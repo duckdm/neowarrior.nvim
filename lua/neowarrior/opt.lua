@@ -47,5 +47,18 @@ return {
     modify_select_project = { key = 'Mp', desc = 'Modify project' },
     modify_select_priority = { key = 'MP', desc = 'Modify priority' },
     modify_due = { key = 'Md', desc = 'Modify due date' },
-  }
+  },
+  icons = {
+    task = "\u{f1db}",
+    task_completed = "\u{f14a}",
+    recur = "\u{f021}",
+    project = "\u{f07b}",
+    warning = "\u{f071}",
+    annotated = "\u{f1781}",
+    start = "\u{f040a}",
+    due = "\u{f1442}",
+    est = "\u{f0520}",
+    deleted = "\u{f014}",
+    depends = "\u{f111}",
+  },
 }
