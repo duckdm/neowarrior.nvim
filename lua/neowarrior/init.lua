@@ -47,7 +47,6 @@ local opt = {
     select_filter = { key = 'f', desc = 'Select filter' },
     toggle_group_view = { key = 'tg', desc = 'Toggle grouped view' },
     toggle_tree_view = { key = 'tt', desc = 'Toggle tree view' },
-    toggle_tree_view_reset = { key = 'T', desc = 'Reset tree view' },
     select_report = { key = 'r', desc = 'Select report' },
     refresh = { key = 'R', desc = 'Refresh tasks' },
     reset = { key = 'X', desc = 'Reset filters' },
@@ -566,6 +565,21 @@ L.treeview = function(cs, level)
   end
 end
 
+M.show_task = function()
+  local line = vim.api.nvim_get_current_line()
+  local uuid = Func.get_meta_data(line, 'uuid')
+  local category = Func.get_category(line)
+  if uuid then
+    Buffer.save_cursor()
+    M.show(uuid)
+  elseif category then
+    if category == opt.no_project_name then
+      category = ""
+    end
+    M.export("project:" .. category)
+    M.render_list()
+  end
+end
 
 M.show = function(uuid)
   NWCurrentTask = uuid
@@ -856,6 +870,13 @@ M.export = function(filter)
   return exported_tasks
 end
 
+M.list = function()
+  M.export(NWCurrentFilter)
+  M.render_list()
+  Buffer.restore_cursor()
+  M.close_help()
+end
+
 ---Print list of tasks in different modes (treeview, list, grouped list)
 M.render_list = function()
   NWCurrentTask = nil
@@ -1054,31 +1075,259 @@ M.open = function(split)
   syntax match MetadataConceal /{{{[^}]*}}}/ contained conceal
 ]])
     local opts = { noremap = true, silent = true }
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.help.key, "<Cmd>NeoWarriorHelp<CR>", opts)
+    local default_keymap_opts = { buffer = bufnr, noremap = true, silent = false }
+
+    vim.keymap.set("n", opt.keys.help.key, function()
+      M.open_help()
+    end, default_keymap_opts)
+
+    vim.keymap.set("n", opt.keys.close_help.key, function()
+      M.close_help()
+    end, default_keymap_opts)
+
+    vim.keymap.set("n", opt.keys.done.key, function()
+      Buffer.save_cursor()
+      local back_uuid = NWCurrentTask
+      local line = vim.api.nvim_get_current_line()
+      local uuid = Func.get_meta_data(line, 'uuid')
+      if not uuid then
+        uuid = NWCurrentTask
+      end
+      local is_dependency = Func.get_meta_data(line, "dependency")
+      local is_parent = Func.get_meta_data(line, "parent")
+      if not is_parent then
+        if is_dependency then
+          print("TODO: remove dependency")
+        elseif uuid then
+          M.done(uuid)
+        end
+        if NWCurrentTask then
+          M.show(back_uuid)
+        else
+          M.export(NWCurrentFilter)
+          M.render_list()
+        end
+      end
+      Buffer.restore_cursor()
+    end, default_keymap_opts)
+
+    vim.keymap.set("n", opt.keys.start.key, function()
+      Buffer.save_cursor()
+      local line = vim.api.nvim_get_current_line()
+      local uuid = Func.get_meta_data(line, 'uuid')
+      if NWCurrentTask then
+        uuid = NWCurrentTask
+      end
+      local task = nil
+      if uuid then
+        task = Data.task(uuid)
+      end
+
+      if task and task.start then
+        vim.fn.system("task stop " .. uuid)
+        if NWCurrentTask then
+          M.show(uuid)
+        else
+          M.export(NWCurrentFilter)
+          M.render_list()
+        end
+        Buffer.restore_cursor()
+      else
+        vim.fn.system("task start " .. uuid)
+        M.show(uuid)
+      end
+    end, default_keymap_opts)
+
+    vim.keymap.set("n", opt.keys.select_dependency.key, function()
+      update_all_tasks()
+      local line = vim.api.nvim_get_current_line()
+      local uuid = Func.get_meta_data(line, 'uuid')
+      local opts = require("telescope.themes").get_dropdown({})
+      pickers
+      .new(opts, {
+        prompt_title = "Select dependency",
+        finder = finders.new_table({
+          results = NWAllTasks,
+          entry_maker = function(entry)
+            local task_icon = icons.task
+            if entry.status and entry.status == "completed" then
+              task_icon = icons.task_completed
+            end
+            if entry.status and entry.status == "deleted" then
+              task_icon = icons.deleted
+            end
+            if Func.has_pending_dependencies(entry.depends, NWAllTasks) then
+              task_icon = icons.depends
+            end
+            return {
+              value = entry,
+              display = task_icon .. ' ' .. entry.description,
+              ordinal = entry.description,
+            }
+          end,
+        }),
+        sorter = conf.generic_sorter(opts),
+        attach_mappings = function(prompt_bufnr)
+          actions.select_default:replace(function()
+            actions.close(prompt_bufnr)
+            local selection = action_state.get_selected_entry()
+            if uuid then
+              Data.add_dependency(uuid, selection.value.uuid)
+              update_all_tasks()
+              M.export(NWCurrentFilter)
+              M.render_list()
+            end
+          end)
+          return true
+        end,
+      })
+      :find()
+    end, default_keymap_opts)
+
+    vim.keymap.set("n", opt.keys.toggle_tree.key, function()
+      Buffer.save_cursor()
+      Func.toggle_tree(NWToggledTrees)
+      M.render_list()
+      Buffer.restore_cursor()
+    end, default_keymap_opts)
+
+    vim.keymap.set("n", "<CR>", function()
+      M.show_task()
+    end, default_keymap_opts)
+
+    vim.keymap.set("n", opt.keys.enter.key, function()
+      M.show_task()
+    end, default_keymap_opts)
+
+    vim.keymap.set("n", opt.keys.modify_select_project.key, function()
+      local line = vim.api.nvim_get_current_line()
+      local uuid = Func.get_meta_data(line, 'uuid')
+      if uuid then
+        local opts = require("telescope.themes").get_dropdown({})
+        pickers
+        .new(opts, {
+          prompt_title = "Set task project",
+          finder = finders.new_table({
+            results = NWProjects,
+          }),
+          sorter = conf.generic_sorter(opts),
+          attach_mappings = function(prompt_bufnr)
+            actions.select_default:replace(function()
+              local prompt = action_state.get_current_picker(prompt_bufnr):_get_prompt()
+              actions.close(prompt_bufnr)
+              local selection = action_state.get_selected_entry()
+              local mod_project = prompt
+              if selection and selection[1] then
+                mod_project = selection[1]
+              end
+              M.modify(uuid, "project:" .. mod_project)
+              M.refresh()
+            end)
+            return true
+          end,
+        })
+        :find()
+      end
+    end, default_keymap_opts)
+
+    vim.keymap.set("n", opt.keys.modify_select_priority.key, function()
+      local line = vim.api.nvim_get_current_line()
+      local uuid = Func.get_meta_data(line, 'uuid')
+      if uuid then
+        local opts = require("telescope.themes").get_dropdown({})
+        pickers
+        .new(opts, {
+          prompt_title = "Set task priority",
+          finder = finders.new_table({
+            results = { "H", "M", "L", "None" },
+          }),
+          sorter = conf.generic_sorter(opts),
+          attach_mappings = function(prompt_bufnr)
+            actions.select_default:replace(function()
+              local prompt = action_state.get_current_picker(prompt_bufnr):_get_prompt()
+              actions.close(prompt_bufnr)
+              local selection = action_state.get_selected_entry()
+              local mod_priority = prompt
+              if selection and selection[1] then
+                mod_priority = selection[1]
+              end
+              if (mod_priority == "H") or (mod_priority == "M") or (mod_priority == "L") then
+                M.modify(uuid, "priority:" .. mod_priority)
+              else
+                M.modify(uuid, "priority:")
+              end
+              M.export(NWCurrentFilter)
+              M.render_list()
+            end)
+            return true
+          end,
+        })
+        :find()
+      end
+    end, default_keymap_opts)
+
+    vim.keymap.set("n", opt.keys.modify_due.key, function()
+      local line = vim.api.nvim_get_current_line()
+      local uuid = Func.get_meta_data(line, 'uuid')
+      Buffer.save_cursor()
+      local prompt = "Task due date: "
+      vim.ui.input({
+        prompt = prompt,
+        cancelreturn = nil,
+      }, function(input)
+        if input then
+          M.modify(uuid, "due:" .. input)
+          M.export(NWCurrentFilter)
+          M.render_list()
+        end
+      end)
+      Buffer.restore_cursor()
+    end, default_keymap_opts)
+
+    vim.keymap.set("n", opt.keys.modify.key, function()
+      local line = vim.api.nvim_get_current_line()
+      local uuid = Func.get_meta_data(line, 'uuid')
+      if not uuid and NWCurrentTask then
+        uuid = NWCurrentTask
+      end
+      local task = nil
+      if uuid then
+        task = Data.task(uuid)
+        Buffer.save_cursor()
+        local prompt = 'Modify task ("description" due:21hours etc): '
+        vim.ui.input({
+          prompt = prompt,
+          default = '"' .. task.description .. '"',
+          cancelreturn = nil,
+        }, function(input)
+          if input then
+            M.modify(uuid, input)
+            if NWCurrentTask then
+              M.show(NWCurrentTask)
+            else
+              M.export(NWCurrentFilter)
+              M.render_list()
+            end
+          end
+        end)
+        Buffer.restore_cursor()
+      end
+    end, default_keymap_opts)
+
+    vim.keymap.set("n", '<Esc>', function() M.list() end, default_keymap_opts)
+    vim.keymap.set("n", opt.keys.back.key, function() M.list() end, default_keymap_opts)
+
     vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.add.key, "<Cmd>NeoWarriorAdd<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.done.key, "<Cmd>NeoWarriorDone<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.start.key, "<Cmd>NeoWarriorStart<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.select_dependency.key, "<Cmd>NeoWarriorSelectDependency<CR>", opts)
     vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.filter.key, "<Cmd>NeoWarriorFilter<CR>", opts)
     vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.select_filter.key, "<Cmd>NeoWarriorFilterFromCommon<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.toggle_group_view.key, "<Cmd>NeoWarriorToggleGroup<CR>", opts)
+    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.toggle_group_view.key, "<Cmd>NeoWarriorToggleGroupView<CR>", opts)
+    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.toggle_tree_view.key, "<Cmd>NeoWarriorToggleTreeView<CR>", opts)
     vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.select_report.key, "<Cmd>NeoWarriorReport<CR>", opts)
     vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.refresh.key, "<Cmd>NeoWarriorRefresh<CR>", opts)
     vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.reset.key, "<Cmd>NeoWarriorReset<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.toggle_tree_view.key, "<Cmd>NeoWarriorToggleTreeView<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.toggle_tree_view_reset.key, "<Cmd>NeoWarriorToggleTreeViewReset<CR>", opts)
     vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.collapse_all.key, "<Cmd>NeoWarriorToggleTreeCollapseAll<CR>", opts)
     vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.expand_all.key, "<Cmd>NeoWarriorToggleTreeExpandAll<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.toggle_tree.key, "<Cmd>NeoWarriorToggleTree<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", "<CR>", "<Cmd>NeoWarriorShowTask<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.enter.key, "<Cmd>NeoWarriorShowTask<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.modify_select_project.key, "<Cmd>NeoWarriorSelectProject<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.modify_select_priority.key, "<Cmd>NeoWarriorSelectPriority<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.modify_due.key, "<Cmd>NeoWarriorModifyDue<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.modify.key, "<Cmd>NeoWarriorModify<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.back.key, "<Cmd>NeoWarriorList<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", opt.keys.close_help.key, "<Cmd>NeoWarriorCloseHelp<CR>", opts)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", "<Esc>", "<Cmd>NeoWarriorList<CR>", opts)
+
     M.export(NWCurrentFilter)
     M.render_list()
     if opt.expanded then
@@ -1191,14 +1440,6 @@ M.setup = function(set_opt)
     end,
   })
 
-  vim.api.nvim_create_user_command("NeoWarriorHelp", function()
-    M.open_help()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorCloseHelp", function()
-    M.close_help()
-  end, {})
-
   vim.api.nvim_create_user_command("NeoWarriorFocus", function()
     M.focus()
   end, {})
@@ -1247,81 +1488,6 @@ M.setup = function(set_opt)
     end)
   end, {})
 
-  vim.api.nvim_create_user_command("NeoWarriorStart", function()
-    Buffer.save_cursor()
-    local line = vim.api.nvim_get_current_line()
-    local uuid = Func.get_meta_data(line, 'uuid')
-    if NWCurrentTask then
-      uuid = NWCurrentTask
-    end
-    local task = nil
-    if uuid then
-      task = Data.task(uuid)
-    end
-
-    if task and task.start then
-      vim.fn.system("task stop " .. uuid)
-      if NWCurrentTask then
-        M.show(uuid)
-      else
-        M.export(NWCurrentFilter)
-        M.render_list()
-      end
-      Buffer.restore_cursor()
-    else
-      vim.fn.system("task start " .. uuid)
-      M.show(uuid)
-    end
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorModify", function()
-    local line = vim.api.nvim_get_current_line()
-    local uuid = Func.get_meta_data(line, 'uuid')
-    if not uuid and NWCurrentTask then
-      uuid = NWCurrentTask
-    end
-    local task = nil
-    if uuid then
-      task = Data.task(uuid)
-      Buffer.save_cursor()
-      local prompt = 'Modify task ("description" due:21hours etc): '
-      vim.ui.input({
-        prompt = prompt,
-        default = '"' .. task.description .. '"',
-        cancelreturn = nil,
-      }, function(input)
-        if input then
-          M.modify(uuid, input)
-          if NWCurrentTask then
-            M.show(NWCurrentTask)
-          else
-            M.export(NWCurrentFilter)
-            M.render_list()
-          end
-        end
-      end)
-      Buffer.restore_cursor()
-    end
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorModifyDue", function()
-    local line = vim.api.nvim_get_current_line()
-    local uuid = Func.get_meta_data(line, 'uuid')
-    Buffer.save_cursor()
-    local prompt = "Task due date: "
-    vim.ui.input({
-      prompt = prompt,
-      cancelreturn = nil,
-    }, function(input)
-      if input then
-        M.modify(uuid, "due:" .. input)
-        M.export(NWCurrentFilter)
-        M.render_list()
-      end
-    end)
-    Buffer.restore_cursor()
-  end, {})
-
   vim.api.nvim_create_user_command("NeoWarriorToggleTreeCollapseAll", function()
     Buffer.save_cursor()
     NWToggledTrees = {}
@@ -1333,87 +1499,8 @@ M.setup = function(set_opt)
     M.expand_all()
   end, {})
 
-  vim.api.nvim_create_user_command("NeoWarriorDone", function()
-    Buffer.save_cursor()
-    local back_uuid = NWCurrentTask
-    local line = vim.api.nvim_get_current_line()
-    local uuid = Func.get_meta_data(line, 'uuid')
-    if not uuid then
-      uuid = NWCurrentTask
-    end
-    local is_dependency = Func.get_meta_data(line, "dependency")
-    local is_parent = Func.get_meta_data(line, "parent")
-    if not is_parent then
-      if is_dependency then
-        print("TODO: remove dependency")
-      elseif uuid then
-        M.done(uuid)
-      end
-      if NWCurrentTask then
-        M.show(back_uuid)
-      else
-        M.export(NWCurrentFilter)
-        M.render_list()
-      end
-    end
-    Buffer.restore_cursor()
-  end, {})
-
   vim.api.nvim_create_user_command("NeoWarriorDelete", function()
     M.delete(vim.api.nvim_get_current_line())
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorList", function()
-    M.export(NWCurrentFilter)
-    M.render_list()
-    Buffer.restore_cursor()
-    M.close_help()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorSelectDependency", function()
-    update_all_tasks()
-    local line = vim.api.nvim_get_current_line()
-    local uuid = Func.get_meta_data(line, 'uuid')
-    local opts = require("telescope.themes").get_dropdown({})
-    pickers
-      .new(opts, {
-        prompt_title = "Select dependency",
-        finder = finders.new_table({
-          results = NWAllTasks,
-          entry_maker = function(entry)
-            local task_icon = icons.task
-            if entry.status and entry.status == "completed" then
-              task_icon = icons.task_completed
-            end
-            if entry.status and entry.status == "deleted" then
-              task_icon = icons.deleted
-            end
-            if Func.has_pending_dependencies(entry.depends, NWAllTasks) then
-              task_icon = icons.depends
-            end
-            return {
-              value = entry,
-              display = task_icon .. ' ' .. entry.description,
-              ordinal = entry.description,
-            }
-          end,
-        }),
-        sorter = conf.generic_sorter(opts),
-        attach_mappings = function(prompt_bufnr)
-          actions.select_default:replace(function()
-            actions.close(prompt_bufnr)
-            local selection = action_state.get_selected_entry()
-            if uuid then
-              Data.add_dependency(uuid, selection.value.uuid)
-              update_all_tasks()
-              M.export(NWCurrentFilter)
-              M.render_list()
-            end
-          end)
-          return true
-        end,
-      })
-      :find()
   end, {})
 
   vim.api.nvim_create_user_command("NeoWarriorFilter", function()
@@ -1500,13 +1587,6 @@ M.setup = function(set_opt)
       :find()
   end, {})
 
-  vim.api.nvim_create_user_command("NeoWarriorToggleTree", function()
-    Buffer.save_cursor()
-    Func.toggle_tree(NWToggledTrees)
-    M.render_list()
-    Buffer.restore_cursor()
-  end, {})
-
   vim.api.nvim_create_user_command("NeoWarriorToggleTreeView", function()
     if treeview then
       treeview = false
@@ -1516,12 +1596,8 @@ M.setup = function(set_opt)
     end
     M.render_list()
   end, {})
-  vim.api.nvim_create_user_command("NeoWarriorToggleTreeViewReset", function()
-    treeview = true
-    M.export(NWCurrentFilter)
-    M.render_list()
-  end, {})
-  vim.api.nvim_create_user_command("NeoWarriorToggleGroup", function()
+
+  vim.api.nvim_create_user_command("NeoWarriorToggleGroupView", function()
     if grouped then
       grouped = false
     else
@@ -1529,88 +1605,6 @@ M.setup = function(set_opt)
       treeview = false
     end
     M.render_list()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorSelectPriority", function()
-    local line = vim.api.nvim_get_current_line()
-    local uuid = Func.get_meta_data(line, 'uuid')
-    if uuid then
-      local opts = require("telescope.themes").get_dropdown({})
-      pickers
-        .new(opts, {
-          prompt_title = "Set task priority",
-          finder = finders.new_table({
-            results = { "H", "M", "L", "None" },
-          }),
-          sorter = conf.generic_sorter(opts),
-          attach_mappings = function(prompt_bufnr)
-            actions.select_default:replace(function()
-              local prompt = action_state.get_current_picker(prompt_bufnr):_get_prompt()
-              actions.close(prompt_bufnr)
-              local selection = action_state.get_selected_entry()
-              local mod_priority = prompt
-              if selection and selection[1] then
-                mod_priority = selection[1]
-              end
-              if (mod_priority == "H") or (mod_priority == "M") or (mod_priority == "L") then
-                M.modify(uuid, "priority:" .. mod_priority)
-              else
-                M.modify(uuid, "priority:")
-              end
-              M.export(NWCurrentFilter)
-              M.render_list()
-            end)
-            return true
-          end,
-        })
-        :find()
-    end
-  end, {})
-  vim.api.nvim_create_user_command("NeoWarriorSelectProject", function()
-    local line = vim.api.nvim_get_current_line()
-    local uuid = Func.get_meta_data(line, 'uuid')
-    if uuid then
-      local opts = require("telescope.themes").get_dropdown({})
-      pickers
-        .new(opts, {
-          prompt_title = "Set task project",
-          finder = finders.new_table({
-            results = NWProjects,
-          }),
-          sorter = conf.generic_sorter(opts),
-          attach_mappings = function(prompt_bufnr)
-            actions.select_default:replace(function()
-              local prompt = action_state.get_current_picker(prompt_bufnr):_get_prompt()
-              actions.close(prompt_bufnr)
-              local selection = action_state.get_selected_entry()
-              local mod_project = prompt
-              if selection and selection[1] then
-                mod_project = selection[1]
-              end
-              M.modify(uuid, "project:" .. mod_project)
-              M.refresh()
-            end)
-            return true
-          end,
-        })
-        :find()
-    end
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorShowTask", function()
-    local line = vim.api.nvim_get_current_line()
-    local uuid = Func.get_meta_data(line, 'uuid')
-    local category = Func.get_category(line)
-    if uuid then
-      Buffer.save_cursor()
-      M.show(uuid)
-    elseif category then
-      if category == opt.no_project_name then
-        category = ""
-      end
-      M.export("project:" .. category)
-      M.render_list()
-    end
   end, {})
 
   vim.api.nvim_create_user_command("NeoWarriorReset", function()

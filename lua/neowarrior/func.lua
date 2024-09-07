@@ -71,6 +71,7 @@ M.fill_project_tables = function(project, projects, opt)
     M.add_to_project_tables(project_name, projects, opt)
   end
 end
+
 --- Find task by UUID
 ---@param uuid string
 ---@param tasks table
