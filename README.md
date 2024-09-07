@@ -4,6 +4,7 @@ A simple taskwarrior plugin for NeoVim.
 ```lua
 {
   'duckdm/neowarrior.nvim',
+  event = 'VeryLazy',
   dependencies = { 'nvim-telescope/telescope.nvim' },
   config = function()
 
