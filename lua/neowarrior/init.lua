@@ -1333,18 +1333,24 @@ M.setup = function(set_opt)
         end
         local line = vim.api.nvim_get_current_line()
         local description = Func.get_meta_data(line, 'description')
-        local project = Func.get_meta_data(line, 'project')
-        local urgency = Func.get_meta_data(line, 'urgency')
-        local priority = Func.get_meta_data(line, 'priority')
-        local due = Func.get_meta_data(line, 'due')
-        local estimate = Func.get_meta_data(line, 'estimate')
-        local max_width = opt.float.max_width
-        local win_width = vim.api.nvim_win_get_width(0)
-        local width = max_width
-        if win_width < max_width then
-          width = win_width
-        end
         if description then
+          local project = Func.get_meta_data(line, 'project')
+          local urgency = Func.get_meta_data(line, 'urgency')
+          local priority = Func.get_meta_data(line, 'priority')
+          local due = Func.get_meta_data(line, 'due')
+          local estimate = Func.get_meta_data(line, 'estimate')
+          local max_width = opt.float.max_width
+          local win_width = vim.api.nvim_win_get_width(0)
+          local width = max_width
+          local anchor = 'SW'
+          local row = 0
+          if Buffer.get_cursor()[1] < 10 then
+            anchor = 'NW'
+            row = 1
+          end
+          if win_width < max_width then
+            width = win_width
+          end
           local lines = {
             description,
             ''
@@ -1364,7 +1370,12 @@ M.setup = function(set_opt)
           if estimate then
             table.insert(lines, icons.est .. ' Estimate: ' .. estimate)
           end
-          float = Buffer.float(lines, { width = width, border = 'rounded' })
+          float = Buffer.float(lines, { 
+            width = width,
+            border = 'rounded',
+            anchor = anchor,
+            row = row,
+          })
         end
       end,
     })
