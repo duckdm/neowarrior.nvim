@@ -69,7 +69,7 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
 | X | Reset filters |
 | W | Collapse all trees |
 | E | Expand all trees |
-| <Tab> | Toggle tree |
+| Tab | Toggle tree |
 | l | Show task details |
 | h | Back |
 | q | Close help |
