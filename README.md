@@ -1,4 +1,20 @@
-A simple taskwarrior plugin for NeoVim.
+A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as a sidebar with my tasks inside neovim. 
+
+# Features
+
+- Add, start, modify and mark tasks done
+- Filter tasks
+  - Select from common filter
+  - Custom filter input
+- Select report
+- Select dependency/parent task
+- Show task details
+- Task detail float (enabled on active line)
+- Grouped and tree views (based on task project)
+- Customizable keymaps
+- Customizable reports and filters
+- Customize config per directory (uses `vim.uv.cwd()`)
+
 
 # Example config (lazy.nvim)
 ```lua
