@@ -1,0 +1,51 @@
+return {
+  show_current_filter = true,
+  filter = "",
+  report = "next",
+  --@type normal|grouped|tree
+  mode = "normal",
+  --@type boolean Whether to expand all trees at start
+  expanded = false,
+  no_project_name = "No project defined",
+  float = {
+    enabled = true,
+    max_width = 60,
+  },
+  dir_setup = nil,
+  reports = {
+    "active", "all", "blocked", "blocking", "completed", "list", "long",
+    "ls", "minimal", "newest", "next", "oldest", "overdue", "projects",
+    "ready", "recurring", "summary", "tags", "unblocked", "waiting",
+  },
+  filters = {
+    "due:", "due.not:", "\\(due.before:2d and due.not: \\)",
+    "scheduled:", "scheduled.not:", "priority:H",
+    "priority.not:H", "priority:M", "priority.not:M", "priority:L",
+    "priority.not:L", "priority:", "priority.not:", "project:",
+    "project.not:",
+  },
+  keys = {
+    help = { key = '?', desc = 'Help' },
+    add = { key = 'a', desc = 'Add task' },
+    done = { key = 'd', desc = 'Mark task done' },
+    start = { key = 's', desc = 'Start task' },
+    select_dependency = { key = 'D', desc = 'Select dependency' },
+    filter = { key = 'F', desc = 'Filter tasks' },
+    select_filter = { key = 'f', desc = 'Select filter' },
+    toggle_group_view = { key = 'tg', desc = 'Toggle grouped view' },
+    toggle_tree_view = { key = 'tt', desc = 'Toggle tree view' },
+    select_report = { key = 'r', desc = 'Select report' },
+    refresh = { key = 'R', desc = 'Refresh tasks' },
+    reset = { key = 'X', desc = 'Reset filters' },
+    collapse_all = { key = 'W', desc = 'Collapse all trees' },
+    expand_all = { key = 'E', desc = 'Expand all trees' },
+    toggle_tree = { key = '<Tab>', desc = 'Toggle tree' },
+    enter = { key = 'l', desc = 'Show task details' },
+    back = { key = 'h', desc = 'Back' },
+    close_help = { key = 'q', desc = 'Close help' },
+    modify = { key = 'MM', desc = 'Modify task' },
+    modify_select_project = { key = 'Mp', desc = 'Modify project' },
+    modify_select_priority = { key = 'MP', desc = 'Modify priority' },
+    modify_due = { key = 'Md', desc = 'Modify due date' },
+  }
+}
