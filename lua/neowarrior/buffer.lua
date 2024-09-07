@@ -30,6 +30,7 @@ end
 Buffer.float = function (lines, opts)
     local buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_lines(buf, 0, -1, true, lines)
+    Buffer.option(buf, "wrap", true)
     opts = vim.tbl_deep_extend('force', {
       relative = 'cursor',
       width = 30,
@@ -40,8 +41,11 @@ Buffer.float = function (lines, opts)
       style = 'minimal'
     }, opts)
     local win = vim.api.nvim_open_win(buf, false, opts)
+    vim.api.nvim_win_set_option(win, 'wrap', true)
+    vim.api.nvim_win_set_option(win, 'linebreak', true)
     return win
 end
+
 --- Set buffer virt text
 ---@param text string
 ---@param hl_group string
