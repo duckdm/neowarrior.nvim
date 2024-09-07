@@ -1,5 +1,7 @@
 A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as a sidebar with my tasks inside neovim. 
 
+![Screenshot][./screenshot.png]
+
 # Features
 
 - Add, start, modify and mark tasks done
