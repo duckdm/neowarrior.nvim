@@ -34,10 +34,10 @@ local NWCurrentFilter = nil
 local NWRecentFilters = {}
 
 --- Set options
----@param o table
-local set_opts = function(o)
-  if o and Util.table_size(o) > 0 then
-    opt = vim.tbl_deep_extend('force', opt, o)
+---@param user_opts table
+local set_opts = function(user_opts)
+  if user_opts and Util.table_size(user_opts) > 0 then
+    opt = vim.tbl_deep_extend('force', opt, user_opts)
   end
 
   if opt.dir_setup and Util.table_size(opt.dir_setup) > 0 then
@@ -1079,9 +1079,9 @@ M.open = function(split)
       update_all_tasks()
       local line = vim.api.nvim_get_current_line()
       local uuid = Func.get_meta_data(line, 'uuid')
-      local opts = require("telescope.themes").get_dropdown({})
+      local telescope_opts = require("telescope.themes").get_dropdown({})
       pickers
-      .new(opts, {
+      .new(telescope_opts, {
         prompt_title = "Select dependency",
         finder = finders.new_table({
           results = NWAllTasks,
@@ -1140,9 +1140,9 @@ M.open = function(split)
       local line = vim.api.nvim_get_current_line()
       local uuid = Func.get_meta_data(line, 'uuid')
       if uuid then
-        local opts = require("telescope.themes").get_dropdown({})
+        local telescope_opts = require("telescope.themes").get_dropdown({})
         pickers
-        .new(opts, {
+        .new(telescope_opts, {
           prompt_title = "Set task project",
           finder = finders.new_table({
             results = NWProjects,
@@ -1171,9 +1171,9 @@ M.open = function(split)
       local line = vim.api.nvim_get_current_line()
       local uuid = Func.get_meta_data(line, 'uuid')
       if uuid then
-        local opts = require("telescope.themes").get_dropdown({})
+        local telescope_opts = require("telescope.themes").get_dropdown({})
         pickers
-        .new(opts, {
+        .new(telescope_opts, {
           prompt_title = "Set task priority",
           finder = finders.new_table({
             results = { "H", "M", "L", "None" },
