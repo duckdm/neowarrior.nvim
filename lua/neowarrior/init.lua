@@ -106,14 +106,15 @@ local set_opts = function(o)
 
   if opt.dir_setup and Util.table_size(opt.dir_setup) > 0 then
     local cwd = vim.uv.cwd()
-    print(vim.inspect(cwd))
     for _, dir_setup in ipairs(opt.dir_setup) do
       if dir_setup.dir == cwd then
         opt = vim.tbl_deep_extend('force', opt, dir_setup)
       end
     end
   end
+end
 
+local init = function()
   if opt.mode and opt.mode == "grouped" then
     grouped = true
   elseif opt.mode and opt.mode == "tree" then
@@ -1089,8 +1090,7 @@ end
 M.reset = function()
   update_all_tasks()
   Buffer.save_cursor()
-  NWCurrentReport = user_opt.report or "next"
-  NWCurrentFilter = user_opt.filter or ""
+  init()
   M.export(NWCurrentFilter)
   M.render_list()
   Buffer.restore_cursor()
@@ -1135,6 +1135,7 @@ M.setup = function(set_opt)
   user_opt = set_opt
   set_opts(user_opt)
   set_colors()
+  init()
 
   if opt.float.enabled then
     local float = nil
