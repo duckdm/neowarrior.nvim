@@ -2,6 +2,11 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
 
 ![Screenshot](./screenshot.png)
 
+# Requirements
+
+- [Taskwarrior](https://taskwarrior.org/)
+- A nerd font for the icons (JetBrainsMono Nerd Font in the screenshot)
+
 # Features
 
 - Add, start, modify and mark tasks done
