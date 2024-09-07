@@ -1,6 +1,6 @@
 A simple taskwarrior plugin for NeoVim.
 
-Example config (lazy.nvim)
+# Example config (lazy.nvim)
 ```lua
 {
   'duckdm/neowarrior.nvim',
@@ -31,7 +31,35 @@ Example config (lazy.nvim)
 }
 ```
 
-Default config
+# Default key maps
+
+| Key | Description |
+| --- | ----------- |
+| ? | Help |
+| a | Add task |
+| d | Mark task done |
+| s | Start task |
+| D | Select dependency |
+| F | Filter tasks |
+| f | Select filter |
+| tg | Toggle grouped view |
+| tt | Toggle tree view |
+| T | Reset tree view |
+| r | Select report |
+| R | Refresh tasks |
+| X | Reset filters |
+| W | Collapse all trees |
+| E | Expand all trees |
+| <Tab> | Toggle tree |
+| l | Show task details |
+| h | Back |
+| q | Close help |
+| MM | Modify task |
+| Mp | Modify project |
+| MP | Modify priority |
+| Md | Modify due date |
+
+# Default config values
 ```lua
 {
   -- Show current filter at the top
@@ -59,7 +87,7 @@ Default config
     "ls", "minimal", "newest", "next", "oldest", "overdue", "projects",
     "ready", "recurring", "summary", "tags", "unblocked", "waiting",
   },
-  -- Filter available in select
+  -- Filters available in select
   filters = {
     "due:", "due.not:", "\\(due.before:2d and due.not: \\)",
     "scheduled:", "scheduled.not:", "priority:H",
