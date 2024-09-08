@@ -1,22 +1,34 @@
 return {
+  -- Whether to show the current filter at the top
   show_current_filter = true,
+  -- Default filter
   filter = "",
+  -- Default report
   report = "next",
   --@type normal|grouped|tree
   mode = "normal",
   --@type boolean Whether to expand all trees at start
   expanded = false,
+  -- Default project name for tasks without project
   no_project_name = "No project defined",
+  -- Task float
   float = {
+    -- Enable floating window for tasks
     enabled = true,
+    -- Max width of float in columns
     max_width = 60,
+    -- Time (ms) before detail float is shown
+    updatetime = 750
   },
+  -- Set config values for specific directories.
   dir_setup = nil,
+  -- Default reports available
   reports = {
     "active", "all", "blocked", "blocking", "completed", "list", "long",
     "ls", "minimal", "newest", "next", "oldest", "overdue", "projects",
     "ready", "recurring", "summary", "tags", "unblocked", "waiting",
   },
+  -- Default filters available
   filters = {
     "due:", "due.not:", "\\(due.before:2d and due.not: \\)",
     "scheduled:", "scheduled.not:", "priority:H",
@@ -24,6 +36,7 @@ return {
     "priority.not:L", "priority:", "priority.not:", "project:",
     "project.not:",
   },
+  -- Default key mappings
   keys = {
     help = { key = '?', desc = 'Help' },
     add = { key = 'a', desc = 'Add task' },
@@ -48,6 +61,7 @@ return {
     modify_select_priority = { key = 'MP', desc = 'Modify priority' },
     modify_due = { key = 'Md', desc = 'Modify due date' },
   },
+  -- Default icons
   icons = {
     task = "\u{f1db}",
     task_completed = "\u{f14a}",

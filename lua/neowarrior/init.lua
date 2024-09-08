@@ -23,6 +23,7 @@ local NWLineColors = {}
 local NWLineCount = 0
 local NWCurrentTask = nil
 local NWAllTasks = {}
+local NWAllPendingTasks = {}
 local NWAllTasksByProject = {}
 local NWTasks = {}
 local NWTasksByProject = {}
@@ -1327,6 +1328,15 @@ M.setup = function(set_opt)
     local float = nil
     vim.api.nvim_create_autocmd('CursorMoved', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
+      callback = function()
+        if float and vim.api.nvim_win_is_valid(float) then
+          vim.api.nvim_win_close(float, true)
+        end
+      end,
+    })
+    vim.o.updatetime = opt.float.updatetime
+    vim.api.nvim_create_autocmd('CursorHold', {
+      group = vim.api.nvim_create_augroup('neowarrior-cursor-hold', { clear = true }),
       callback = function()
         if float and vim.api.nvim_win_is_valid(float) then
           vim.api.nvim_win_close(float, true)
