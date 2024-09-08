@@ -1,3 +1,5 @@
+---@alias NeoWarrior.Config table
+---@type NeoWarrior.Config
 return {
   -- Whether to show the current filter at the top
   show_current_filter = true,
