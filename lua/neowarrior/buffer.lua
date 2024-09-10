@@ -42,7 +42,6 @@ Buffer.float = function (lines, opts)
     }, opts)
     local win = vim.api.nvim_open_win(buf, false, opts)
     vim.api.nvim_win_set_option(win, 'wrap', true)
-    vim.api.nvim_win_set_option(win, 'linebreak', true)
     return win
 end
 

@@ -1,4 +1,5 @@
 ---@class DateTime
+---@field date string
 ---@field year number
 ---@field month number
 ---@field day number
@@ -17,15 +18,17 @@ function DateTime:new(date)
   setmetatable(datetime, self)
 
   self.__index = self
-  self.year = 0
-  self.month = 0
-  self.day = 0
-  self.hour = 0
-  self.minute = 0
-  self.second = 0
-  self.timestamp = 0
 
-  self.parse(date)
+  datetime.date = date
+  datetime.year = 0
+  datetime.month = 0
+  datetime.day = 0
+  datetime.hour = 0
+  datetime.minute = 0
+  datetime.second = 0
+  datetime.timestamp = 0
+
+  self:parse(date)
 
   return datetime
 end
@@ -69,3 +72,52 @@ end
 function DateTime:format(format)
   return os.date(format, self.timestamp)
 end
+
+function DateTime:default_format()
+  if self.timestamp == 0 then
+    return ''
+  end
+  return os.date('%Y-%m-%d, %H:%M', self.timestamp)
+end
+
+-- Function to calculate the relative time difference
+---@return string
+function DateTime:relative()
+  local target_time = self:parse(self.date)
+  target_time = target_time + (2 * 60 * 60)
+  local now = os.time()
+  local diff = os.difftime(target_time, now)
+  local negative = false
+  if diff < 0 then
+    negative = true
+    diff = diff * -1
+  end
+
+  local days = math.floor(diff / (24 * 60 * 60))
+  local hours = math.floor((diff % (24 * 60 * 60)) / (60 * 60))
+  local minutes = math.floor((diff % (60 * 60)) / 60)
+
+  local value = ''
+
+  if days > 0 or days < -1 then
+    if days >= 30 or days <= -30 then
+      local months = math.floor(days / 30)
+      value = string.format('~%dmon', months)
+    else
+      value = string.format('%dd', days)
+    end
+  elseif hours > 0 or hours < -1 then
+    value = string.format('%dh', hours)
+  elseif minutes > 0 or minutes < 0 then
+    value = string.format('%dm', minutes)
+  else
+    value = 'now'
+  end
+  if negative then
+    value = '-' .. value
+  end
+
+  return value
+end
+
+return DateTime
