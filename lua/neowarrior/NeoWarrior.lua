@@ -212,14 +212,17 @@ function NeoWarrior:set_keymaps()
     self:open_help()
   end, default_keymap_opts)
 
+  -- Close help float
   vim.keymap.set("n", self.config.keys.close_help.key, function()
     self:close_help()
   end, default_keymap_opts)
 
+  -- Mark task complete/done
   vim.keymap.set("n", self.config.keys.done.key, function()
     self:mark_done()
   end, default_keymap_opts)
 
+  -- Start task
   vim.keymap.set("n", self.config.keys.start.key, function()
 
     self.buffer:save_cursor()
@@ -256,6 +259,7 @@ function NeoWarrior:set_keymaps()
 
   end, default_keymap_opts)
 
+  -- FIX:
   -- vim.keymap.set("n", self.config.keys.select_dependency.key, function()
   --   self:refresh()
   --   local line = vim.api.nvim_get_current_line()
@@ -300,6 +304,7 @@ function NeoWarrior:set_keymaps()
   --   :find()
   -- end, default_keymap_opts)
 
+  -- FIX:
   -- vim.keymap.set("n", self.config.keys.toggle_tree.key, function()
   --   Buffer.save_cursor()
   --   Func.toggle_tree(self.toggled_trees)
@@ -307,29 +312,10 @@ function NeoWarrior:set_keymaps()
   --   Buffer.restore_cursor()
   -- end, default_keymap_opts)
 
+  -- Show task
   vim.keymap.set("n", "<CR>", function()
 
-    local uuid = Func.get_line_meta_data('uuid')
-    local project = Func.get_line_meta_data('project')
-
-    if uuid then
-
-      -- FIX: Save cursor
-      local task = Taskwarrior:task(uuid)
-      local task_page = TaskPage:new(self, task)
-      self.current_task = task
-      task_page:print(self.buffer)
-
-    elseif project then
-
-      -- FIX: Render list
-      --
-    end
-
-  end, default_keymap_opts)
-
-  vim.keymap.set("n", self.config.keys.enter.key, function()
-
+    -- FIX: should these be using "func"?
     local uuid = Func.get_line_meta_data('uuid')
     local project = Func.get_line_meta_data('project')
 
@@ -345,6 +331,26 @@ function NeoWarrior:set_keymaps()
 
   end, default_keymap_opts)
 
+  -- Show task
+  vim.keymap.set("n", self.config.keys.enter.key, function()
+
+    -- FIX: should these be using "func"?
+    local uuid = Func.get_line_meta_data('uuid')
+    local project = Func.get_line_meta_data('project')
+
+    if uuid then
+
+      self:task(uuid)
+
+    elseif project then
+
+      -- FIX: Render list
+      --
+    end
+
+  end, default_keymap_opts)
+
+  -- FIX:
   -- vim.keymap.set("n", self.config.keys.modify_select_project.key, function()
   --   local line = vim.api.nvim_get_current_line()
   --   local uuid = Func.get_meta_data(line, 'uuid')
@@ -376,6 +382,7 @@ function NeoWarrior:set_keymaps()
   --   end
   -- end, default_keymap_opts)
 
+  -- FIX:
   -- vim.keymap.set("n", self.config.keys.modify_select_priority.key, function()
   --   local line = vim.api.nvim_get_current_line()
   --   local uuid = Func.get_meta_data(line, 'uuid')
@@ -412,6 +419,7 @@ function NeoWarrior:set_keymaps()
   --   end
   -- end, default_keymap_opts)
 
+  -- FIX:
   -- vim.keymap.set("n", self.config.keys.modify_due.key, function()
   --   local line = vim.api.nvim_get_current_line()
   --   local uuid = Func.get_meta_data(line, 'uuid')
@@ -430,6 +438,7 @@ function NeoWarrior:set_keymaps()
   --   Buffer.restore_cursor()
   -- end, default_keymap_opts)
 
+  -- FIX:
   -- vim.keymap.set("n", self.config.keys.modify.key, function()
   --   local line = vim.api.nvim_get_current_line()
   --   local uuid = Func.get_meta_data(line, 'uuid')
@@ -460,8 +469,10 @@ function NeoWarrior:set_keymaps()
   --   end
   -- end, default_keymap_opts)
 
+  -- Back to list/refresh
   vim.keymap.set("n", '<Esc>', function() self:list() end, default_keymap_opts)
   vim.keymap.set("n", self.config.keys.back.key, function() self:list() end, default_keymap_opts)
+
 end
 
 --- Open help
@@ -495,6 +506,7 @@ function NeoWarrior:open_help()
     width = width,
     col = math.floor((win_width - width) / 2),
     row = 5,
+    enter = false,
   })
   self.help_float:open()
 

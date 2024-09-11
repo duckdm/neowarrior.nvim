@@ -52,8 +52,9 @@ function TaskPage:print(buffer)
   buffer:unlock()
   buffer:option("wrap", true, { win = self.neowarrior.window.id })
 
-  -- self:completed()
+  self:completed()
   self:project()
+  self:started()
   self:task_line({
     disable_meta = true,
     disable_description = true,
@@ -71,19 +72,21 @@ function TaskPage:print(buffer)
   })
 
   self.page:nl()
+  self.line_no = self.page:get_line_count()
 
-  -- self:started()
-  -- self:annotations()
-  -- self:urgency()
-  -- self:estimate()
-  -- self:priority()
-  -- self:scheduled()
-  -- self:due()
+  self:annotations()
 
-  -- if self.task.depends then
-  --   table.insert(self.used_keys, "depends")
-  -- end
-  --
+  --  FIX: colors don't work for urgency
+  self:urgency()
+  self:estimate()
+  self:priority()
+  self:scheduled()
+  self:due()
+
+  if self.task.depends then
+    table.insert(self.used_keys, "depends")
+  end
+
   for k, v in pairs(self.task:get_attributes()) do
 
     local used = false
@@ -148,10 +151,11 @@ function TaskPage:row(key, cols)
   table.insert(self.used_keys, key)
 
   local line = Line:new(self.line_no)
+
   for _, col in ipairs(cols) do
     line:add({
       text = col.text,
-      color = col.colors,
+      color = col.color or '',
     })
   end
   self.page:add_line(line)
@@ -186,7 +190,6 @@ function TaskPage:task_line(arg)
   table.insert(self.used_keys, 'description')
   local task_line = TaskLine:new(self.neowarrior, self.line_no, self.task, arg)
   self.page:add_line(task_line)
-  self.line_no = self.line_no + 1
 
 end
 
@@ -198,7 +201,7 @@ function TaskPage:started()
       text = "Task started: ",
     }, {
       text = self.task.start:default_format(),
-      color = "NeoWarriorTextDanger",
+      color = "NeoWarriorTextDangerBg",
     }})
   end
 
@@ -210,12 +213,10 @@ function TaskPage:annotations()
   local annotations = self.task.annotations
   if annotations then
 
-    self.page:nl()
-
-    self:row('annotations', {
+    self:row('annotations', {{
       text = "Annotations",
       color = "NeoWarriorTextInfo",
-    })
+    }})
 
     for _, annotation in ipairs(annotations) do
 
@@ -223,9 +224,8 @@ function TaskPage:annotations()
       local anno_ln = Line:new(0)
 
       if annotation.entry then
-        -- FIX: This does not work for some reason
         local anno_entry_dt = DateTime:new(annotation.entry)
-        anno_entry = " " .. anno_entry_dt:default_format() .. " "
+        anno_entry = " " .. anno_entry_dt:default_format()
         anno_ln:add({
           text = self.neowarrior.config.icons.annotated .. anno_entry,
           color = "NeoWarriorTextInfo",
@@ -233,7 +233,7 @@ function TaskPage:annotations()
       end
 
       anno_ln:add({
-        text = annotation.description,
+        text = " " .. annotation.description,
       })
 
       self.page:add_line(anno_ln)
@@ -247,12 +247,10 @@ end
 --- Urgency row
 function TaskPage:urgency()
 
-  self:row('urgency', {{
-    text = string.format(self.prefix_format, "Urgency"),
-  }, {
-    text = self.task.urgency,
-    color = colors.get_urgency_color(self.task.urgency),
-  }})
+  self:row('urgency', {
+    { text = string.format(self.prefix_format, "Urgency") },
+    { text = self.task.urgency, color = colors.get_urgency_color(self.task.urgency) }
+  })
 
 end
 

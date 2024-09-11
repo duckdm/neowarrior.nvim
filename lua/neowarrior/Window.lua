@@ -17,7 +17,7 @@ function Window:new(arg, opt)
 
     window.id = arg.id or -1
     window.buffer = arg.buffer
-    window.enter = arg.enter or true
+    window.enter = arg.enter or false
 
     window.opt = vim.tbl_extend('force', {
         win = window.id,

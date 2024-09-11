@@ -26,9 +26,7 @@ function DateTime:new(date)
   datetime.hour = 0
   datetime.minute = 0
   datetime.second = 0
-  datetime.timestamp = 0
-
-  self:parse(date)
+  datetime.timestamp = self:parse(date)
 
   return datetime
 end

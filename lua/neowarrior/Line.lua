@@ -1,3 +1,5 @@
+local util = require 'neowarrior.util'
+
 ---@class Line
 ---@field line_no number
 ---@field text string
@@ -20,8 +22,9 @@ function Line:new(line_no)
   line.colors = {}
   line.current_col = 0
   line.last_col = 0
+  line.debug_level = 0
 
-  return line
+  return util.copy(line)
 end
 
 --- Add text to line
@@ -59,8 +62,27 @@ function Line:add(block)
       line = self.line_no,
     })
   end
+  self:log()
 
   return self
+end
+
+function Line:set_debug_level(level)
+  self.debug_level = level
+  return self
+end
+
+--- Print debug info
+function Line:log()
+
+  if self.debug_level >= 1 then
+    print('Line:')
+    print(vim.inspect(self.text))
+    print(vim.inspect(self.colors))
+    if self.debug_level >= 2 then
+      print(vim.inspect(self.meta_text))
+    end
+  end
 end
 
 return Line
