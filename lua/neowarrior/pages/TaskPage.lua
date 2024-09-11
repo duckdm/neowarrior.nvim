@@ -1,8 +1,9 @@
 local Page = require('neowarrior.Page')
-local TaskComponent = require('neowarrior.components.TaskComponent')
 local colors = require('neowarrior.colors')
 local Line = require('neowarrior.Line')
 local DateTime = require('neowarrior.DateTime')
+local TaskLine = require('neowarrior.lines.TaskLine')
+local util = require "neowarrior.util"
 
 ---@class TaskPage
 ---@field neowarrior NeoWarrior
@@ -29,7 +30,7 @@ function TaskPage:new(neowarrior, task)
   task_page.neowarrior = neowarrior
   task_page.task = task
   task_page.used_keys = {}
-  task_page.page = Page:new(neowarrior)
+  task_page.page = Page:new(neowarrior.buffer)
   task_page.prefix_format = "%-13s | "
   task_page.time_fields = {
     "modified",
@@ -37,6 +38,7 @@ function TaskPage:new(neowarrior, task)
     "due",
     "scheduled",
   }
+  task_page.line_no = 0
 
   return task_page
 end
@@ -50,21 +52,38 @@ function TaskPage:print(buffer)
   buffer:unlock()
   buffer:option("wrap", true, { win = self.neowarrior.window.id })
 
-  self:completed()
+  -- self:completed()
   self:project()
-  self:task_line()
-  self:started()
-  self:annotations()
-  self:urgency()
-  self:estimate()
-  self:priority()
-  self:scheduled()
-  self:due()
+  self:task_line({
+    disable_meta = true,
+    disable_description = true,
+  })
+  self:task_line({
+    disable_meta = true,
+    disable_task_icon = true,
+    disable_priority = true,
+    disable_warning = true,
+    disable_due = true,
+    disable_recur = true,
+    disable_estimate = true,
+    disable_annotations = true,
+    disable_start = true,
+  })
 
-  if self.task.depends then
-    table.insert(self.used_keys, "depends")
-  end
+  self.page:nl()
 
+  -- self:started()
+  -- self:annotations()
+  -- self:urgency()
+  -- self:estimate()
+  -- self:priority()
+  -- self:scheduled()
+  -- self:due()
+
+  -- if self.task.depends then
+  --   table.insert(self.used_keys, "depends")
+  -- end
+  --
   for k, v in pairs(self.task:get_attributes()) do
 
     local used = false
@@ -87,16 +106,15 @@ function TaskPage:print(buffer)
       end
       -- FIX:Show tags
       if k == "tags" and v then
-        -- local tags = table.unpack(v)
-        -- local tags = {}
-        -- page:add_raw(string.format("%s%s", prefix, tags), {})
+        local tags = table.unpack(v)
+        self.page:add_raw(string.format("%s%s", prefix, tags), '')
       elseif is_time_field then
         local time_color = nil
         local time_string = v:relative()
         if k == "due" or k == "scheduled" then
           time_color = colors.get_due_color(time_string)
         end
-        local time_ln = Line:new(self.page:get_line_count())
+        local time_ln = Line:new(0)
         time_ln:add({
           text = prefix,
         })
@@ -107,33 +125,38 @@ function TaskPage:print(buffer)
         time_ln:add({
           text = " (" .. v:default_format() .. ")",
         })
-        self.page:add(time_ln)
+        self.page:add_line(time_ln)
       elseif not (k == "uuid") and not (k == "description") and not (k == "parent") and not (k == "imask") and v then
-        self.page:add_raw(string.format("%s%s", prefix, tostring(v)), {})
+        self:row(k, {
+          { text = string.format(self.prefix_format, k) },
+          { text = self.task[k], color = '' }
+        })
       end
     end
   end -- for
 
-
-  self.page:print(buffer)
+  self.page:print()
 
   return self
 end
 
 --- Add a row to the TaskPage
----@param lines table
+---@param cols table
 ---@return TaskPage
-function TaskPage:row(key, lines)
+function TaskPage:row(key, cols)
 
   table.insert(self.used_keys, key)
 
-  local line = Line:new(self.page:get_line_count())
-  for _, l in ipairs(lines) do
+  local line = Line:new(self.line_no)
+  for _, col in ipairs(cols) do
     line:add({
-      text = l.text,
-      color = l.colors,
+      text = col.text,
+      color = col.colors,
     })
   end
+  self.page:add_line(line)
+  self.line_no = self.line_no + 1
+
   return self
 end
 
@@ -141,10 +164,8 @@ end
 function TaskPage:completed()
 
   if self.task.status and self.task.status == "completed" then
-    self:row('status', {{
-      text = self.neowarrior.config.icons.task .. " Completed",
-      color = "NeoWarriorTextSuccess",
-    }})
+    table.insert(self.used_keys, 'status')
+    self.page:add_raw("Task completed", "NeoWarriorTextSuccess")
   end
 
 end
@@ -152,24 +173,20 @@ end
 --- Project row
 function TaskPage:project()
 
+  table.insert(self.used_keys, 'project')
   if self.task.project then
-    self:row('project', {{
-      text = self.neowarrior.config.icons.project .. " " .. self.task.project,
-      color = "NeoWarriorTextInfo",
-    }})
+    self.page:add_raw(self.neowarrior.config.icons.project .. " " .. self.task.project, "NeoWarriorTextInfo")
   end
 
 end
 
 --- Task line
-function TaskPage:task_line()
+function TaskPage:task_line(arg)
 
-  local task_line = TaskComponent:new(
-    self.neowarrior,
-    self.task,
-    self.page:get_line_count()
-  )
-  self.page:add(task_line:get({}))
+  table.insert(self.used_keys, 'description')
+  local task_line = TaskLine:new(self.neowarrior, self.line_no, self.task, arg)
+  self.page:add_line(task_line)
+  self.line_no = self.line_no + 1
 
 end
 
@@ -202,9 +219,8 @@ function TaskPage:annotations()
 
     for _, annotation in ipairs(annotations) do
 
-      print(vim.inspect(annotation))
       local anno_entry = ''
-      local anno_ln = Line:new(self.page:get_line_count())
+      local anno_ln = Line:new(0)
 
       if annotation.entry then
         -- FIX: This does not work for some reason
@@ -220,7 +236,7 @@ function TaskPage:annotations()
         text = annotation.description,
       })
 
-      self.page:add(anno_ln)
+      self.page:add_line(anno_ln)
     end
 
     self.page:nl()

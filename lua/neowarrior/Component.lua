@@ -1,40 +1,58 @@
+local Line = require('neowarrior.Line')
+
 --- Component class. A collection of lines.
 ---@class Component
 ---
 ---@field line_count number
 ---@field lines Line[]
----@field colors table
+---@field text string[]
+---@field colors table[]
 ---@field type string
----@field new fun(self: Component, line_count: number): Component
+---@field new fun(self: Component): Component
 ---@field reset fun(self: Component): Component
----@field add fun(self: Component, line: Line): Component
+---@field add fun(self: Component, lines: Line[]): Component
 ---@field add_raw fun(self: Component, string: string): Line
 ---@field pop fun(self: Component): Line
 ---@field get fun(self: Component): Line[]
+---@field get_line_count fun(self: Component): number
+---@field from fun(self: Component, line_no: number): Component
+---@field nl fun(self: Component): Component
+---@field get_text fun(self: Component): string[]
+---@field get_colors fun(self: Component): table[]
 ---@field print fun(self: Component, buffer: Buffer): Component
----@field debug fun(self: Component): Component
+---@field debug fun(self: Component, arg: { level: number, prefix: string|nil }): Component
 local Component = {}
 
 --- Create new component
----@param line_count number
 ---@return Component
-function Component:new(line_count)
+function Component:new()
     local component = {}
     setmetatable(component, self)
     self.__index = self
 
-    self.line_count = line_count
+    self.start_at = 0
+    self.line_count = 0
     self.lines = {}
+    self.text = {}
     self.colors = {}
-    self.type = 'Component'
 
     return component
+end
+
+--- Set start line number
+---@param line_no number
+---@return Component
+function Component:from(line_no)
+  self.start_at = line_no
+  return self
 end
 
 --- Reset component
 ---@return Component
 function Component:reset()
+
   self.lines = {}
+  self.text = {}
   self.colors = {}
   self.line_count = 0
 
@@ -42,31 +60,40 @@ function Component:reset()
 end
 
 --- Add line to page
----@param lines Line|Line[]
+---@param lines Line[]
 ---@return Component
 function Component:add(lines)
 
   for _, line in ipairs(lines) do
+
+    table.insert(self.lines, line)
+
     local text = line.text or ''
     local meta = line.meta_text or ''
     local colors = line.colors or {}
-    table.insert(self.lines, text .. meta)
-    self.line_count = self.line_count + 1
+    table.insert(self.text, text .. meta)
 
     for _, color in ipairs(colors) do
       table.insert(self.colors, color)
     end
+
+    self.line_count = self.line_count + 1
   end
 
   return self
 end
 
 --- Add raw string to page
----@param string string
+---@param string string|number
 ---@return Component
 function Component:add_raw(string)
-  table.insert(self.lines, string)
+
+  local line = Line:new(self.line_count)
+  line:add({ text = string })
+
+  table.insert(self.lines, line)
   self.line_count = self.line_count + 1
+
   return self
 end
 
@@ -84,17 +111,12 @@ end
 ---@return Component
 function Component:print(buffer)
 
-  buffer:unlock()
-  vim.api.nvim_buf_set_lines(buffer.id, self.line_count, -1, false, {})
-  vim.api.nvim_buf_set_lines(buffer.id, self.line_count, -1, false, self.lines)
-  for _, color in ipairs(self.colors) do
-    if color and color.line and color.group and color.from and color.to then
-      vim.api.nvim_buf_add_highlight(buffer.id, -1, color.group, color.line, color.from, color.to)
-    end
-  end
-  buffer:lock()
-
-  self:reset()
+  buffer:print(
+    self.text,
+    self.colors,
+    self.start_at,
+    self.start_at + self.line_count
+  )
 
   return self
 end
@@ -115,23 +137,48 @@ end
 
 --- Get lines
 ---@return Line[]
-function Component:get()
-  return self.lines
+function Component:get() return self.lines end
+
+--- Get text
+---@return string[]
+function Component:get_text()
+  return self.text
+end
+
+--- Get colors
+---@return table[]
+function Component:get_colors()
+  return self.colors
 end
 
 --- Debug component and print to console
 ---@return Component
-function Component:debug()
-  print('Component:')
-  print('  line_count: ' .. self.line_count)
-  print('  lines:')
-  for _, line in ipairs(self.lines) do
-    print('    ' .. line)
+---@param arg { level: number, prefix: string|nil }
+function Component:debug(arg)
+
+  local level = arg.level or 1
+  local type = self.type or 'unknown component type'
+  local prefix = arg.prefix or nil
+
+  if prefix then
+    print(prefix)
   end
-  print('  colors:')
-  for _, color in ipairs(self.colors) do
-    print('    ' .. vim.inspect(color))
+  print('Component [' .. type .. ']:')
+  print('line_count: ' .. self.line_count)
+
+  if level >= 2 then
+    print('text:')
+    for _, line in ipairs(self.text) do
+      print('    ' .. line)
+    end
+    if level >= 3 then
+      print('colors:')
+      for _, color in ipairs(self.colors) do
+        print('    ' .. vim.inspect(color))
+      end
+    end
   end
+  print('-------------------')
 
   return self
 end

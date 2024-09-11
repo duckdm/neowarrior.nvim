@@ -202,8 +202,12 @@ function NeoWarrior:set_keymaps()
     silent = false
   }
 
-  vim.keymap.set("n", self.config.keys.add.key, function() self:add() end, default_keymap_opts)
+  -- Add new task or annotation (annotation when on task page)
+  vim.keymap.set("n", self.config.keys.add.key, function()
+    self:add()
+  end, default_keymap_opts)
 
+  -- Show help float
   vim.keymap.set("n", self.config.keys.help.key, function()
     self:open_help()
   end, default_keymap_opts)
@@ -475,12 +479,15 @@ function NeoWarrior:open_help()
     return string.lower(a.key) < string.lower(b.key)
   end)
 
-  local win_width = vim.api.nvim_win_get_width(0)
-  local page = Page:new(self)
+  local win_width = self.window:get_width()
+  local page = Page:new(Buffer:new({
+    listed = false,
+    scratch = true,
+  }))
 
   for _, key in ipairs(keys_array) do
-    local key_string = string.format("%6s | %s", key.key, key.desc)
-    page:add(key_string, {})
+    local key_string = string.format("%6s -> %s", key.key, key.desc)
+    page:add_raw(key_string, '')
   end
 
   self.help_float = Float:new(self, page, {
@@ -506,6 +513,7 @@ function NeoWarrior:close_help()
 end
 
 function NeoWarrior:refresh()
+
   self.tasks = self.tw:tasks(self.current_report, self.current_filter)
   self.all_tasks = self.tw:tasks('all', 'description.not:')
   self.all_pending_tasks = TaskCollection:new()
@@ -576,12 +584,10 @@ function NeoWarrior:list()
   self.current_task = nil
   self.buffer:option('wrap', false, { win = self.window.id })
 
-  -- local header_component = HeaderComponent:new(self, 0)
-  -- header_component:print(self.buffer)
-
-  -- local list_component = ListComponent:new(self, header_component:get_line_count(), self.tasks)
-  local list_component = ListComponent:new(self, 15, self.tasks)
-  list_component:print(self.buffer)
+  Page:new(self.buffer)
+    :add(HeaderComponent:new(self))
+    :add(ListComponent:new(self, self.tasks))
+    :print()
 
   self.buffer:restore_cursor()
 

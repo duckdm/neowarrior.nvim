@@ -1,83 +1,83 @@
+local Component = require('neowarrior.Component')
+local Line = require('neowarrior.Line')
+local util = require('neowarrior.util')
+
 ---@class Page
----@field neowarrior NeoWarrior
----@field lines table
----@field colors table
+---@field components table
 ---@field line_count number
+---@field component_count number
+---@field buffer Buffer
+---@field add fun(self: Page, component: Component):Page
+---@field add_line fun(self: Page, line: Line): Page
+---@field add_raw fun(self: Page, string: string, color: string):Page
+---@field print fun(self: Page):Page
+---@field get_line_count fun(self: Page):number
+---@field nl fun(self: Page):Page
 local Page = {}
 
-function Page:new(neowarrior)
+--- Create a new Page
+---@param buffer Buffer
+---@return Page
+function Page:new(buffer)
   local page = {}
   setmetatable(page, self)
   self.__index = self
 
-  page.neowarrior = neowarrior
-  page.lines = {}
-  page.colors = {}
+  page.components = {}
   page.line_count = 0
+  page.component_count = 0
+  page.buffer = buffer
 
   return page
 end
 
-function Page:reset()
-  self.lines = {}
-  self.colors = {}
-  self.line_count = 0
+--- Add component to page
+---@param component Component
+---@return Page
+function Page:add(component)
+
+  table.insert(self.components, util.copy(component))
+  self.line_count = self.line_count + component:get_line_count()
+  self.component_count = self.component_count + 1
+
+  return self
 end
 
 --- Add line to page
----@param lines Line|Line[]
----@return Page
-function Page:add(lines)
-
-  if type(lines) ~= 'table' then
-    lines = { lines }
-  end
-
-  for _, line in ipairs(lines) do
-    table.insert(self.lines, line.text .. line.meta_text)
-    self.line_count = self.line_count + 1
-
-    for _, color in ipairs(line.colors) do
-      table.insert(self.colors, color)
-    end
-  end
+---@param line Line
+function Page:add_line(line)
+  local line_component = Component:new()
+  line_component:add({ line })
+  self:add(line_component)
 
   return self
 end
 
 --- Add raw string to page
 ---@param string string
+---@param color string
 ---@return Page
-function Page:add_raw(string)
-  table.insert(self.lines, string)
-  self.line_count = self.line_count + 1
-  return self
-end
+function Page:add_raw(string, color)
 
---- Add empty line to page
----@return Page
-function Page:nl()
-  table.insert(self.lines, '')
-  self.line_count = self.line_count + 1
+  local line = Line:new(self.line_count):add({ text = string, color = color })
+  local raw = Component:new()
+  raw.type = 'RawComponent: ' .. string
+  raw:add({ line })
+  self:add(raw)
+
   return self
 end
 
 --- Print page
----@param buffer Buffer
 ---@return Page
-function Page:print(buffer)
+function Page:print()
 
-  buffer:unlock()
-  vim.api.nvim_buf_set_lines(buffer.id, 0, -1, false, {})
-  vim.api.nvim_buf_set_lines(buffer.id, 0, -1, false, self.lines)
-  for _, color in ipairs(self.colors) do
-    if color and color.line and color.group and color.from and color.to then
-      vim.api.nvim_buf_add_highlight(buffer.id, -1, color.group, color.line, color.from, color.to)
-    end
+  local start_at = 0
+
+  for _, component in ipairs(self.components) do
+    component:from(start_at):print(self.buffer)
+    start_at = start_at + component:get_line_count()
   end
-  buffer:lock()
-
-  self:reset()
 
   return self
 end
@@ -87,5 +87,9 @@ end
 function Page:get_line_count()
   return self.line_count
 end
+
+--- Add empty line to page
+---@return Page
+function Page:nl() self:add_raw('', '') return self end
 
 return Page

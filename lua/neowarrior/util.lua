@@ -1,5 +1,27 @@
 local Util = {}
 
+local function deep_copy(orig, max_depth, depth)
+
+  local orig_type = type(orig)
+  local copy = nil
+
+  if orig_type and orig_type == 'table' and depth < 3 then
+    copy = {}
+    for orig_key, orig_value in next, orig, nil do
+      copy[deep_copy(orig_key, max_depth, depth + 1)] = deep_copy(orig_value, max_depth, depth + 1)
+    end
+    setmetatable(copy, deep_copy(getmetatable(orig), max_depth, depth + 1))
+  else
+    copy = orig
+  end
+
+  return copy
+end
+
+Util.copy = function(orig)
+  return deep_copy(orig, 5, 0)
+end
+
 Util.table_size = function(table)
   local c = 0
   for _ in pairs(table) do

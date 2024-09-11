@@ -31,4 +31,15 @@ function Window:new(arg, opt)
     return window
 end
 
+--- Get window width
+---@return number
+function Window:get_width()
+    return vim.api.nvim_win_get_width(self.id)
+end
+
+--- Close window
+function Window:close()
+  vim.api.nvim_win_close(self.id, true)
+end
+
 return Window

@@ -2,6 +2,21 @@ local Util = require('neowarrior.util')
 
 ---@class Buffer
 ---@field public id number
+---@field public listed boolean
+---@field public scratch boolean
+---@field public cursor integer[]|nil
+---@field public set_name fun(self: Buffer, name: string): Buffer
+---@field public print fun(self: Buffer, lines: table, colors: table, from: number, to: number): Buffer
+---@field public option fun(self: Buffer, key: string, value: any, opt: table): Buffer
+---@field public lock fun(self: Buffer): Buffer
+---@field public unlock fun(self: Buffer): Buffer
+---@field public get_meta_data fun(self: Buffer, key: string): string|nil
+---@field public get_cursor fun(self: Buffer): integer[]
+---@field public save_cursor fun(self: Buffer): integer[]
+---@field public restore_cursor fun(self: Buffer): Buffer|nil
+---@field public virt_text fun(self: Buffer, text: string, hl_group: string, ns_name: string, o: table): number
+---@field public create_line fun(ln: number, blocks: table): table
+---@field public apply_colors fun(colors: table, cta: table): nil
 local Buffer = {}
 
 --- Constructor
@@ -25,6 +40,36 @@ end
 ---return Buffer
 function Buffer:set_name(name)
   vim.api.nvim_buf_set_name(self.id, name)
+  return self
+end
+
+--- Print buffer
+---@param lines table
+---@param colors table
+---@param from number
+---@param to number
+---@return Buffer
+function Buffer:print(lines, colors, from, to)
+
+  self:unlock()
+
+  vim.api.nvim_buf_set_lines(self.id, from, -1, false, {})
+  vim.api.nvim_buf_set_lines(self.id, from, -1, false, lines)
+  for _, color in ipairs(colors) do
+    if color and color.line and color.group and color.from and color.to then
+      vim.api.nvim_buf_add_highlight(
+        self.id,
+        -1,
+        color.group,
+        color.line + from,
+        color.from,
+        color.to
+      )
+    end
+  end
+
+  self:lock()
+
   return self
 end
 

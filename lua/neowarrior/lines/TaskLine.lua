@@ -10,7 +10,7 @@ local TaskLine = {}
 
 --- Create a new TaskLine
 ---@param task Task
----@return Component
+---@return Line
 function TaskLine:new(neowarrior, line_no, task, arg)
     local task_component = {}
     setmetatable(task_component, self)
@@ -109,17 +109,20 @@ function TaskLine:get_task_line(arg)
     })
   end
 
-  line:add({
-    text = self.neowarrior.config.icons.warning .. " ",
-    color = colors.get_urgency_color(urgency_val),
-    disable = (urgency_val < 5 or disable_warning),
-  })
+  if urgency_val > 5 and (not disable_warning) then
+    line:add({
+      text = self.neowarrior.config.icons.warning .. " ",
+      color = colors.get_urgency_color(urgency_val),
+      disable = (urgency_val < 5 or disable_warning),
+    })
+  end
 
-  line:add({
-    text = priority .. " ",
-    color = colors.get_priority_color(priority),
-    disable = (priority == "-" or disable_priority),
-  })
+  if not disable_priority then
+    line:add({
+      text = priority .. " ",
+      color = colors.get_priority_color(priority),
+    })
+  end
 
   if not disable_recur and self.task.recur then
     line:add({
@@ -150,15 +153,17 @@ function TaskLine:get_task_line(arg)
     })
   end
 
-  line:add({
-    text = description,
-    disable = disable_description,
-  })
+  if not disable_description then
+    line:add({
+      text = description,
+    })
+  end
 
-  line:add({
-    disable = disable_meta,
-    meta = meta_table,
-  })
+  if meta_table and not (disable_meta) then
+    line:add({
+      meta = meta_table,
+    })
+  end
 
   return line
 end

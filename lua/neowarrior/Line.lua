@@ -25,6 +25,8 @@ function Line:new(line_no)
 end
 
 --- Add text to line
+---@param block table
+---@return Line
 function Line:add(block)
 
   if block.text then
@@ -57,6 +59,8 @@ function Line:add(block)
       line = self.line_no,
     })
   end
+
+  return self
 end
 
 return Line

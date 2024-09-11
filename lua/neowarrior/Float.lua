@@ -1,10 +1,8 @@
-local Buffer = require('neowarrior.Buffer')
 local Window = require('neowarrior.Window')
 
 ---@class Float
 ---@field neowarrior NeoWarrior
 ---@field page Page
----@field buffer Buffer
 ---@field window Window
 ---@field opt table
 ---@field open fun(float: Float):Float
@@ -18,10 +16,6 @@ function Float:new(neowarrior, page, opt)
 
     float.neowarrior = neowarrior
     float.page = page
-    float.buffer = Buffer:new({
-      listed = false,
-      scratch = true
-    })
     float.window = nil
     float.opt = opt
 
@@ -34,7 +28,7 @@ function Float:open()
 
   self.window = Window:new({
     id = -1,
-    buffer = self.buffer,
+    buffer = self.page.buffer,
     enter = self.opt.enter or false,
   }, {
     relative = self.opt.relative or 'editor',
@@ -47,7 +41,7 @@ function Float:open()
     anchor = self.opt.anchor or 'NW',
     style = self.opt.style or 'minimal'
   })
-  self.page:print(self.buffer)
+  self.page:print()
 
   return self
 end
@@ -55,7 +49,7 @@ end
 --- Close float
 ---@return Float
 function Float:close()
-  vim.api.nvim_win_close(self.window.id, true)
+  self.window:close()
   return self
 end
 

@@ -1,4 +1,4 @@
-local TaskComponent = require('neowarrior.components.TaskComponent')
+local TaskLine = require('neowarrior.lines.TaskLine')
 local Component = require('neowarrior.Component')
 
 ---@class ListComponent
@@ -7,27 +7,26 @@ local ListComponent = {}
 
 --- Create a new ListComponent
 ---@param neowarrior NeoWarrior
----@param line_no number
 ---@param task_collection TaskCollection
 ---@return Component
-function ListComponent:new(neowarrior, line_no, task_collection)
+function ListComponent:new(neowarrior, task_collection)
     local header_component = {}
     setmetatable(header_component, self)
     self.__index = self
 
     self.neowarrior = neowarrior
-    self.line_no = line_no
     self.task_collection = task_collection
 
-    local component = Component:new(line_no)
-    component:add(self:get())
+    local component = Component:new()
+    component.type = 'ListComponent'
+    component:add(self:get_lines())
 
     return component
 end
 
 --- Get header line data
 ---@return Line[]
-function ListComponent:get()
+function ListComponent:get_lines()
 
   self.neowarrior:refresh()
 
@@ -43,12 +42,12 @@ end
 function ListComponent:get_task_lines(task_collection)
 
   local lines = {}
+  local line_no = 0
 
   for _, task in ipairs(task_collection:get()) do
 
-    local task_component = TaskComponent:new(self.neowarrior, self.line_no, task, {})
-    task_component:debug()
-    table.insert(lines, task_component:get())
+    table.insert(lines, TaskLine:new(self.neowarrior, line_no, task, {}))
+    line_no = line_no + 1
 
   end
 
