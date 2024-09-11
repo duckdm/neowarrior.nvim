@@ -1,30 +1,35 @@
 local colors = require "neowarrior.colors"
 local Line = require "neowarrior.Line"
+local Component = require "neowarrior.Component"
 
 ---@class TaskComponent
 ---@field neowarrior NeoWarrior
----@field task Task
 ---@field line_no number
+---@field task Task
+---@field arg table
 local TaskComponent = {}
 
 --- Create a new TaskComponent
 ---@param task Task
----@return TaskComponent
-function TaskComponent:new(neowarrior, task, line_no)
+---@return Component
+function TaskComponent:new(neowarrior, line_no, task, arg)
     local task_component = {}
     setmetatable(task_component, self)
     self.__index = self
 
     self.neowarrior = neowarrior
-    self.task = task
     self.line_no = line_no
+    self.task = task
 
-    return task_component
+    local component = Component:new(line_no)
+    component:add(self:get(arg))
+
+    return component
 end
 
 --- Get task line data
 ---@param arg table
----@return Line
+---@return Line[]
 function TaskComponent:get(arg)
 
   local line = Line:new(self.line_no)
@@ -159,7 +164,7 @@ function TaskComponent:get(arg)
     meta = meta_table,
   })
 
-  return line
+  return { line }
 end
 
 return TaskComponent

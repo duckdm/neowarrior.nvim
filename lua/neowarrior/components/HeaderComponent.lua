@@ -8,7 +8,7 @@ local HeaderComponent = {}
 --- Create a new HeaderComponent
 ---@param neowarrior NeoWarrior
 ---@param line_no number
----@return HeaderComponent
+---@return Component
 function HeaderComponent:new(neowarrior, line_no)
     local header_component = {}
     setmetatable(header_component, self)
@@ -17,8 +17,8 @@ function HeaderComponent:new(neowarrior, line_no)
     self.line_no = line_no
     self.neowarrior = neowarrior
 
-    -- local component = Component:new(self.line_no)
-    -- component:add(self:get())
+    local component = Component:new(self.line_no)
+    component:add(self:get())
 
     return component
 end

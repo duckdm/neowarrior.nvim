@@ -4,6 +4,7 @@
 ---@field line_count number
 ---@field lines Line[]
 ---@field colors table
+---@field type string
 ---@field new fun(self: Component, line_count: number): Component
 ---@field reset fun(self: Component): Component
 ---@field add fun(self: Component, line: Line): Component
@@ -11,6 +12,7 @@
 ---@field pop fun(self: Component): Line
 ---@field get fun(self: Component): Line[]
 ---@field print fun(self: Component, buffer: Buffer): Component
+---@field debug fun(self: Component): Component
 local Component = {}
 
 --- Create new component
@@ -24,6 +26,7 @@ function Component:new(line_count)
     self.line_count = line_count
     self.lines = {}
     self.colors = {}
+    self.type = 'Component'
 
     return component
 end
@@ -43,15 +46,14 @@ end
 ---@return Component
 function Component:add(lines)
 
-  if type(lines) ~= 'table' then
-    lines = { lines }
-  end
-
   for _, line in ipairs(lines) do
-    table.insert(self.lines, line.text .. line.meta_text)
+    local text = line.text or ''
+    local meta = line.meta_text or ''
+    local colors = line.colors or {}
+    table.insert(self.lines, text .. meta)
     self.line_count = self.line_count + 1
 
-    for _, color in ipairs(line.colors) do
+    for _, color in ipairs(colors) do
       table.insert(self.colors, color)
     end
   end
@@ -83,8 +85,8 @@ end
 function Component:print(buffer)
 
   buffer:unlock()
-  vim.api.nvim_buf_set_lines(buffer.id, 0, -1, false, {})
-  vim.api.nvim_buf_set_lines(buffer.id, 0, -1, false, self.lines)
+  vim.api.nvim_buf_set_lines(buffer.id, self.line_count, -1, false, {})
+  vim.api.nvim_buf_set_lines(buffer.id, self.line_count, -1, false, self.lines)
   for _, color in ipairs(self.colors) do
     if color and color.line and color.group and color.from and color.to then
       vim.api.nvim_buf_add_highlight(buffer.id, -1, color.group, color.line, color.from, color.to)
@@ -102,3 +104,36 @@ end
 function Component:get_line_count()
   return self.line_count
 end
+
+--- Pop line
+---@return Line
+function Component:pop()
+  local line = table.remove(self.lines)
+  self.line_count = self.line_count - 1
+  return line
+end
+
+--- Get lines
+---@return Line[]
+function Component:get()
+  return self.lines
+end
+
+--- Debug component and print to console
+---@return Component
+function Component:debug()
+  print('Component:')
+  print('  line_count: ' .. self.line_count)
+  print('  lines:')
+  for _, line in ipairs(self.lines) do
+    print('    ' .. line)
+  end
+  print('  colors:')
+  for _, color in ipairs(self.colors) do
+    print('    ' .. vim.inspect(color))
+  end
+
+  return self
+end
+
+return Component

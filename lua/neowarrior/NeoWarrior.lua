@@ -576,11 +576,12 @@ function NeoWarrior:list()
   self.current_task = nil
   self.buffer:option('wrap', false, { win = self.window.id })
 
-  local header_component = HeaderComponent:new(self, 0)
-  header_component:print(self.buffer)
+  -- local header_component = HeaderComponent:new(self, 0)
+  -- header_component:print(self.buffer)
 
-  -- local list = List:new(self, self.tasks)
-  -- list:print(self.buffer)
+  -- local list_component = ListComponent:new(self, header_component:get_line_count(), self.tasks)
+  local list_component = ListComponent:new(self, 15, self.tasks)
+  list_component:print(self.buffer)
 
   self.buffer:restore_cursor()
 
