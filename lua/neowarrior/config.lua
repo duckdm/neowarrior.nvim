@@ -1,36 +1,53 @@
+---FIX: test all these
 ---@alias NeoWarrior.Config table
 ---@type NeoWarrior.Config
 return {
-  -- Whether to show the current filter at the top
-  show_current_filter = true,
-  -- Default filter
+  ---@type table Task line config
+  task_line = {
+    ---@type boolean Show warning icon colored based on urgency
+    enable_warning_icon = true,
+    ---@type boolean Show task-has-recurrance indicator
+    enable_recur_icon = true,
+    ---@type boolean Show priority (H, M, L)
+    enable_priority = true,
+    ---@type boolean Show due date
+    enable_due_date = true,
+    ---@type boolean Show estimate. NOTE: This is not a default field in taskwarrior
+    enable_estimate = true,
+  },
+  ---@type boolean Whether to show the current filter at the top
+  enable_current_filter = true,
+  ---@type string Default taskwarrior filter
   filter = "",
-  -- Default report
+  ---@type string Default taskwarrior report
   report = "next",
-  --@type normal|grouped|tree
+  ---@type "normal"|"grouped"|"tree"
   mode = "normal",
-  --@type boolean Whether to expand all trees at start
+  ---@type boolean Whether to expand all trees at start
   expanded = false,
-  -- Default project name for tasks without project
+  ---@type string Default project name for tasks without project
   no_project_name = "No project defined",
-  -- Task float
+  ---@type table Task float
   float = {
-    -- Enable floating window for tasks
+    ---@type boolean Enable floating window for tasks
     enabled = true,
-    -- Max width of float in columns
+    ---@type number Max width of float in columns
     max_width = 60,
-    -- Time (ms) before detail float is shown
+    ---@type number Time in milliseconds before detail float is shown
     updatetime = 750
   },
-  -- Set config values for specific directories.
+  ---@type table|nil Set config values for specific directories. Most
+  --- config values from this file should work per dir basis too.
   dir_setup = nil,
-  -- Default reports available
+  ---@type table Default reports available (valid taskwarrior reports). Used
+  ---in selects.
   reports = {
     "active", "all", "blocked", "blocking", "completed", "list", "long",
     "ls", "minimal", "newest", "next", "oldest", "overdue", "projects",
     "ready", "recurring", "summary", "tags", "unblocked", "waiting",
   },
-  -- Default filters available
+  ---@type table Default filters available (valid taskwarrior filters). Used
+  ---in selects.
   filters = {
     "due:", "due.not:", "\\(due.before:2d and due.not: \\)",
     "scheduled:", "scheduled.not:", "priority:H",
@@ -38,7 +55,7 @@ return {
     "priority.not:L", "priority:", "priority.not:", "project:",
     "project.not:",
   },
-  -- Default key mappings
+  ---@type table Default key mappings
   keys = {
     help = { key = '?', desc = 'Help' },
     add = { key = 'a', desc = 'Add task' },
@@ -63,7 +80,7 @@ return {
     modify_select_priority = { key = 'MP', desc = 'Modify priority' },
     modify_due = { key = 'Md', desc = 'Modify due date' },
   },
-  -- Default icons
+  ---@type table Default icons
   icons = {
     task = "\u{f1db}",
     task_completed = "\u{f14a}",
