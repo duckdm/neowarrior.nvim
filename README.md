@@ -86,32 +86,49 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
 # Default config values
 ```lua
 {
-  -- Show current filter at the top
-  show_current_filter = true,
+  -- Task line config
+  task_line = {
+    -- Show warning icon colored based on urgency
+    enable_warning_icon = true,
+    -- Show task-has-recurrance indicator
+    enable_recur_icon = true,
+    -- Show priority (H, M, L)
+    enable_priority = true,
+    -- Show due date
+    enable_due_date = true,
+    -- Show estimate. NOTE: This is not a default field in taskwarrior
+    enable_estimate = true,
+  },
+  -- Whether to show the current filter at the top
+  enable_current_filter = true,
   -- Default filter
   filter = "",
   -- Default report
   report = "next",
-  ---@type normal|grouped|tree
+  --@type normal|grouped|tree
   mode = "normal",
-  ---@type boolean Whether to expand all trees at start
+  --@type boolean Whether to expand all trees at start
   expanded = false,
   -- Default project name for tasks without project
   no_project_name = "No project defined",
-  -- If task detail float should be enabled (activated on active line)
+  -- Task float
   float = {
+    -- Enable floating window for tasks
     enabled = true,
+    -- Max width of float in columns
     max_width = 60,
+    -- Time (ms) before detail float is shown
+    updatetime = 750
   },
-  -- Directory specific configs (same format)
+  -- Set config values for specific directories.
   dir_setup = nil,
-  -- Reports available in select
+  -- Default reports available
   reports = {
     "active", "all", "blocked", "blocking", "completed", "list", "long",
     "ls", "minimal", "newest", "next", "oldest", "overdue", "projects",
     "ready", "recurring", "summary", "tags", "unblocked", "waiting",
   },
-  -- Filters available in select
+  -- Default filters available
   filters = {
     "due:", "due.not:", "\\(due.before:2d and due.not: \\)",
     "scheduled:", "scheduled.not:", "priority:H",
@@ -119,7 +136,7 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
     "priority.not:L", "priority:", "priority.not:", "project:",
     "project.not:",
   },
-  -- Default keys
+  -- Default key mappings
   keys = {
     help = { key = '?', desc = 'Help' },
     add = { key = 'a', desc = 'Add task' },
@@ -130,7 +147,6 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
     select_filter = { key = 'f', desc = 'Select filter' },
     toggle_group_view = { key = 'tg', desc = 'Toggle grouped view' },
     toggle_tree_view = { key = 'tt', desc = 'Toggle tree view' },
-    toggle_tree_view_reset = { key = 'T', desc = 'Reset tree view' },
     select_report = { key = 'r', desc = 'Select report' },
     refresh = { key = 'R', desc = 'Refresh tasks' },
     reset = { key = 'X', desc = 'Reset filters' },
@@ -144,6 +160,20 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
     modify_select_project = { key = 'Mp', desc = 'Modify project' },
     modify_select_priority = { key = 'MP', desc = 'Modify priority' },
     modify_due = { key = 'Md', desc = 'Modify due date' },
-  }
+  },
+  -- Default icons
+  icons = {
+    task = "\u{f1db}",
+    task_completed = "\u{f14a}",
+    recur = "\u{f021}",
+    project = "\u{f07b}",
+    warning = "\u{f071}",
+    annotated = "\u{f1781}",
+    start = "\u{f040a}",
+    due = "\u{f1442}",
+    est = "\u{f0520}",
+    deleted = "\u{f014}",
+    depends = "\u{f111}",
+  },
 }
 ```
