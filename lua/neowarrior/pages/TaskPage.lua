@@ -3,7 +3,8 @@ local colors = require('neowarrior.colors')
 local Line = require('neowarrior.Line')
 local DateTime = require('neowarrior.DateTime')
 local TaskLine = require('neowarrior.lines.TaskLine')
-local util = require "neowarrior.util"
+local Project = require('neowarrior.Project')
+local ProjectLine = require('neowarrior.lines.ProjectLine')
 
 ---@class TaskPage
 ---@field neowarrior NeoWarrior
@@ -179,7 +180,9 @@ function TaskPage:project()
 
   table.insert(self.used_keys, 'project')
   if self.task.project then
-    self.page:add_raw(self.neowarrior.config.icons.project .. " " .. self.task.project, "NeoWarriorTextInfo")
+    local project = Project:new({ name = self.task.project })
+    local project_line = ProjectLine:new(self.neowarrior, self.line_no, project, {})
+    self.page:add_line(project_line)
   end
 
 end

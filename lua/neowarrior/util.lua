@@ -30,6 +30,34 @@ Util.table_size = function(table)
   return c
 end
 
+Util.extract = function(key, tbl)
+
+  local values = {}
+  for _, value in ipairs(tbl) do
+    if value[key] then
+      local in_table = false
+      for _, v in ipairs(values) do
+        if v == value[key] then
+          in_table = true
+        end
+      end
+      if not in_table then
+        table.insert(values, value[key])
+      end
+    end
+  end
+
+  return values
+end
+
+Util.table_map = function(table, fn)
+  local new_table = {}
+  for key, value in pairs(table) do
+    new_table[key] = fn(value)
+  end
+  return new_table
+end
+
 --- Check if item exists in table
 ---@param table table
 ---@param cmp table { key = any, value = any }
@@ -49,39 +77,6 @@ Util.in_table = function(table, cmp)
     end
   end
   return false
-end
-
-Util.printr = function(data)
-  -- cache of tables already printed, to avoid infinite recursive loops
-  local tablecache = {}
-  local buffer = ''
-  local padder = '    '
-
-  local function _dumpvar(d, depth)
-    local t = type(d)
-    local str = tostring(d)
-    if t == 'table' then
-      if tablecache[str] then
-        -- table already dumped before, so we dont
-        -- dump it again, just mention it
-        buffer = buffer .. '<' .. str .. '>\n'
-      else
-        tablecache[str] = (tablecache[str] or 0) + 1
-        buffer = buffer .. '(' .. str .. ') {\n'
-        for k, v in pairs(d) do
-          buffer = buffer .. string.rep(padder, depth + 1) .. '[' .. k .. '] => '
-          _dumpvar(v, depth + 1)
-        end
-        buffer = buffer .. string.rep(padder, depth) .. '}\n'
-      end
-    elseif t == 'number' then
-      buffer = buffer .. '(' .. t .. ') ' .. str .. '\n'
-    else
-      buffer = buffer .. '(' .. t .. ') "' .. str .. '"\n'
-    end
-  end
-  _dumpvar(data, 0)
-  return buffer
 end
 
 --- Split string

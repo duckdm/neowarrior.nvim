@@ -92,28 +92,6 @@ function Task:get_date_time_object(value)
   return nil
 end
 
---- Check if task has pending dependencies
----@return boolean|TaskCollection
-function Task:has_pending_dependencies()
-
-  local not_completed = TaskCollection:new()
-  -- TODO: Test this
-  if self.depends and Util.table_size(self.depends) > 0 then
-    for _, uuid in ipairs(self.depends) do
-      if self.neowarrior.all_tasks then
-        local task = self.neowarrior.all_tasks:find_task_by_uuid(uuid)
-        if task and task.status ~= "completed" then
-          not_completed:add(task)
-        end
-      end
-    end
-  end
-  if not_completed:count() > 0 then
-    return not_completed
-  end
-  return false
-end
-
 function Task:get_attributes()
   return {
     id = self.id,

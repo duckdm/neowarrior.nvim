@@ -1,5 +1,6 @@
 local colors = require "neowarrior.colors"
 local Line = require "neowarrior.Line"
+local TaskUtil = require "neowarrior.TaskUtil"
 
 ---@class TaskLine
 ---@field neowarrior NeoWarrior
@@ -9,7 +10,10 @@ local Line = require "neowarrior.Line"
 local TaskLine = {}
 
 --- Create a new TaskLine
+---@param neowarrior NeoWarrior
+---@param line_no number
 ---@param task Task
+---@param arg table
 ---@return Line
 function TaskLine:new(neowarrior, line_no, task, arg)
     local task_component = {}
@@ -28,16 +32,32 @@ end
 ---@return Line[]
 function TaskLine:get_task_line(arg)
 
+  local conf = self.neowarrior.config.task_line
   local line = Line:new(self.line_no)
   local indent = arg.indent or ""
   local disable_meta = arg.disable_meta or false
   local disable_priority = arg.disable_priority or false
+  if conf.enable_priority == false then
+    disable_priority = true
+  end
   local disable_warning = arg.disable_warning or false
+  if conf.enable_warning_icon == false then
+    disable_warning = true
+  end
   local disable_due = arg.disable_due or false
+  if conf.enable_due_date == false then
+    disable_due = true
+  end
   local disable_description = arg.disable_description or false
   local disable_recur = arg.disable_recur or false
+  if conf.enable_recur_icon == false then
+    disable_recur = true
+  end
   local disable_task_icon = arg.disable_task_icon or false
   local disable_estimate = arg.disable_estimate or false
+  if conf.enable_estimate == false then
+    disable_estimate = true
+  end
   local disable_annotations = arg.disable_annotations or false
   local disable_start = arg.disable_start or false
   local project = self.task.project or 'No project'
@@ -69,9 +89,11 @@ function TaskLine:get_task_line(arg)
     task_icon = self.neowarrior.config.icons.deleted
     task_icon_color = "NeoWarriorTextWarning"
   end
-  if self.task:has_pending_dependencies() then
+  local has_blocking = false
+  if self.task.depends and TaskUtil.has_dependencies(self.task, self.neowarrior.all_pending_tasks) then
     task_icon = self.neowarrior.config.icons.depends
     task_icon_color = "NeoWarriorTextDanger"
+    has_blocking = true
   end
 
   local meta_table = {
@@ -131,15 +153,14 @@ function TaskLine:get_task_line(arg)
     })
   end
 
-  if due then
+  if due and (due ~= '') and (not disable_due) then
     line:add({
       text = self.neowarrior.config.icons.due .. "" .. due .. " ",
-      disable = (due == "" or disable_due),
       color = colors.get_due_color(due),
     })
   end
 
-  if not disable_estimate and self.task.estimate then
+  if not disable_estimate and self.task.estimate and self.task.estimate > 0 then
     line:add({
       text = self.neowarrior.config.icons.est .. "" .. estimate_string .. " ",
       color = colors.get_estimate_color(self.task.estimate),
@@ -156,7 +177,14 @@ function TaskLine:get_task_line(arg)
   if not disable_description then
     line:add({
       text = description,
+      color = has_blocking and "NeoWarriorTextDanger" or nil,
     })
+    if has_blocking then
+      line:add({
+        text = " [has blocking tasks]",
+        color = "NeoWarriorTextDanger",
+      })
+    end
   end
 
   if meta_table and not (disable_meta) then

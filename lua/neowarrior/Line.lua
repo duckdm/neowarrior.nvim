@@ -48,7 +48,7 @@ function Line:add(block)
   end
 
   if self.current_col > 0 then
-    self.last_col = self.current_col - 1
+    self.last_col = self.current_col
   else
     self.last_col = 0
   end

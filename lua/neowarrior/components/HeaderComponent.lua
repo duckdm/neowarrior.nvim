@@ -36,6 +36,7 @@ function HeaderComponent:get()
   help:add({ text = "(" .. keys.add.key .. ")add | " })
   help:add({ text = "(" .. keys.done.key .. ")done | " })
   help:add({ text = "(" .. keys.filter.key .. ")filter" })
+  help:add({ meta = { action = 'help' }})
   table.insert(lines, help)
 
   local report = Line:new(line_no + 1)
@@ -44,6 +45,7 @@ function HeaderComponent:get()
     text = "Report: " .. nw.current_report,
     color = "NeoWarriorTextInfo"
   })
+  report:add({ meta = { action = 'report' }})
 
   if nw.current_mode == 'grouped' then
     report:add({ text = " (Grouped by project)" })
@@ -52,13 +54,16 @@ function HeaderComponent:get()
   end
   table.insert(lines, report)
 
-  local filter = Line:new(line_no + 2)
-  filter:add({ text = "(" .. keys.select_filter.key .. ")filter: " })
-  filter:add({
-    text = nw.current_filter,
-    color = "NeoWarriorTextWarning"
-  })
+  if self.neowarrior.config.enable_current_filter then
+    local filter = Line:new(line_no + 2)
+    filter:add({ text = "(" .. keys.select_filter.key .. ")filter: " })
+    filter:add({
+      text = nw.current_filter,
+      color = "NeoWarriorTextWarning"
+    })
+    filter:add({ meta = { action = 'filter' }})
   table.insert(lines, filter)
+  end
 
   --- Add new line
   table.insert(lines, Line:new(line_no + 3):add({ text = "" }))

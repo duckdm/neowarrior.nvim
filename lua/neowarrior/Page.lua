@@ -72,6 +72,8 @@ end
 ---@return Page
 function Page:print()
 
+  self.buffer:unlock()
+  vim.api.nvim_buf_set_lines(self.buffer.id, 0, -1, false, {})
   local start_at = 0
 
   for _, component in ipairs(self.components) do

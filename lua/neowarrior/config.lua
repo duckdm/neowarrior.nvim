@@ -15,6 +15,15 @@ return {
     ---@type boolean Show estimate. NOTE: This is not a default field in taskwarrior
     enable_estimate = true,
   },
+  ---@type table Project line config. This is only used in tree view.
+  project_line = {
+    ---@type boolean Show task count
+    enable_task_count = true,
+    ---@type boolean Show average urgency
+    enable_average_urgency = true,
+    ---@type boolean Show total urgency
+    enable_total_urgency = false,
+  },
   ---@type boolean Whether to show the current filter at the top
   enable_current_filter = true,
   ---@type string Default taskwarrior filter
@@ -55,7 +64,7 @@ return {
     "priority.not:L", "priority:", "priority.not:", "project:",
     "project.not:",
   },
-  ---@type table Default key mappings
+  ---@type table Default key mappings. Disable all by setting keys to nil or false.
   keys = {
     help = { key = '?', desc = 'Help' },
     add = { key = 'a', desc = 'Add task' },
@@ -82,10 +91,14 @@ return {
   },
   ---@type table Default icons
   icons = {
+    tree_line = "│", --- Not currently used
+    tree_item = "├", --- Not currently used
+    tree_item_last = "└", --- Not currently used
     task = "\u{f1db}",
     task_completed = "\u{f14a}",
     recur = "\u{f021}",
     project = "\u{f07b}",
+    project_open = "\u{f115}",
     warning = "\u{f071}",
     annotated = "\u{f1781}",
     start = "\u{f040a}",

@@ -3,7 +3,7 @@ local TaskCollection = require("neowarrior.TaskCollection")
 
 ---@class Taskwarrior
 ---@field neowarrior NeoWarrior
----@field syscall fun(self: Taskwarrior, cmd: string): string
+---@field syscall fun(self: Taskwarrior, cmd: string[]): string
 local Taskwarrior = {}
 
 --- Create new taskwarrior instance
@@ -20,10 +20,11 @@ function Taskwarrior:new(neowarrior)
 end
 
 --- Execute system call
----@param cmd string
+---@param cmd table
 ---@return string
 function Taskwarrior:syscall(cmd)
-  return vim.fn.system(cmd)
+  local result = vim.fn.system(table.concat(cmd, " "))
+  return result
 end
 
 --- Get single task by UUID
@@ -31,7 +32,7 @@ end
 ---@return Task
 function Taskwarrior:task(uuid)
 
-  local json_data = self:syscall("task " .. uuid .. " export")
+  local json_data = self:syscall({ "task", uuid, "export" })
   local task = vim.json.decode(json_data)
 
   return Task:new(self.neowarrior, task[1])
@@ -48,10 +49,12 @@ function Taskwarrior:tasks(report, filter)
   if filter and string.find(filter, "limit:") then
     default_limit = ""
   end
-  local cmd = "task " .. default_limit .. "export " .. report
+  -- local cmd = "task " .. default_limit .. "export " .. report
+  local cmd = { "task", default_limit, "export", report }
 
   if filter then
-    cmd = "task " .. default_limit .. filter .. " export " .. report
+    -- cmd = "task " .. default_limit .. filter .. " export " .. report
+    cmd = { "task", default_limit, filter, "export", report }
   end
 
   local json_data = self:syscall(cmd)
@@ -72,7 +75,7 @@ end
 --- Add new task
 ---@param input string
 function Taskwarrior:add(input)
-  self:syscall("task add " .. input)
+  self:syscall({ "task", "add", input })
 end
 ---
 --- Modify task
@@ -80,7 +83,7 @@ end
 ---@param mod_string string
 function Taskwarrior:modify(task, mod_string)
   if not (mod_string == "") then
-    self:syscall("task modify " .. task.uuid .. " " .. mod_string)
+    self:syscall({ "task", "modify", task.uuid, mod_string })
   end
 end
 --
@@ -88,21 +91,21 @@ end
 ---@param task Task
 ---@param dependency_uuid string
 function Taskwarrior:add_dependency(task, dependency_uuid)
-  self:syscall("task " .. task.uuid .. " modify depends:" .. dependency_uuid)
+  self:syscall({ "task", task.uuid, "modify", "depends:" .. dependency_uuid })
 end
 
 --- Start task
 ---@param task Task
 ---@return Task
 function Taskwarrior:start(task)
-  self:syscall("task start " .. task.uuid)
+  self:syscall({ "task", "start", task.uuid })
   return Taskwarrior:task(task.uuid)
 end
 
 --- Stop task
 ---@param task Task
 function Taskwarrior:stop(task)
-  self:syscall("task stop " .. task.uuid)
+  self:syscall({ "task", "stop", task.uuid })
   return Taskwarrior:task(task.uuid)
 end
 
@@ -110,17 +113,17 @@ end
 ---@param task Task
 ---@param annotation string
 function Taskwarrior:annotate(task, annotation)
-  self:syscall("task annotate " .. task.uuid .. " " .. annotation)
+  self:syscall({ "task", "annotate", task.uuid, annotation })
 end
 ---
 --- Complete task / mark done
 ---@param task Task
 function Taskwarrior:done(task)
-  self:syscall("task done " .. task.uuid)
+  self:syscall({ "task", "done", task.uuid })
 end
 
 --- Delete task
---- TODO: make this work
+--- FIX: make this work
 ---@param task Task 
 function Taskwarrior:delete(task)
   vim.fn.confirm("Use CLI to delete task\n[" .. task.description .. "]", "OK")

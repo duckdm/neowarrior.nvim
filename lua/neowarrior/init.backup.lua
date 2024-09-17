@@ -789,7 +789,7 @@ M.render_list = function()
   Buffer.unlock(bufnr)
   Buffer.option(bufnr, "wrap", false)
 
-  if opt.show_current_filter then
+  if opt.enable_current_filter then
     local current_filter_string = ""
     if NWCurrentFilter then
       current_filter_string = NWCurrentFilter .. " "

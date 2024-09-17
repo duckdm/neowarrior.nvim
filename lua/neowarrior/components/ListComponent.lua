@@ -1,5 +1,6 @@
 local TaskLine = require('neowarrior.lines.TaskLine')
 local Component = require('neowarrior.Component')
+local TreeComponent = require('neowarrior.components.TreeComponent')
 
 ---@class ListComponent
 ---@field neowarrior NeoWarrior
@@ -31,17 +32,20 @@ function ListComponent:get_lines()
   self.neowarrior:refresh()
 
   if self.neowarrior.current_mode == 'tree' then
+
+    local tree = TreeComponent:new(self.neowarrior, self.neowarrior.project_tree)
+    return tree:get_lines()
+
   elseif self.neowarrior.current_mode == 'grouped' then
   end
 
-  return self:get_task_lines(self.task_collection)
+  return self:get_task_lines(self.task_collection, {})
 end
 
 --- Get task lines
 ---@return Line[]
-function ListComponent:get_task_lines(task_collection)
+function ListComponent:get_task_lines(task_collection, lines)
 
-  local lines = {}
   local line_no = 0
 
   for _, task in ipairs(task_collection:get()) do
