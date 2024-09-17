@@ -1,6 +1,7 @@
 local TaskLine = require('neowarrior.lines.TaskLine')
 local Component = require('neowarrior.Component')
 local TreeComponent = require('neowarrior.components.TreeComponent')
+local GroupedComponent = require('neowarrior.components.GroupedComponent')
 
 ---@class ListComponent
 ---@field neowarrior NeoWarrior
@@ -17,6 +18,7 @@ function ListComponent:new(neowarrior, task_collection)
 
     self.neowarrior = neowarrior
     self.task_collection = task_collection
+    self.line_no = 0
 
     local component = Component:new()
     component.type = 'ListComponent'
@@ -29,14 +31,19 @@ end
 ---@return Line[]
 function ListComponent:get_lines()
 
-  self.neowarrior:refresh()
+  local nw = self.neowarrior
+  nw:refresh()
 
-  if self.neowarrior.current_mode == 'tree' then
+  if nw.current_mode == 'tree' then
 
-    local tree = TreeComponent:new(self.neowarrior, self.neowarrior.project_tree)
+    local tree = TreeComponent:new(nw, nw.project_tree)
     return tree:get_lines()
 
-  elseif self.neowarrior.current_mode == 'grouped' then
+  elseif nw.current_mode == 'grouped' then
+
+    local grouped = GroupedComponent:new(nw, nw.projects)
+    return grouped:get_lines()
+
   end
 
   return self:get_task_lines(self.task_collection, {})
@@ -46,12 +53,10 @@ end
 ---@return Line[]
 function ListComponent:get_task_lines(task_collection, lines)
 
-  local line_no = 0
-
   for _, task in ipairs(task_collection:get()) do
 
-    table.insert(lines, TaskLine:new(self.neowarrior, line_no, task, {}))
-    line_no = line_no + 1
+    table.insert(lines, TaskLine:new(self.neowarrior, self.line_no, task, {}))
+    self.line_no = self.line_no + 1
 
   end
 

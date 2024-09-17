@@ -19,7 +19,6 @@ local ProjectLine = require('neowarrior.lines.ProjectLine')
 local TaskPage = {}
 
 --- Create a new TaskPage
----
 ---@param neowarrior NeoWarrior
 ---@param task Task
 ---@return TaskPage
@@ -59,10 +58,11 @@ function TaskPage:print(buffer)
   self:task_line({
     disable_meta = true,
     disable_description = true,
+    disable_task_icon = true,
   })
   self:task_line({
     disable_meta = true,
-    disable_task_icon = true,
+    -- disable_task_icon = true,
     disable_priority = true,
     disable_warning = true,
     disable_due = true,
@@ -73,11 +73,9 @@ function TaskPage:print(buffer)
   })
 
   self.page:nl()
-  self.line_no = self.page:get_line_count()
 
   self:annotations()
 
-  --  FIX: colors don't work for urgency
   self:urgency()
   self:estimate()
   self:priority()
@@ -108,7 +106,7 @@ function TaskPage:print(buffer)
           break
         end
       end
-      -- FIX:Show tags
+      -- TODO:Show tags
       if k == "tags" and v then
         local tags = table.unpack(v)
         self.page:add_raw(string.format("%s%s", prefix, tags), '')
@@ -130,10 +128,17 @@ function TaskPage:print(buffer)
           text = " (" .. v:default_format() .. ")",
         })
         self.page:add_line(time_ln)
-      elseif not (k == "uuid") and not (k == "description") and not (k == "parent") and not (k == "imask") and v then
+      elseif not (k == "description") and not (k == "parent") and not (k == "imask") and v then
+        if type(k) == "table" then
+          k = table.concat(k, ", ")
+        end
+        local value = self.task[k]
+        if type(value) == "table" then
+          value = table.concat(value, ", ")
+        end
         self:row(k, {
           { text = string.format(self.prefix_format, k) },
-          { text = self.task[k], color = '' }
+          { text = value, color = '' }
         })
       end
     end
@@ -160,7 +165,6 @@ function TaskPage:row(key, cols)
     })
   end
   self.page:add_line(line)
-  self.line_no = self.line_no + 1
 
   return self
 end
@@ -250,10 +254,20 @@ end
 --- Urgency row
 function TaskPage:urgency()
 
-  self:row('urgency', {
-    { text = string.format(self.prefix_format, "Urgency") },
-    { text = self.task.urgency, color = colors.get_urgency_color(self.task.urgency) }
+  local cols = {{ text = string.format(self.prefix_format, "Urgency") }}
+
+  if self.task.urgency > 5 then
+    table.insert(cols, {
+      text = self.neowarrior.config.icons.warning .. " ",
+      color = colors.get_urgency_color(self.task.urgency),
+    })
+  end
+
+  table.insert(cols, {
+    text = self.task.urgency,
+    color = colors.get_urgency_color(self.task.urgency)
   })
+  self:row('urgency', cols)
 
 end
 
@@ -302,7 +316,7 @@ function TaskPage:due()
     self:row('due', {{
       text = string.format(self.prefix_format, "Due"),
     }, {
-      text = self.task.due:relative() .. " (" .. self.task.due:default_format() .. ")",
+      text = self.neowarrior.config.icons.due .. " " .. self.task.due:relative() .. " (" .. self.task.due:default_format() .. ")",
       color = colors.get_due_color(self.task.due:relative()),
     }})
   end

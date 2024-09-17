@@ -133,6 +133,17 @@ function NeoWarrior:init()
   return self
 end
 
+--- Second init, after first refresh, before list render
+function NeoWarrior:after_initial_refresh()
+
+  if self.config.expanded then
+    for _, project in ipairs(self.all_projects:get()) do
+      self.toggled_trees[project.id] = true
+    end
+  end
+
+end
+
 --- Refresh all data (tasks and projects)
 ---@return NeoWarrior
 function NeoWarrior:refresh()
@@ -155,9 +166,11 @@ function NeoWarrior:refresh()
 
   self.projects = self:generate_project_collection_from_tasks(self.tasks)
   self.projects:refresh()
+  self.projects:sort('estimate.total')
 
   self.all_projects = self:generate_project_collection_from_tasks(self.all_tasks)
   self.all_projects:refresh()
+  self.all_projects:sort('urgency.average')
 
   self.project_tree = self:fill_project_tree(
     self:generate_tree(self.project_names),
@@ -358,7 +371,7 @@ function NeoWarrior:create_user_commands()
 end
 
 --- Set keymaps
---- FIX: keymap callbacks should call seperate functions in appropriate classes
+--- TODO: keymap callbacks should call seperate functions in appropriate classes
 function NeoWarrior:set_keymaps()
 
   if not self.config.keys then
@@ -600,55 +613,64 @@ function NeoWarrior:set_keymaps()
     end
   end, default_keymap_opts)
 
-  -- FIX:
-  -- vim.keymap.set("n", self.config.keys.modify_due.key, function()
-  --   local line = vim.api.nvim_get_current_line()
-  --   local uuid = Func.get_meta_data(line, 'uuid')
-  --   Buffer.save_cursor()
-  --   local prompt = "Task due date: "
-  --   vim.ui.input({
-  --     prompt = prompt,
-  --     cancelreturn = nil,
-  --   }, function(input)
-  --     if input then
-  --       M.modify(uuid, "due:" .. input)
-  --       M.export(NWCurrentFilter)
-  --       M.render_list()
-  --     end
-  --   end)
-  --   Buffer.restore_cursor()
-  -- end, default_keymap_opts)
+  --- Modify task due date
+  vim.keymap.set("n", self.config.keys.modify_due.key, function()
+    local uuid = nil
+    if self.current_task then
+      uuid = self.current_task.uuid
+    else
+      uuid = self.buffer:get_meta_data('uuid')
+    end
+    local task = self.tw:task(uuid)
+    self.buffer:save_cursor()
+    local prompt = "Task due date: "
+    vim.ui.input({
+      prompt = prompt,
+      cancelreturn = nil,
+    }, function(input)
+      if input then
+        self.tw:modify(task, "due:" .. input)
+        if self.current_task then
+          self:task(self.current_task.uuid)
+        else
+          self:refresh()
+          self:list()
+        end
+      end
+    end)
+    Buffer.restore_cursor()
+  end, default_keymap_opts)
 
-  -- FIX:
-  -- vim.keymap.set("n", self.config.keys.modify.key, function()
-  --   local line = vim.api.nvim_get_current_line()
-  --   local uuid = Func.get_meta_data(line, 'uuid')
-  --   if not uuid and NWCurrentTask then
-  --     uuid = NWCurrentTask
-  --   end
-  --   local task = nil
-  --   if uuid then
-  --     task = Data.task(uuid)
-  --     Buffer.save_cursor()
-  --     local prompt = 'Modify task ("description" due:21hours etc): '
-  --     vim.ui.input({
-  --       prompt = prompt,
-  --       default = '"' .. task.description .. '"',
-  --       cancelreturn = nil,
-  --     }, function(input)
-  --       if input then
-  --         M.modify(uuid, input)
-  --         if NWCurrentTask then
-  --           M.show(NWCurrentTask)
-  --         else
-  --           M.export(NWCurrentFilter)
-  --           M.render_list()
-  --         end
-  --       end
-  --     end)
-  --     Buffer.restore_cursor()
-  --   end
-  -- end, default_keymap_opts)
+  --- Modify task
+  vim.keymap.set("n", self.config.keys.modify.key, function()
+    local uuid = nil
+    if self.current_task then
+      uuid = self.current_task.uuid
+    else
+      uuid = self.buffer:get_meta_data('uuid')
+    end
+    if uuid then
+      local task = self.tw:task(uuid)
+      self.buffer:save_cursor()
+      local prompt = 'Modify task ("description" due:21hours etc): '
+      vim.ui.input({
+        prompt = prompt,
+        default = '"' .. task.description .. '"',
+        cancelreturn = nil,
+      }, function(input)
+        if input then
+          self.tw:modify(task, input)
+          if self.current_task then
+            self:task(self.current_task.uuid)
+          else
+            self:refresh()
+            self:list()
+          end
+        end
+      end)
+      self.buffer:restore_cursor()
+    end
+  end, default_keymap_opts)
 
   -- Back to list/refresh
   vim.keymap.set("n", '<Esc>', function() self:list() end, default_keymap_opts)
@@ -763,11 +785,6 @@ function NeoWarrior:insert_into_tree(tree, parts, index, parent_key)
     return
   end
   local part = parts[index]
-  ---FIX: What is this?
-  local pad = 0
-  if string.len(part) > pad then
-    pad = string.len(part)
-  end
   local key = parent_key .. "." .. part
   if parent_key == "" then
     key = part
@@ -840,6 +857,7 @@ end
 ---@param opts table
 ---@return NeoWarrior
 function NeoWarrior:open(opts)
+
   local split = opts.split or 'below'
 
   self.buffer = Buffer:new({})
@@ -883,6 +901,7 @@ function NeoWarrior:open(opts)
 ]])
 
   self:refresh()
+  self:after_initial_refresh()
   self:list()
 
   return self
@@ -895,10 +914,7 @@ function NeoWarrior:list()
   self.current_task = nil
   self.buffer:option('wrap', false, { win = self.window.id })
 
-  local task_count = self.tasks and self.tasks:count() or 0
-
   Page:new(self.buffer)
-    -- :add_raw('Task count: ' .. task_count, '')
     :add(HeaderComponent:new(self))
     :add(ListComponent:new(self, self.tasks))
     :print()

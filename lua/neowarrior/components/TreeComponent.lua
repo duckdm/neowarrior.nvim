@@ -45,6 +45,7 @@ function TreeComponent:generate_lines(project, indent, line_no)
         enable_task_count = config.enable_task_count,
         enable_average_urgency = config.enable_average_urgency,
         enable_total_urgency = config.enable_total_urgency,
+        enable_total_estimate = config.enable_total_estimate,
         open = self.neowarrior.toggled_trees[sub_project.id],
       })
       table.insert(self.lines, project_line)

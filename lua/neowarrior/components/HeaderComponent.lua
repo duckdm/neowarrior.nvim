@@ -39,22 +39,24 @@ function HeaderComponent:get()
   help:add({ meta = { action = 'help' }})
   table.insert(lines, help)
 
-  local report = Line:new(line_no + 1)
-  report:add({ text = "(" .. keys.select_report.key .. ")report: " })
-  report:add({
-    text = "Report: " .. nw.current_report,
-    color = "NeoWarriorTextInfo"
-  })
-  report:add({ meta = { action = 'report' }})
+  if nw.config.enable_current_report then
+    local report = Line:new(line_no + 1)
+    report:add({ text = "(" .. keys.select_report.key .. ")report: " })
+    report:add({
+      text = "Report: " .. nw.current_report,
+      color = "NeoWarriorTextInfo"
+    })
+    report:add({ meta = { action = 'report' }})
 
-  if nw.current_mode == 'grouped' then
-    report:add({ text = " (Grouped by project)" })
-  elseif nw.current_mode == 'tree' then
-    report:add({ text = " (Tree view)" })
+    if nw.current_mode == 'grouped' then
+      report:add({ text = " (Grouped by project)" })
+    elseif nw.current_mode == 'tree' then
+      report:add({ text = " (Tree view)" })
+    end
+    table.insert(lines, report)
   end
-  table.insert(lines, report)
 
-  if self.neowarrior.config.enable_current_filter then
+  if nw.config.enable_current_filter then
     local filter = Line:new(line_no + 2)
     filter:add({ text = "(" .. keys.select_filter.key .. ")filter: " })
     filter:add({

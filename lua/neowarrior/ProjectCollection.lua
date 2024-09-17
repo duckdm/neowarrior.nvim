@@ -53,6 +53,10 @@ function ProjectCollection:sort(key)
   end)
   self.projects = projects_array
 
+  for _, project in ipairs(self.projects) do
+    project.tasks:sort('urgency')
+  end
+
   return self
 end
 

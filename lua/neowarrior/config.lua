@@ -23,9 +23,13 @@ return {
     enable_average_urgency = true,
     ---@type boolean Show total urgency
     enable_total_urgency = false,
+    ---@type boolean Show total estimate
+    enable_total_estimate = true,
   },
   ---@type boolean Whether to show the current filter at the top
   enable_current_filter = true,
+  ---@type boolean Whether to show the current report at the top
+  enable_current_report = true,
   ---@type string Default taskwarrior filter
   filter = "",
   ---@type string Default taskwarrior report
@@ -34,8 +38,10 @@ return {
   mode = "normal",
   ---@type boolean Whether to expand all trees at start
   expanded = false,
+  ---FIX: not implemeted
   ---@type string Default project name for tasks without project
   no_project_name = "No project defined",
+  ---FIX: not implemented
   ---@type table Task float
   float = {
     ---@type boolean Enable floating window for tasks
@@ -91,9 +97,9 @@ return {
   },
   ---@type table Default icons
   icons = {
-    tree_line = "│", --- Not currently used
-    tree_item = "├", --- Not currently used
-    tree_item_last = "└", --- Not currently used
+    tree_line = "│", --- NOTE: Not currently used
+    tree_item = "├", --- NOTE: Not currently used
+    tree_item_last = "└", --- NOTE: Not currently used
     task = "\u{f1db}",
     task_completed = "\u{f14a}",
     recur = "\u{f021}",

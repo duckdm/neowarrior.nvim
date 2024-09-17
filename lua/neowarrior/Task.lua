@@ -1,6 +1,4 @@
-local Util = require('neowarrior.util')
 local DateTime = require('neowarrior.DateTime')
-local TaskCollection = require('neowarrior.TaskCollection')
 
 ---@class Task
 ---@field neowarrior NeoWarrior
@@ -49,7 +47,7 @@ function Task:new(neowarrior, task_data)
   data.estimate = task_data.estimate or nil
   data.estimate_string = self:get_hour_duration_string(task_data.estimate)
   data.depends = task_data.depends or nil
-  -- FIX: Probably need a specific class for annotations (similar
+  -- TODO: Probably need a specific class for annotations (similar
   -- to TaskCollection).
   -- if task_data.annotations then
   --   local anno_collection = TaskCollection:new()

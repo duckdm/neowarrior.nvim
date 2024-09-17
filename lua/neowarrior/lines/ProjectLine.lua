@@ -36,8 +36,12 @@ function ProjectLine:get_project_line(arg)
   local indent = arg.indent or ""
   local open = arg.open or false
   local icon = open and conf.icons.project_open or conf.icons.project
+  local name = self.project.name
+  if arg.id_as_name then
+    name = self.project.id
+  end
   line:add({
-    text = indent .. icon .. " " .. self.project.name,
+    text = indent .. icon .. " " .. name,
     color = "NeoWarriorTextInfo",
   })
 
@@ -60,6 +64,13 @@ function ProjectLine:get_project_line(arg)
     line:add({
       text = " " .. string.format("%.2f", self.project.urgency.total),
       color = colors.get_urgency_color(self.project.urgency.total),
+    })
+  end
+
+  if arg.enable_total_estimate and self.project.estimate.total > 0 then
+    line:add({
+      text = " " .. conf.icons.est .. " " .. string.format("%.1f", self.project.estimate.total) .. "h",
+      color = colors.get_urgency_color(self.project.estimate.total),
     })
   end
 

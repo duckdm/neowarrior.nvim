@@ -123,7 +123,7 @@ function Taskwarrior:done(task)
 end
 
 --- Delete task
---- FIX: make this work
+--- TODO: make this work
 ---@param task Task 
 function Taskwarrior:delete(task)
   vim.fn.confirm("Use CLI to delete task\n[" .. task.description .. "]", "OK")
