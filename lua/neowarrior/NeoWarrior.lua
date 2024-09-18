@@ -440,6 +440,15 @@ end
 --- Create user commands
 function NeoWarrior:create_user_commands()
 
+  vim.api.nvim_create_user_command("NeoWarriorOpen", function(opt)
+    local valid_args = { 'current', 'above', 'below', 'left', 'right' }
+    local split = opt and opt.fargs and opt.fargs[1] or 'below'
+    if not vim.tbl_contains(valid_args, split) then
+      split = 'below'
+    end
+    self:open({ split = split })
+  end, { nargs = '*' })
+
   vim.api.nvim_create_user_command("NeoWarriorAdd", function()
     self:add()
   end, {})

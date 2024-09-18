@@ -55,6 +55,38 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
 }
 ```
 
+# Available commands
+
+| Command | Description |
+| ------- | ----------- |
+| `:NeoWarriorOpen` | Open NeoWarrior (default to below current buffer) |
+| `:NeoWarriorOpen left` | Open NeoWarrior on the left side |
+| `:NeoWarriorOpen right` | Open NeoWarrior on the right side |
+| `:NeoWarriorOpen above` | Open NeoWarrior above current buffer |
+| `:NeoWarriorOpen below` | Open NeoWarrior below current buffer |
+| `:NeoWarriorOpen current` | Open NeoWarrior in current buffer |
+
+# API methods
+```lua
+-- Open NeoWarrior (default to below current buffer)
+require('neowarrior').open()
+
+--- Open NeoWarrior on the left side
+require('neowarrior').open_left()
+
+--- Open NeoWarrior on the right side
+require('neowarrior').open_right()
+
+--- Open NeoWarrior above current buffer
+require('neowarrior').open_above()
+
+--- Open NeoWarrior below current buffer
+require('neowarrior').open_below()
+
+--- Open NeoWarrior in current buffer
+require('neowarrior').open_current()
+```
+
 # Default key maps
 
 | Key | Description |
