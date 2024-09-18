@@ -333,6 +333,20 @@ function NeoWarrior:refresh()
   return self
 end
 
+--- Focus on neowarrior window
+function NeoWarrior:focus()
+
+  local windows = vim.api.nvim_list_wins()
+  for _, handle in ipairs(windows) do
+    local buf_handle = vim.api.nvim_win_get_buf(handle)
+    local buf_name = vim.api.nvim_buf_get_name(buf_handle)
+    if string.find(buf_name, "neowarrior") then
+      vim.api.nvim_set_current_win(handle)
+      return
+    end
+  end
+end
+
 --- Generate project collection from tasks
 ---@param tasks TaskCollection
 ---@return ProjectCollection
