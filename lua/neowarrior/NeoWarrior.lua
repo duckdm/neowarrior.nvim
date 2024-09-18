@@ -542,24 +542,32 @@ function NeoWarrior:create_user_commands()
   end, {})
 
   vim.api.nvim_create_user_command("NeoWarriorFilter", function()
+    self.buffer:save_cursor()
     self:filter()
+    self.buffer:restore_cursor()
   end, {})
 
   vim.api.nvim_create_user_command("NeoWarriorFilterSelect", function()
+    self.buffer:save_cursor()
     self:filter_select()
+    self.buffer:restore_cursor()
   end, {})
 
   vim.api.nvim_create_user_command("NeoWarriorReportSelect", function()
+    self.buffer:save_cursor()
     self:report_select()
+    self.buffer:restore_cursor()
   end, {})
 
   vim.api.nvim_create_user_command("NeoWarriorRefresh", function()
+    self.buffer:save_cursor()
     self:refresh()
     if self.current_task then
       self:task(self.current_task.uuid)
     else
       self:list()
     end
+    self.buffer:restore_cursor()
   end, {})
 
 end
@@ -648,8 +656,8 @@ function NeoWarrior:set_keymaps()
 
   -- Select task dependency
   if self.config.keys.select_dependency then
-    self:close_floats()
     vim.keymap.set("n", self.config.keys.select_dependency, function()
+      self:close_floats()
       self:refresh()
       local uuid = nil
       local task = nil
@@ -800,6 +808,7 @@ function NeoWarrior:set_keymaps()
   if self.config.keys.modify_select_priority then
     vim.keymap.set("n", self.config.keys.modify_select_priority, function()
       self:close_floats()
+      self.buffer:save_cursor()
       local uuid = nil
       if self.current_task then
         uuid = self.current_task.uuid
@@ -836,6 +845,7 @@ function NeoWarrior:set_keymaps()
               else
                 self:list()
               end
+              self.buffer:restore_cursor()
             end)
             return true
           end,
@@ -849,6 +859,7 @@ function NeoWarrior:set_keymaps()
   if self.config.keys.modify_due then
     vim.keymap.set("n", self.config.keys.modify_due, function()
       self:close_floats()
+      self.buffer:save_cursor()
       local uuid = nil
       if self.current_task then
         uuid = self.current_task.uuid
@@ -871,6 +882,7 @@ function NeoWarrior:set_keymaps()
               self:refresh()
               self:list()
             end
+            self.buffer:restore_cursor()
           end
         end)
         self.buffer:restore_cursor()
@@ -882,6 +894,7 @@ function NeoWarrior:set_keymaps()
   if self.config.keys.modify then
     vim.keymap.set("n", self.config.keys.modify, function()
       self:close_floats()
+      self.buffer:save_cursor()
       local uuid = nil
       if self.current_task then
         uuid = self.current_task.uuid
@@ -905,6 +918,7 @@ function NeoWarrior:set_keymaps()
               self:refresh()
               self:list()
             end
+            self.buffer:restore_cursor()
           end
         end)
         self.buffer:restore_cursor()
