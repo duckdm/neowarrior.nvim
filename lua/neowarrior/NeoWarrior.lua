@@ -215,8 +215,10 @@ function NeoWarrior:setup_autocmds()
           local win_width = vim.api.nvim_win_get_width(0)
           local width = max_width
           local anchor = 'SW'
+          local cursor = self.buffer:get_cursor()
           local row = 0
-          if self.buffer:get_cursor()[1] <= 10 then
+          local col = 0 - cursor[2]
+          if cursor[1] <= 10 then
             anchor = 'NW'
             row = 1
           end
@@ -259,7 +261,7 @@ function NeoWarrior:setup_autocmds()
             self.task_float = Float:new(self, page, {
               relative = 'cursor',
               width = width,
-              col = 0,
+              col = col,
               row = row,
               enter = false,
               anchor = anchor,
