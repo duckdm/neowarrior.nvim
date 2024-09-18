@@ -178,6 +178,13 @@ function NeoWarrior:setup(config)
 
   colors.set()
 
+  self:create_user_commands()
+
+  return self
+end
+
+function NeoWarrior:setup_autocmds()
+
   if self.config.float.enabled then
     vim.api.nvim_create_autocmd('CursorMoved', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
@@ -192,7 +199,6 @@ function NeoWarrior:setup(config)
     vim.api.nvim_create_autocmd('CursorHold', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-hold', { clear = true }),
       callback = function()
-        local line = vim.api.nvim_get_current_line()
         local description = self.buffer:get_meta_data('description')
         if description then
           local uuid = self.buffer:get_meta_data('uuid')
@@ -257,7 +263,6 @@ function NeoWarrior:setup(config)
     })
   end
 
-  return self
 end
 
 --- Init neowarrior
@@ -1108,7 +1113,7 @@ function NeoWarrior:open(opts)
   self.buffer = Buffer:new({})
   self:init()
   self:set_keymaps()
-  self:create_user_commands()
+  self:setup_autocmds()
 
   if split == 'current' then
     vim.api.nvim_set_current_buf(self.buffer.id)
