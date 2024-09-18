@@ -132,6 +132,8 @@ require('neowarrior').open_current()
     enable_priority = true,
     ---@type boolean Show due date
     enable_due_date = true,
+    ---@type boolean Show urgency
+    enable_urgency = true,
     ---@type boolean Show estimate. NOTE: This is not a default field in taskwarrior
     enable_estimate = true,
   },
@@ -199,28 +201,28 @@ require('neowarrior').open_current()
   },
   ---@type table Default key mappings. Disable all by setting keys to nil or false.
   keys = {
-    help = { key = '?', desc = 'Help' },
-    add = { key = 'a', desc = 'Add task' },
-    done = { key = 'd', desc = 'Mark task done' },
-    start = { key = 's', desc = 'Start task' },
-    select_dependency = { key = 'D', desc = 'Select dependency' },
-    filter = { key = 'F', desc = 'Filter tasks' },
-    select_filter = { key = 'f', desc = 'Select filter' },
-    toggle_group_view = { key = 'tg', desc = 'Toggle grouped view' },
-    toggle_tree_view = { key = 'tt', desc = 'Toggle tree view' },
-    select_report = { key = 'r', desc = 'Select report' },
-    refresh = { key = 'R', desc = 'Refresh tasks' },
-    reset = { key = 'X', desc = 'Reset filters' },
-    collapse_all = { key = 'W', desc = 'Collapse all trees' },
-    expand_all = { key = 'E', desc = 'Expand all trees' },
-    toggle_tree = { key = '<Tab>', desc = 'Toggle tree' },
-    enter = { key = 'l', desc = 'Show task details' },
-    back = { key = 'h', desc = 'Back' },
-    close_help = { key = 'q', desc = 'Close help' },
-    modify = { key = 'MM', desc = 'Modify task' },
-    modify_select_project = { key = 'Mp', desc = 'Modify project' },
-    modify_select_priority = { key = 'MP', desc = 'Modify priority' },
-    modify_due = { key = 'Md', desc = 'Modify due date' },
+    help = '?', --- Show help
+    add = 'a', --- Add task
+    done = 'd', --- Mark task as done
+    start = 's', --- Start task
+    select_dependency = 'D', --- Select dependency
+    filter = 'F', --- Input filter
+    select_filter = 'f', --- Select filter
+    toggle_group_view = 'tg', --- Toggle grouped view
+    toggle_tree_view = 'tt', --- Toggle tree view
+    select_report = 'r', --- Select report
+    refresh = 'R', --- Refresh tasks
+    reset = 'X', --- Reset filter
+    collapse_all = 'W', --- Collapse all tree nodes
+    expand_all = 'E', --- Expand all tree nodes
+    toggle_tree = '<Tab>', --- Toggle tree node
+    enter = 'l', --- Enter task/Activate line action
+    back = 'h', --- Go back
+    close_help = 'q', --- Close help
+    modify = 'MM', --- Modify task
+    modify_select_project = 'Mp', --- Modify project
+    modify_select_priority = 'MP', --- Modify priority
+    modify_due = 'Md', --- Modify due date
   },
   ---@type table Default icons
   icons = {

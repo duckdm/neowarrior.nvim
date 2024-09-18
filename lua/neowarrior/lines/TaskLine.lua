@@ -188,6 +188,13 @@ function TaskLine:get_task_line(arg)
     end
   end
 
+  if not disable_urgency and self.neowarrior.config.task_line.enable_urgency then
+    line:add({
+      text = " " .. string.format("%.1f", urgency_val) .. " ",
+      color = colors.get_urgency_color(urgency_val),
+    })
+  end
+
   if meta_table and not (disable_meta) then
     line:add({
       meta = meta_table,

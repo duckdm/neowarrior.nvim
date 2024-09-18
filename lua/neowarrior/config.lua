@@ -11,6 +11,8 @@ return {
     enable_priority = true,
     ---@type boolean Show due date
     enable_due_date = true,
+    ---@type boolean Show urgency
+    enable_urgency = true,
     ---@type boolean Show estimate. NOTE: This is not a default field in taskwarrior
     enable_estimate = true,
   },
