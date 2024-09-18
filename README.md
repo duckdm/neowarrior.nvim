@@ -10,6 +10,7 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
 ## Optional
 
 - A nerd font is highly recommended for the icons. Se config for setting custom icons.
+- [folke/noice.nvim](https://github.com/folke/noice.nvim) for a nice cmdline UI.
 
 # Features
 
@@ -27,12 +28,34 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
 - Customize config per directory
 
 
-# Example config (lazy.nvim)
+# Installation
+
+## Simple setup with lazy.nvim
+
+```lua
+return {
+  'duckdm/neowarrior.nvim',
+  dependencies = {
+    'nvim-telescope/telescope.nvim',
+    --- Optional but recommended for nicer inputs
+    --- 'folke/noice.nvim',
+  },
+  --- See config example below
+  opts = {}
+}
+```
+
+## Example setup with dir specific configs
+
 ```lua
 {
   'duckdm/neowarrior.nvim',
   event = 'VeryLazy',
-  dependencies = { 'nvim-telescope/telescope.nvim' },
+  dependencies = {
+    'nvim-telescope/telescope.nvim',
+    --- Optional but recommended for nicer inputs
+    --- 'folke/noice.nvim',
+  },
   config = function()
 
     local nw = require('neowarrior')
