@@ -112,6 +112,9 @@ require('neowarrior').open_below()
 
 --- Open NeoWarrior in current buffer
 require('neowarrior').open_current()
+
+--- Focus NeoWarrior
+require('neowarrior').focus()
 ```
 
 # Default key maps
