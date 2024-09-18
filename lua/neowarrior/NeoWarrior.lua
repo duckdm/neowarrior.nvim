@@ -3,7 +3,6 @@ local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
-local Func = require('neowarrior.func')
 local Buffer = require('neowarrior.Buffer')
 local Window = require('neowarrior.Window')
 local Float = require('neowarrior.Float')
@@ -356,7 +355,7 @@ function NeoWarrior:add()
   local default_add_input = ""
   local prompt = "Task (ex: task name due:tomorrow etc): "
   local line = vim.api.nvim_get_current_line()
-  local task_uuid = Func.get_meta_data(line, 'uuid')
+  local task_uuid = self.buffer:get_meta_data(line, 'uuid')
   local task = nil
   if task_uuid then
     task = self.all_tasks:find_task_by_uuid(task_uuid)
