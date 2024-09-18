@@ -29,6 +29,7 @@ local Line = require('neowarrior.Line')
 ---@field public window Window|nil
 ---@field public help_float Float|nil
 ---@field public task_float Float|nil
+---@field public task_floats Float[]
 ---@field public tw Taskwarrior
 ---@field public tasks TaskCollection
 ---@field public all_tasks TaskCollection
@@ -81,6 +82,7 @@ function NeoWarrior:new()
     neowarrior.window = nil
     neowarrior.help_float = nil
     neowarrior.task_float = nil
+    neowarrior.task_floats = {}
     neowarrior.tw = Taskwarrior:new(neowarrior or self)
     neowarrior.tasks = TaskCollection:new()
     neowarrior.all_tasks = TaskCollection:new()
@@ -190,6 +192,14 @@ function NeoWarrior:close_floats()
   if self.help_float then
     self.help_float:close()
   end
+  if util.table_size(self.task_floats) > 0 then
+    for _, float in ipairs(self.task_floats) do
+      if float then
+        float:close()
+      end
+    end
+    self.task_floats = {}
+  end
 end
 
 function NeoWarrior:setup_autocmds()
@@ -198,10 +208,7 @@ function NeoWarrior:setup_autocmds()
     vim.api.nvim_create_autocmd('CursorMoved', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
       callback = function()
-        if self.task_float then
-          self.task_float:close()
-          self.task_float = nil
-        end
+        self:close_floats()
       end,
     })
     vim.o.updatetime = self.config.float.delay
@@ -267,6 +274,7 @@ function NeoWarrior:setup_autocmds()
               anchor = anchor,
             })
             self.task_float:open()
+            table.insert(self.task_floats, self.task_float)
 
           end
         end
