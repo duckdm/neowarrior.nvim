@@ -183,6 +183,15 @@ function NeoWarrior:setup(config)
   return self
 end
 
+function NeoWarrior:close_floats()
+  if self.task_float then
+    self.task_float:close()
+  end
+  if self.help_float then
+    self.help_float:close()
+  end
+end
+
 function NeoWarrior:setup_autocmds()
 
   if self.config.float.enabled then
@@ -384,6 +393,8 @@ end
 
 function NeoWarrior:show()
 
+  self:close_floats()
+
   local uuid = self.buffer:get_meta_data('uuid')
   local project = self.buffer:get_meta_data('project')
   local action = self.buffer:get_meta_data('action')
@@ -412,6 +423,7 @@ end
 
 --- Show add input
 function NeoWarrior:add()
+  self:close_floats()
   self.buffer:save_cursor()
   local default_add_input = ""
   local prompt = "Task (ex: task name due:tomorrow etc): "
@@ -458,6 +470,7 @@ end
 ---@return self|nil
 function NeoWarrior:mark_done()
 
+  self:close_floats()
   self.buffer:save_cursor()
   local uuid = self.buffer:get_meta_data('uuid')
   if not uuid and self.current_task then
@@ -621,6 +634,7 @@ function NeoWarrior:set_keymaps()
 
   -- Select task dependency
   if self.config.keys.select_dependency then
+    self:close_floats()
     vim.keymap.set("n", self.config.keys.select_dependency, function()
       self:refresh()
       local uuid = nil
@@ -718,6 +732,7 @@ function NeoWarrior:set_keymaps()
   -- Modify task project
   if self.config.keys.modify_select_project then
     vim.keymap.set("n", self.config.keys.modify_select_project, function()
+      self:close_floats()
       local uuid = nil
       if self.current_task then
         uuid = self.current_task.uuid
@@ -770,6 +785,7 @@ function NeoWarrior:set_keymaps()
   --- Modify task priority
   if self.config.keys.modify_select_priority then
     vim.keymap.set("n", self.config.keys.modify_select_priority, function()
+      self:close_floats()
       local uuid = nil
       if self.current_task then
         uuid = self.current_task.uuid
@@ -818,6 +834,7 @@ function NeoWarrior:set_keymaps()
   --- Modify task due date
   if self.config.keys.modify_due then
     vim.keymap.set("n", self.config.keys.modify_due, function()
+      self:close_floats()
       local uuid = nil
       if self.current_task then
         uuid = self.current_task.uuid
@@ -850,6 +867,7 @@ function NeoWarrior:set_keymaps()
   --- Modify task
   if self.config.keys.modify then
     vim.keymap.set("n", self.config.keys.modify, function()
+      self:close_floats()
       local uuid = nil
       if self.current_task then
         uuid = self.current_task.uuid
@@ -912,6 +930,7 @@ end
 ---@return NeoWarrior
 function NeoWarrior:start_stop()
 
+  self:close_floats()
   self.buffer:save_cursor()
   local uuid = self.buffer:get_meta_data('uuid')
 
@@ -951,6 +970,7 @@ end
 ---@return Float help_float
 function NeoWarrior:open_help()
 
+  self:close_floats()
 
   local page = Page:new(Buffer:new({
     listed = false,
@@ -1161,6 +1181,7 @@ end
 ---@return NeoWarrior
 function NeoWarrior:list()
 
+  self:close_floats()
   self.current_task = nil
   self.buffer:option('wrap', false, { win = self.window.id })
 
@@ -1192,6 +1213,7 @@ function NeoWarrior:task(uuid)
 end
 
 function NeoWarrior:filter()
+  self:close_floats()
   local default_filter_input = self.current_filter or ""
   vim.ui.input({
     prompt = "Filter (ex: next project:neowarrior",
@@ -1208,6 +1230,7 @@ end
 
 --- Open telescope filter selection
 function NeoWarrior:filter_select()
+  self:close_floats()
   local opts = require("telescope.themes").get_dropdown({})
   local filters = self.config.filters
   for _, project in ipairs(self.all_projects:get()) do
@@ -1241,6 +1264,7 @@ function NeoWarrior:filter_select()
 end
 
 function NeoWarrior:report_select()
+  self:close_floats()
   local opts = require("telescope.themes").get_dropdown({})
   pickers
   .new(opts, {
