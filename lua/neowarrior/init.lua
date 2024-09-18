@@ -12,6 +12,7 @@ M.setup = function(opts)
 
 end
 
+M.open = function() neowarrior:open({ split = 'below' }) end
 M.open_current = function() neowarrior:open({ split = 'current' }) end
 M.open_below = function() neowarrior:open({ split = 'below' }) end
 M.open_above = function() neowarrior:open({ split = 'above' }) end
