@@ -99,8 +99,30 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
     ---@type boolean Show estimate. NOTE: This is not a default field in taskwarrior
     enable_estimate = true,
   },
-  ---@type boolean Whether to show the current filter at the top
-  enable_current_filter = true,
+  ---@type table Project line config. This is only used in tree view.
+  project_line = {
+    ---@type boolean Show task count
+    enable_task_count = true,
+    ---@type boolean Show average urgency
+    enable_average_urgency = true,
+    ---@type boolean Show total urgency
+    enable_total_urgency = false,
+    ---@type boolean Show total estimate
+    enable_total_estimate = true,
+  },
+  ---@type table Header config
+  header = {
+    ---@type string|nil Custom header text (disable with nil)
+    text = "NeoWarrior {version}",
+    ---@type boolean Whether to show help line
+    enable_help_line = true,
+    ---@type boolean Whether to show the current report at the top
+    enable_current_report = true,
+    ---@type boolean Whether to show the current view on the report line
+    enable_current_view = true,
+    ---@type boolean Whether to show the current filter at the top
+    enable_current_filter = true,
+  },
   ---@type string Default taskwarrior filter
   filter = "",
   ---@type string Default taskwarrior report
@@ -110,7 +132,7 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
   ---@type boolean Whether to expand all trees at start
   expanded = false,
   ---@type string Default project name for tasks without project
-  no_project_name = "No project defined",
+  no_project_name = "no-project",
   ---@type table Task float
   float = {
     ---@type boolean Enable floating window for tasks
@@ -118,7 +140,7 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
     ---@type number Max width of float in columns
     max_width = 60,
     ---@type number Time in milliseconds before detail float is shown
-    updatetime = 750
+    delay = 200,
   },
   ---@type table|nil Set config values for specific directories. Most
   --- config values from this file should work per dir basis too.
@@ -139,7 +161,7 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
     "priority.not:L", "priority:", "priority.not:", "project:",
     "project.not:",
   },
-  ---@type table Default key mappings
+  ---@type table Default key mappings. Disable all by setting keys to nil or false.
   keys = {
     help = { key = '?', desc = 'Help' },
     add = { key = 'a', desc = 'Add task' },
@@ -166,10 +188,14 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
   },
   ---@type table Default icons
   icons = {
+    tree_line = "│", --- NOTE: Not currently used
+    tree_item = "├", --- NOTE: Not currently used
+    tree_item_last = "└", --- NOTE: Not currently used
     task = "\u{f1db}",
     task_completed = "\u{f14a}",
     recur = "\u{f021}",
     project = "\u{f07b}",
+    project_open = "\u{f115}",
     warning = "\u{f071}",
     annotated = "\u{f1781}",
     start = "\u{f040a}",
