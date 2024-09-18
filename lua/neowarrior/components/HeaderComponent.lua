@@ -36,6 +36,7 @@ function HeaderComponent:get()
     local header_text = nw.config.header.text:gsub("{version}", nw.version)
     header:add({ text = header_text, color = "NeoWarriorTextHeader" })
     table.insert(lines, header)
+    line_no = line_no + 1
   end
 
   if nw.config.header.enable_help_line then
@@ -46,10 +47,11 @@ function HeaderComponent:get()
     help:add({ text = "(" .. keys.filter.key .. ")filter" })
     help:add({ meta = { action = 'help' }})
     table.insert(lines, help)
+    line_no = line_no + 1
   end
 
   if nw.config.header.enable_current_report then
-    local report = Line:new(line_no + 1)
+    local report = Line:new(line_no)
     report:add({ text = "(" .. keys.select_report.key .. ")report: " })
     report:add({
       text = "Report: " .. nw.current_report,
@@ -65,17 +67,19 @@ function HeaderComponent:get()
       end
     end
     table.insert(lines, report)
+    line_no = line_no + 1
   end
 
   if nw.config.header.enable_current_filter then
-    local filter = Line:new(line_no + 2)
+    local filter = Line:new(line_no)
     filter:add({ text = "(" .. keys.select_filter.key .. ")filter: " })
     filter:add({
       text = nw.current_filter,
       color = "NeoWarriorTextWarning"
     })
     filter:add({ meta = { action = 'filter' }})
-  table.insert(lines, filter)
+    table.insert(lines, filter)
+    line_no = line_no + 1
   end
 
   --- Add new line
