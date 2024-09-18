@@ -20,7 +20,7 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
 - Grouped and tree views (based on task project)
 - Customizable keymaps
 - Customizable reports and filters
-- Customize config per directory (uses `vim.uv.cwd()`)
+- Customize config per directory
 
 
 # Example config (lazy.nvim)
