@@ -26,10 +26,19 @@ return {
     ---@type boolean Show total estimate
     enable_total_estimate = true,
   },
-  ---@type boolean Whether to show the current filter at the top
-  enable_current_filter = true,
-  ---@type boolean Whether to show the current report at the top
-  enable_current_report = true,
+  ---@type table Header config
+  header = {
+    ---@type string|nil Custom header text (disable with nil)
+    text = "NeoWarrior {version}",
+    ---@type boolean Whether to show help line
+    enable_help_line = true,
+    ---@type boolean Whether to show the current report at the top
+    enable_current_report = true,
+    ---@type boolean Whether to show the current view on the report line
+    enable_current_view = true,
+    ---@type boolean Whether to show the current filter at the top
+    enable_current_filter = true,
+  },
   ---@type string Default taskwarrior filter
   filter = "",
   ---@type string Default taskwarrior report
@@ -38,10 +47,8 @@ return {
   mode = "normal",
   ---@type boolean Whether to expand all trees at start
   expanded = false,
-  ---FIX: not implemeted
   ---@type string Default project name for tasks without project
-  no_project_name = "No project defined",
-  ---FIX: not implemented
+  no_project_name = "no-project",
   ---@type table Task float
   float = {
     ---@type boolean Enable floating window for tasks
@@ -49,7 +56,7 @@ return {
     ---@type number Max width of float in columns
     max_width = 60,
     ---@type number Time in milliseconds before detail float is shown
-    updatetime = 750
+    delay = 200,
   },
   ---@type table|nil Set config values for specific directories. Most
   --- config values from this file should work per dir basis too.

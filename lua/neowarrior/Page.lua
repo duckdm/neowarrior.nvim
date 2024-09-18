@@ -9,6 +9,7 @@ local util = require('neowarrior.util')
 ---@field buffer Buffer
 ---@field add fun(self: Page, component: Component):Page
 ---@field add_line fun(self: Page, line: Line): Page
+---@field add_lines fun(self: Page, lines: Line[]): Page
 ---@field add_raw fun(self: Page, string: string, color: string):Page
 ---@field print fun(self: Page):Page
 ---@field get_line_count fun(self: Page):number
@@ -49,6 +50,17 @@ function Page:add_line(line)
   local line_component = Component:new()
   line_component:add({ line })
   self:add(line_component)
+
+  return self
+end
+
+--- Add line to page
+---@param lines Line[]
+function Page:add_lines(lines)
+
+  for _, line in ipairs(lines) do
+    self:add_line(line)
+  end
 
   return self
 end

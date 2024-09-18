@@ -62,7 +62,7 @@ end
 
 --- Get priority color
 ---@param priority string|nil
----@return string|nil
+---@return string
 Colors.get_priority_color = function(priority)
   if priority == "H" then
     return "NeoWarriorTextDanger"
@@ -73,7 +73,7 @@ Colors.get_priority_color = function(priority)
   if priority == "L" then
     return "NeoWarriorTextSuccess"
   end
-  return nil
+  return ""
 end
 
 return Colors

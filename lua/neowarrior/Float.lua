@@ -41,6 +41,8 @@ function Float:open()
     anchor = self.opt.anchor or 'NW',
     style = self.opt.style or 'minimal'
   })
+  self.page.buffer:option('wrap', true, { win = self.window.id })
+  self.page.buffer:option('linebreak', true, { win = self.window.id })
   self.page:print()
 
   return self
@@ -49,7 +51,10 @@ end
 --- Close float
 ---@return Float
 function Float:close()
-  self.window:close()
+  local win = self.window and self.window.id or nil
+  if win and vim.api.nvim_win_is_valid(win) then
+    self.window:close()
+  end
   return self
 end
 

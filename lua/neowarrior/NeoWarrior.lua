@@ -22,11 +22,13 @@ local ProjectLine = require('neowarrior.lines.ProjectLine')
 local util = require('neowarrior.util')
 
 ---@class NeoWarrior
+---@field public version string
 ---@field public config NeoWarrior.Config
 ---@field public user_config NeoWarrior.Config
 ---@field public buffer Buffer
 ---@field public window Window|nil
 ---@field public help_float Float|nil
+---@field public task_float Float|nil
 ---@field public tw Taskwarrior
 ---@field public tasks TaskCollection
 ---@field public all_tasks TaskCollection
@@ -70,12 +72,14 @@ function NeoWarrior:new()
     setmetatable(neowarrior, self)
     self.__index = self
 
+    neowarrior.version = "v0.0.2"
     neowarrior.config = nil
     neowarrior.user_config = nil
     neowarrior.buffer = nil
     neowarrior.window = nil
     neowarrior.help_float = nil
-    neowarrior.tw = Taskwarrior:new(self)
+    neowarrior.task_float = nil
+    neowarrior.tw = Taskwarrior:new(neowarrior or self)
     neowarrior.tasks = TaskCollection:new()
     neowarrior.all_tasks = TaskCollection:new()
     neowarrior.all_pending_tasks = TaskCollection:new()
@@ -118,6 +122,85 @@ function NeoWarrior:setup(config)
   self.config.default_report = self.config.report or "next"
 
   colors.set()
+
+  if self.config.float.enabled then
+    vim.api.nvim_create_autocmd('CursorMoved', {
+      group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
+      callback = function()
+        if self.task_float then
+          self.task_float:close()
+          self.task_float = nil
+        end
+      end,
+    })
+    vim.o.updatetime = self.config.float.delay
+    vim.api.nvim_create_autocmd('CursorHold', {
+      group = vim.api.nvim_create_augroup('neowarrior-cursor-hold', { clear = true }),
+      callback = function()
+        local line = vim.api.nvim_get_current_line()
+        local description = self.buffer:get_meta_data('description')
+        if description then
+          local uuid = self.buffer:get_meta_data('uuid')
+          local max_width = self.config.float.max_width
+          local win_width = vim.api.nvim_win_get_width(0)
+          local width = max_width
+          local anchor = 'SW'
+          local row = 0
+          if self.buffer:get_cursor()[1] <= 10 then
+            anchor = 'NW'
+            row = 1
+          end
+          if win_width < max_width then
+            width = win_width
+          end
+
+          if uuid then
+
+            local task = self.tw:task(uuid)
+            local project = self.all_projects:find(task.project)
+
+            local float_buffer = Buffer:new({
+              listed = false,
+              scratch = true,
+            })
+            local page = Page:new(float_buffer)
+            page:add_line(ProjectLine:new(self, 0, project, {
+              disable_meta = true,
+            }))
+            page:add_line(TaskLine:new(self, 0, task, {
+              disable_meta = true,
+              disable_due = true,
+              disable_estimate = true,
+            }))
+            page:add_raw(' ', '')
+            page:add_raw('Urgency: ' .. task.urgency, colors.get_urgency_color(task.urgency))
+            if task.priority then
+              local priority_color = colors.get_priority_color(task.priority)
+              page:add_raw('Priority: ' .. task.priority, priority_color)
+            end
+            if task.due then
+              local due_relative = task.due:relative()
+              local due_formatted = task.due:default_format()
+              page:add_raw('Due: ' .. due_relative .. " (" .. due_formatted .. ")", colors.get_due_color(due_relative))
+            end
+            if task.estimate then
+              page:add_raw('Estimate: ' .. task.estimate_string, colors.get_urgency_color(task.estimate))
+            end
+            self.task_float = Float:new(self, page, {
+              relative = 'cursor',
+              width = width,
+              col = 0,
+              row = row,
+              enter = false,
+              anchor = anchor,
+            })
+            self.task_float:open()
+
+          end
+        end
+      end,
+    })
+  end
 
   return self
 end
@@ -190,15 +273,31 @@ function NeoWarrior:generate_project_collection_from_tasks(tasks)
 
   for _, task in ipairs(tasks:get()) do
 
-    if task.project then
+    local project_name = self.config.no_project_name
+    local project_id = ""
 
-      local project = project_collection:find(task.project)
+    if task.project and task.project ~= "" then
+
+      project_name = task.project
+      project_id = task.project
+
+    end
+
+    if project_name then
+
+      local project = project_collection:find(project_name)
 
       if not project then
-        project = Project:new({ name = task.project })
+
+        project = Project:new({
+          id = project_id,
+          name = project_name
+        })
+
       end
 
       local task_in_project = project.tasks:find(task.uuid)
+
       if not task_in_project then
         project.tasks:add(task)
       end
@@ -309,7 +408,7 @@ function NeoWarrior:mark_done()
     return nil
   end
 
-  local task = Taskwarrior:task(uuid)
+  local task = self.tw:task(uuid)
   local is_dependency = self.buffer:get_meta_data("dependency")
   local is_parent = self.buffer:get_meta_data("parent")
 
@@ -317,14 +416,14 @@ function NeoWarrior:mark_done()
 
     if is_dependency then
 
-      -- TODO: remove dependency
+      -- TODO: remove dependency not implemented
 
     elseif uuid then
 
       local choice = vim.fn.confirm("Are you sure you want to mark this task done?\n[" .. task.description .. "]\n", "Yes\nNo", 1, "question")
 
       if choice == 1 then
-        Taskwarrior:done(task)
+        self.tw:done(task)
       end
     end
 
@@ -621,24 +720,26 @@ function NeoWarrior:set_keymaps()
     else
       uuid = self.buffer:get_meta_data('uuid')
     end
-    local task = self.tw:task(uuid)
-    self.buffer:save_cursor()
-    local prompt = "Task due date: "
-    vim.ui.input({
-      prompt = prompt,
-      cancelreturn = nil,
-    }, function(input)
-      if input then
-        self.tw:modify(task, "due:" .. input)
-        if self.current_task then
-          self:task(self.current_task.uuid)
-        else
-          self:refresh()
-          self:list()
+    if uuid then
+      local task = self.tw:task(uuid)
+      self.buffer:save_cursor()
+      local prompt = "Task due date: "
+      vim.ui.input({
+        prompt = prompt,
+        cancelreturn = nil,
+      }, function(input)
+        if input then
+          self.tw:modify(task, "due:" .. input)
+          if self.current_task then
+            self:task(self.current_task.uuid)
+          else
+            self:refresh()
+            self:list()
+          end
         end
-      end
-    end)
-    Buffer.restore_cursor()
+      end)
+      self.buffer:restore_cursor()
+    end
   end, default_keymap_opts)
 
   --- Modify task
@@ -699,12 +800,12 @@ function NeoWarrior:start_stop()
   local task = nil
 
   if uuid then
-    task = Taskwarrior:task(uuid)
+    task = self.tw:task(uuid)
   end
 
   if task and task.start then
 
-    Taskwarrior:stop(task)
+    self.tw:stop(task)
 
     if self.current_task then
       self:task(self.current_task.uuid)
@@ -716,7 +817,7 @@ function NeoWarrior:start_stop()
 
   elseif task then
 
-    Taskwarrior:start(task)
+    self.tw:start(task)
     self:task(task.uuid)
 
   end
@@ -914,6 +1015,10 @@ function NeoWarrior:list()
   self.current_task = nil
   self.buffer:option('wrap', false, { win = self.window.id })
 
+  if self.current_filter:find("project:" .. self.config.no_project_name) then
+    self.current_filter = self.current_filter:gsub("project:" .. self.config.no_project_name, "project:")
+  end
+
   Page:new(self.buffer)
     :add(HeaderComponent:new(self))
     :add(ListComponent:new(self, self.tasks))
@@ -930,7 +1035,7 @@ function NeoWarrior:task(uuid)
 
   self.buffer:save_cursor()
 
-  local task = Taskwarrior:task(uuid)
+  local task = self.tw:task(uuid)
   local task_page = TaskPage:new(self, task)
   task_page:print(self.buffer)
   self.current_task = task

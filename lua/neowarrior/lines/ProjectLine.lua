@@ -37,6 +37,8 @@ function ProjectLine:get_project_line(arg)
   local open = arg.open or false
   local icon = open and conf.icons.project_open or conf.icons.project
   local name = self.project.name
+  local disable_meta = arg.disable_meta or false
+
   if arg.id_as_name then
     name = self.project.id
   end
@@ -74,11 +76,13 @@ function ProjectLine:get_project_line(arg)
     })
   end
 
-  line:add({
-    meta = {
-      project = self.project.id,
-    },
-  })
+  if not disable_meta then
+    line:add({
+      meta = {
+        project = self.project.id,
+      },
+    })
+  end
 
   return line
 end

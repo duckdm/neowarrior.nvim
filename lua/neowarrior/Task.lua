@@ -34,11 +34,10 @@ function Task:new(neowarrior, task_data)
   setmetatable(data, self)
   self.__index = self
 
-  data.neowarrior = neowarrior
   data.id = task_data.id or nil
   data.status = task_data.status or nil
   data.description = task_data.description or nil
-  data.project = task_data.project or nil
+  data.project = task_data.project or neowarrior.config.no_project_name
   data.priority = task_data.priority or nil
   data.tags = task_data.tags or nil
   data.uuid = task_data.uuid or nil

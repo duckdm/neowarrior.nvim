@@ -105,6 +105,7 @@ function TaskLine:get_task_line(arg)
     urgency = urgency_val,
     due = due,
     estimate = self.task.estimate,
+    status = self.task.status or "pending",
   }
 
   if meta then
