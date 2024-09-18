@@ -4,8 +4,12 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
 
 # Requirements
 
+- [Neovim v0.10.0](https://github.com/neovim/neovim/releases/tag/v0.10.0)
 - [Taskwarrior](https://taskwarrior.org/)
-- A nerd font for the icons (JetBrainsMono Nerd Font in the screenshot)
+
+## Optional
+
+- A nerd font is highly recommended for the icons. Se config for setting custom icons.
 
 # Features
 
