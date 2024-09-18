@@ -19,6 +19,7 @@ local Project = require('neowarrior.Project')
 local ProjectCollection = require('neowarrior.ProjectCollection')
 local ProjectLine = require('neowarrior.lines.ProjectLine')
 local util = require('neowarrior.util')
+local Line = require('neowarrior.Line')
 
 ---@class NeoWarrior
 ---@field public version string
@@ -41,7 +42,9 @@ local util = require('neowarrior.util')
 ---@field public current_filter string
 ---@field public current_report string
 ---@field public current_mode string
+---@field public key_descriptions table
 ---@field public current_task Task
+---@field public keys table
 ---@field public new fun(self: NeoWarrior): NeoWarrior
 ---@field public setup fun(self: NeoWarrior, config: NeoWarrior.Config): NeoWarrior
 ---@field public init fun(self: NeoWarrior): NeoWarrior
@@ -92,6 +95,59 @@ function NeoWarrior:new()
     neowarrior.current_report = nil
     neowarrior.current_mode = nil
     neowarrior.current_task = nil
+    neowarrior.keys = {
+      {
+        name = nil,
+        keys = {
+          { key = 'help', sort = 0, desc = 'Help' },
+          { key = 'close_help', sort = 1, desc = 'Close help' },
+        }
+      },
+
+      {
+        name = "Task actions",
+        keys = {
+          { key = 'add', sort = 10, desc = 'Add task' },
+          { key = 'enter', sort = 11, desc = 'Show task/Activate line action' },
+          { key = 'back', sort = 12, desc = 'Back' },
+          { key = 'done', sort = 13, desc = 'Mark task done' },
+          { key = 'start', sort = 14, desc = 'Start task' },
+          { key = 'modify', sort = 15, desc = 'Modify task' },
+          { key = 'modify_select_project', sort = 16, desc = 'Modify project' },
+          { key = 'modify_select_priority', sort = 17, desc = 'Modify priority' },
+          { key = 'modify_due', sort = 18, desc = 'Modify due date' },
+          { key = 'select_dependency', sort = 19, desc = 'Select dependency' },
+        },
+      },
+
+      {
+        name = 'Reports and filters',
+        keys = {
+          { key = 'select_report', sort = 30, desc = 'Select report' },
+          { key = 'select_filter', sort = 31, desc = 'Select filter' },
+          { key = 'filter', sort = 32, desc = 'Filter input' },
+          { key = 'reset', sort = 33, desc = 'Reset filter and report' },
+        },
+      },
+
+      {
+        name = 'Views',
+        keys = {
+          { key = 'toggle_group_view', sort = 33, desc = 'Toggle grouped view' },
+          { key = 'toggle_tree_view', sort = 34, desc = 'Toggle tree view' },
+          { key = 'collapse_all', sort = 35, desc = 'Collapse all trees' },
+          { key = 'expand_all', sort = 36, desc = 'Expand all trees' },
+          { key = 'toggle_tree', sort = 37, desc = 'Toggle tree' },
+        }
+      },
+
+      {
+        name = 'Other',
+        keys = {
+          { key = 'refresh', sort = 50, desc = 'Refresh data' },
+        }
+      }
+    }
 
     return neowarrior
 end
@@ -492,38 +548,52 @@ function NeoWarrior:set_keymaps()
   }
 
   -- Add new task or annotation (annotation when on task page)
-  vim.keymap.set("n", self.config.keys.add.key, function()
-    self:add()
-  end, default_keymap_opts)
+  if self.config.keys.add then
+    vim.keymap.set("n", self.config.keys.add, function()
+      self:add()
+    end, default_keymap_opts)
+  end
 
   -- Show help float
-  vim.keymap.set("n", self.config.keys.help.key, function()
-    self:open_help()
-  end, default_keymap_opts)
+  if self.config.keys.help then
+    vim.keymap.set("n", self.config.keys.help, function()
+      self:open_help()
+    end, default_keymap_opts)
+  end
 
   -- Close help float
-  vim.keymap.set("n", self.config.keys.close_help.key, function()
-    self:close_help()
-  end, default_keymap_opts)
+  if self.config.keys.close_help then
+    vim.keymap.set("n", self.config.keys.close_help, function()
+      self:close_help()
+    end, default_keymap_opts)
+  end
 
   -- Mark task complete/done
-  vim.keymap.set("n", self.config.keys.done.key, function()
-    self:mark_done()
-  end, default_keymap_opts)
+  if self.config.keys.done then
+    vim.keymap.set("n", self.config.keys.done, function()
+      self:mark_done()
+    end, default_keymap_opts)
+  end
 
   -- Start task
-  vim.keymap.set("n", self.config.keys.start.key, function()
-    self:start_stop()
-  end, default_keymap_opts)
+  if self.config.keys.start then
+    vim.keymap.set("n", self.config.keys.start, function()
+      self:start_stop()
+    end, default_keymap_opts)
+  end
 
-  vim.keymap.set("n", self.config.keys.reset.key, function()
-    self.current_filter = self.config.default_filter
-    self.current_report = self.config.default_report
-    self:refresh()
-    self:list()
-  end, default_keymap_opts)
+  -- Reset filtera and report
+  if self.config.keys.reset then
+    vim.keymap.set("n", self.config.keys.reset, function()
+      self.current_filter = self.config.default_filter
+      self.current_report = self.config.default_report
+      self:refresh()
+      self:list()
+    end, default_keymap_opts)
+  end
 
-  vim.keymap.set("n", self.config.keys.toggle_tree_view.key, function()
+  -- Toggle tree view
+  vim.keymap.set("n", self.config.keys.toggle_tree_view, function()
     if self.current_mode == 'tree' then
       self.current_mode = 'normal'
     else
@@ -532,138 +602,55 @@ function NeoWarrior:set_keymaps()
     self:list()
   end, default_keymap_opts)
 
-  vim.keymap.set("n", self.config.keys.toggle_group_view.key, function()
-    if self.current_mode == 'grouped' then
-      self.current_mode = 'normal'
-    else
-      self.current_mode = 'grouped'
-    end
-    self:list()
-  end, default_keymap_opts)
-
-  -- Select task dependency
-  vim.keymap.set("n", self.config.keys.select_dependency.key, function()
-    self:refresh()
-    local uuid = nil
-    local task = nil
-    if self.current_task then
-      uuid = self.current_task.uuid
-    else
-      uuid = self.buffer:get_meta_data('uuid')
-    end
-    if not uuid then
-      return
-    end
-    task = self.tw:task(uuid)
-    local telescope_opts = require("telescope.themes").get_dropdown({})
-    pickers.new(telescope_opts, {
-      prompt_title = "Select dependency",
-      finder = finders.new_table({
-        results = self.all_pending_tasks:get(),
-        entry_maker = function(entry)
-          local task_line = TaskLine:new(self, 0, entry, {})
-          return {
-            value = entry,
-            display = task_line.text,
-            ordinal = task_line.text,
-          }
-        end,
-      }),
-      sorter = conf.generic_sorter(telescope_opts),
-      attach_mappings = function(prompt_bufnr)
-        actions.select_default:replace(function()
-          actions.close(prompt_bufnr)
-          local selection = action_state.get_selected_entry()
-          if task then
-            self.tw:add_dependency(task, selection.value.uuid)
-            self:refresh()
-            self:list()
-          end
-        end)
-        return true
-      end,
-    })
-    :find()
-  end, default_keymap_opts)
-
-  -- Toggle tree node
-  vim.keymap.set("n", self.config.keys.toggle_tree.key, function()
-    self.buffer:save_cursor()
-    local project_id = self.buffer:get_meta_data('project')
-    if project_id then
-      if self.toggled_trees[project_id] then
-        self.toggled_trees[project_id] = false
+  -- Toggle grouped view
+  if self.config.keys.toggle_group_view then
+    vim.keymap.set("n", self.config.keys.toggle_group_view, function()
+      if self.current_mode == 'grouped' then
+        self.current_mode = 'normal'
       else
-        self.toggled_trees[project_id] = true
+        self.current_mode = 'grouped'
       end
       self:list()
-    end
-    self.buffer:restore_cursor()
-  end, default_keymap_opts)
+    end, default_keymap_opts)
+  end
 
-  vim.keymap.set("n", self.config.keys.expand_all.key, function()
-    self.buffer:save_cursor()
-    for _, project in ipairs(self.all_projects:get()) do
-      self.toggled_trees[project.id] = true
-    end
-    self:list()
-    self.buffer:restore_cursor()
-  end, default_keymap_opts)
-
-  vim.keymap.set("n", self.config.keys.collapse_all.key, function()
-    self.buffer:save_cursor()
-    self.toggled_trees = {}
-    self:list()
-    self.buffer:restore_cursor()
-  end, default_keymap_opts)
-
-  -- Show task
-  vim.keymap.set("n", "<CR>", function()
-    self:show()
-  end, default_keymap_opts)
-  vim.keymap.set("n", self.config.keys.enter.key, function()
-    self:show()
-  end, default_keymap_opts)
-
-  vim.keymap.set("n", self.config.keys.modify_select_project.key, function()
-    local uuid = nil
-    if self.current_task then
-      uuid = self.current_task.uuid
-    else
-      uuid = self.buffer:get_meta_data('uuid')
-    end
-    if uuid then
-      local task = self.tw:task(uuid)
+  -- Select task dependency
+  if self.config.keys.select_dependency then
+    vim.keymap.set("n", self.config.keys.select_dependency, function()
+      self:refresh()
+      local uuid = nil
+      local task = nil
+      if self.current_task then
+        uuid = self.current_task.uuid
+      else
+        uuid = self.buffer:get_meta_data('uuid')
+      end
+      if not uuid then
+        return
+      end
+      task = self.tw:task(uuid)
       local telescope_opts = require("telescope.themes").get_dropdown({})
-      pickers
-      .new(telescope_opts, {
-        prompt_title = "Set task project",
+      pickers.new(telescope_opts, {
+        prompt_title = "Select dependency",
         finder = finders.new_table({
-          results = self.all_projects:get(),
+          results = self.all_pending_tasks:get(),
           entry_maker = function(entry)
-            local project_line = ProjectLine:new(self, 0, entry, {})
+            local task_line = TaskLine:new(self, 0, entry, {})
             return {
-              value = entry.id,
-              display = project_line.text,
-              ordinal = project_line.text,
+              value = entry,
+              display = task_line.text,
+              ordinal = task_line.text,
             }
           end,
         }),
         sorter = conf.generic_sorter(telescope_opts),
         attach_mappings = function(prompt_bufnr)
           actions.select_default:replace(function()
-            local prompt = action_state.get_current_picker(prompt_bufnr):_get_prompt()
             actions.close(prompt_bufnr)
             local selection = action_state.get_selected_entry()
-            local mod_project = prompt
-            if selection and selection.value then
-              mod_project = selection.value
-            end
-            self.tw:modify(task, "project:" .. mod_project)
-            self:refresh()
-            if self.current_task then
-              self:task(self.current_task.uuid)
-            else
+            if task then
+              self.tw:add_dependency(task, selection.value.uuid)
+              self:refresh()
               self:list()
             end
           end)
@@ -671,125 +658,248 @@ function NeoWarrior:set_keymaps()
         end,
       })
       :find()
-    end
-  end, default_keymap_opts)
+    end, default_keymap_opts)
+  end
 
-  vim.keymap.set("n", self.config.keys.modify_select_priority.key, function()
-    local uuid = nil
-    if self.current_task then
-      uuid = self.current_task.uuid
-    else
-      uuid = self.buffer:get_meta_data('uuid')
-    end
-    if uuid then
-      local task = self.tw:task(uuid)
-      local telescope_opts = require("telescope.themes").get_dropdown({})
-      pickers
-      .new(telescope_opts, {
-        prompt_title = "Set task priority",
-        finder = finders.new_table({
-          results = { "H", "M", "L", "None" },
-        }),
-        sorter = conf.generic_sorter(telescope_opts),
-        attach_mappings = function(prompt_bufnr)
-          actions.select_default:replace(function()
-            local prompt = action_state.get_current_picker(prompt_bufnr):_get_prompt()
-            actions.close(prompt_bufnr)
-            local selection = action_state.get_selected_entry()
-            local mod_priority = prompt
-            if selection and selection[1] then
-              mod_priority = selection[1]
-            end
-            if (mod_priority == "H") or (mod_priority == "M") or (mod_priority == "L") then
-              self.tw:modify(task, "priority:" .. mod_priority)
-            else
-              self.tw:modify(task, "priority:")
-            end
-            self:refresh()
-            if self.current_task then
-              self:task(self.current_task.uuid)
-            else
-              self:list()
-            end
-          end)
-          return true
-        end,
-      })
-      :find()
-    end
-  end, default_keymap_opts)
+  -- Toggle tree node
+  if self.config.keys.toggle_tree then
+    vim.keymap.set("n", self.config.keys.toggle_tree, function()
+      self.buffer:save_cursor()
+      local project_id = self.buffer:get_meta_data('project')
+      if project_id then
+        if self.toggled_trees[project_id] then
+          self.toggled_trees[project_id] = false
+        else
+          self.toggled_trees[project_id] = true
+        end
+        self:list()
+      end
+      self.buffer:restore_cursor()
+    end, default_keymap_opts)
+  end
+
+  -- Expand all trees
+  if self.config.keys.expand_all then
+    vim.keymap.set("n", self.config.keys.expand_all, function()
+      self.buffer:save_cursor()
+      for _, project in ipairs(self.all_projects:get()) do
+        self.toggled_trees[project.id] = true
+      end
+      self:list()
+      self.buffer:restore_cursor()
+    end, default_keymap_opts)
+  end
+
+  --- Collapse all tree nodes
+  if self.config.keys.collapse_all then
+    vim.keymap.set("n", self.config.keys.collapse_all, function()
+      self.buffer:save_cursor()
+      self.toggled_trees = {}
+      self:list()
+      self.buffer:restore_cursor()
+    end, default_keymap_opts)
+  end
+
+  -- Show task
+  if self.config.keys.enter then
+    vim.keymap.set("n", "<CR>", function()
+      self:show()
+    end, default_keymap_opts)
+    vim.keymap.set("n", self.config.keys.enter, function()
+      self:show()
+    end, default_keymap_opts)
+  end
+
+  -- Modify task project
+  if self.config.keys.modify_select_project then
+    vim.keymap.set("n", self.config.keys.modify_select_project, function()
+      local uuid = nil
+      if self.current_task then
+        uuid = self.current_task.uuid
+      else
+        uuid = self.buffer:get_meta_data('uuid')
+      end
+      if uuid then
+        local task = self.tw:task(uuid)
+        local telescope_opts = require("telescope.themes").get_dropdown({})
+        pickers
+        .new(telescope_opts, {
+          prompt_title = "Set task project",
+          finder = finders.new_table({
+            results = self.all_projects:get(),
+            entry_maker = function(entry)
+              local project_line = ProjectLine:new(self, 0, entry, {})
+              return {
+                value = entry.id,
+                display = project_line.text,
+                ordinal = project_line.text,
+              }
+            end,
+          }),
+          sorter = conf.generic_sorter(telescope_opts),
+          attach_mappings = function(prompt_bufnr)
+            actions.select_default:replace(function()
+              local prompt = action_state.get_current_picker(prompt_bufnr):_get_prompt()
+              actions.close(prompt_bufnr)
+              local selection = action_state.get_selected_entry()
+              local mod_project = prompt
+              if selection and selection.value then
+                mod_project = selection.value
+              end
+              self.tw:modify(task, "project:" .. mod_project)
+              self:refresh()
+              if self.current_task then
+                self:task(self.current_task.uuid)
+              else
+                self:list()
+              end
+            end)
+            return true
+          end,
+        })
+        :find()
+      end
+    end, default_keymap_opts)
+  end
+
+  --- Modify task priority
+  if self.config.keys.modify_select_priority then
+    vim.keymap.set("n", self.config.keys.modify_select_priority, function()
+      local uuid = nil
+      if self.current_task then
+        uuid = self.current_task.uuid
+      else
+        uuid = self.buffer:get_meta_data('uuid')
+      end
+      if uuid then
+        local task = self.tw:task(uuid)
+        local telescope_opts = require("telescope.themes").get_dropdown({})
+        pickers
+        .new(telescope_opts, {
+          prompt_title = "Set task priority",
+          finder = finders.new_table({
+            results = { "H", "M", "L", "None" },
+          }),
+          sorter = conf.generic_sorter(telescope_opts),
+          attach_mappings = function(prompt_bufnr)
+            actions.select_default:replace(function()
+              local prompt = action_state.get_current_picker(prompt_bufnr):_get_prompt()
+              actions.close(prompt_bufnr)
+              local selection = action_state.get_selected_entry()
+              local mod_priority = prompt
+              if selection and selection[1] then
+                mod_priority = selection[1]
+              end
+              if (mod_priority == "H") or (mod_priority == "M") or (mod_priority == "L") then
+                self.tw:modify(task, "priority:" .. mod_priority)
+              else
+                self.tw:modify(task, "priority:")
+              end
+              self:refresh()
+              if self.current_task then
+                self:task(self.current_task.uuid)
+              else
+                self:list()
+              end
+            end)
+            return true
+          end,
+        })
+        :find()
+      end
+    end, default_keymap_opts)
+  end
 
   --- Modify task due date
-  vim.keymap.set("n", self.config.keys.modify_due.key, function()
-    local uuid = nil
-    if self.current_task then
-      uuid = self.current_task.uuid
-    else
-      uuid = self.buffer:get_meta_data('uuid')
-    end
-    if uuid then
-      local task = self.tw:task(uuid)
-      self.buffer:save_cursor()
-      local prompt = "Task due date: "
-      vim.ui.input({
-        prompt = prompt,
-        cancelreturn = nil,
-      }, function(input)
-        if input then
-          self.tw:modify(task, "due:" .. input)
-          if self.current_task then
-            self:task(self.current_task.uuid)
-          else
-            self:refresh()
-            self:list()
+  if self.config.keys.modify_due then
+    vim.keymap.set("n", self.config.keys.modify_due, function()
+      local uuid = nil
+      if self.current_task then
+        uuid = self.current_task.uuid
+      else
+        uuid = self.buffer:get_meta_data('uuid')
+      end
+      if uuid then
+        local task = self.tw:task(uuid)
+        self.buffer:save_cursor()
+        local prompt = "Task due date: "
+        vim.ui.input({
+          prompt = prompt,
+          cancelreturn = nil,
+        }, function(input)
+          if input then
+            self.tw:modify(task, "due:" .. input)
+            if self.current_task then
+              self:task(self.current_task.uuid)
+            else
+              self:refresh()
+              self:list()
+            end
           end
-        end
-      end)
-      self.buffer:restore_cursor()
-    end
-  end, default_keymap_opts)
+        end)
+        self.buffer:restore_cursor()
+      end
+    end, default_keymap_opts)
+  end
 
   --- Modify task
-  vim.keymap.set("n", self.config.keys.modify.key, function()
-    local uuid = nil
-    if self.current_task then
-      uuid = self.current_task.uuid
-    else
-      uuid = self.buffer:get_meta_data('uuid')
-    end
-    if uuid then
-      local task = self.tw:task(uuid)
-      self.buffer:save_cursor()
-      local prompt = 'Modify task ("description" due:21hours etc): '
-      vim.ui.input({
-        prompt = prompt,
-        default = '"' .. task.description .. '"',
-        cancelreturn = nil,
-      }, function(input)
-        if input then
-          self.tw:modify(task, input)
-          if self.current_task then
-            self:task(self.current_task.uuid)
-          else
-            self:refresh()
-            self:list()
+  if self.config.keys.modify then
+    vim.keymap.set("n", self.config.keys.modify, function()
+      local uuid = nil
+      if self.current_task then
+        uuid = self.current_task.uuid
+      else
+        uuid = self.buffer:get_meta_data('uuid')
+      end
+      if uuid then
+        local task = self.tw:task(uuid)
+        self.buffer:save_cursor()
+        local prompt = 'Modify task ("description" due:21hours etc): '
+        vim.ui.input({
+          prompt = prompt,
+          default = '"' .. task.description .. '"',
+          cancelreturn = nil,
+        }, function(input)
+          if input then
+            self.tw:modify(task, input)
+            if self.current_task then
+              self:task(self.current_task.uuid)
+            else
+              self:refresh()
+              self:list()
+            end
           end
-        end
-      end)
-      self.buffer:restore_cursor()
-    end
-  end, default_keymap_opts)
+        end)
+        self.buffer:restore_cursor()
+      end
+    end, default_keymap_opts)
+  end
 
   -- Back to list/refresh
-  vim.keymap.set("n", '<Esc>', function() self:list() end, default_keymap_opts)
-  vim.keymap.set("n", self.config.keys.back.key, function() self:list() end, default_keymap_opts)
+  if self.config.keys.back then
+    vim.keymap.set("n", '<Esc>', function() self:list() end, default_keymap_opts)
+    vim.keymap.set("n", self.config.keys.back, function() self:list() end, default_keymap_opts)
+  end
 
-  vim.keymap.set("n", self.config.keys.filter.key, '<Cmd>NeoWarriorFilter<CR>', default_keymap_opts)
-  vim.keymap.set("n", self.config.keys.select_filter.key, '<Cmd>NeoWarriorFilterSelect<CR>', default_keymap_opts)
+  -- Filter tasks
+  if self.config.keys.filter then
+    vim.keymap.set("n", self.config.keys.filter, '<Cmd>NeoWarriorFilter<CR>', default_keymap_opts)
+  end
 
-  vim.keymap.set("n", self.config.keys.select_report.key, '<Cmd>NeoWarriorReportSelect<CR>', default_keymap_opts)
+  -- Select filter
+  if self.config.keys.select_filter then
+    vim.keymap.set("n", self.config.keys.select_filter, '<Cmd>NeoWarriorFilterSelect<CR>', default_keymap_opts)
+  end
 
-  vim.keymap.set("n", self.config.keys.refresh.key, '<Cmd>NeoWarriorRefresh<CR>', default_keymap_opts)
+  -- Select report
+  if self.config.keys.select_report then
+    vim.keymap.set("n", self.config.keys.select_report, '<Cmd>NeoWarriorReportSelect<CR>', default_keymap_opts)
+  end
+
+  -- Refresh tasks
+  if self.config.keys.refresh then
+    vim.keymap.set("n", self.config.keys.refresh, '<Cmd>NeoWarriorRefresh<CR>', default_keymap_opts)
+  end
 
 end
 
@@ -836,28 +946,55 @@ end
 ---@return Float help_float
 function NeoWarrior:open_help()
 
-  local width = 40;
-  local keys_array = {}
 
-  -- Sort keymaps
-  for _, value in pairs(self.config.keys) do
-    table.insert(keys_array, { key = value.key, desc = value.desc })
-  end
-  table.sort(keys_array, function(a, b)
-    return string.lower(a.key) < string.lower(b.key)
-  end)
-
-  local win_width = self.window:get_width()
   local page = Page:new(Buffer:new({
     listed = false,
     scratch = true,
   }))
 
-  for _, key in ipairs(keys_array) do
-    local key_string = string.format("%6s -> %s", key.key, key.desc)
-    page:add_raw(key_string, '')
+  local width = 0
+  local win_width = self.window:get_width()
+  local pad = 0
+  local key_length = 0
+  local sep_length = 4
+  local desc_length = 0
+
+  for _, value in pairs(self.config.keys) do
+    local len = string.len(value)
+    if string.len(value) > pad then
+      key_length = len
+      pad = len
+    end
   end
 
+  pad = pad + 2
+
+  page:add_raw(' ', '')
+
+  for _, group in ipairs(self.keys) do
+
+    if group.name then
+      page:add_raw(string.format("%" .. pad + 4 .. "s", " ") .. group.name, 'NeoWarriorTextInfo')
+    end
+
+    for _, key in ipairs(group.keys) do
+      local conf_key = self.config.keys[key.key]
+      local key_line = Line:new(0)
+      key_line:add({ text = string.format("%" .. pad .. "s", conf_key), color = 'NeoWarriorTextInfo' })
+      key_line:add({ text = " -> " .. key.desc, color = '' })
+      page:add_line(key_line)
+
+      if string.len(key.desc) > desc_length then
+        desc_length = string.len(key.desc)
+      end
+    end
+
+    page:add_raw(' ', '')
+
+  end
+
+  width = key_length + sep_length + desc_length + 4
+  print(width)
   self.help_float = Float:new(self, page, {
     title = 'NeoWarrior help',
     width = width,

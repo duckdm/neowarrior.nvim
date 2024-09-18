@@ -71,7 +71,7 @@ end
 ---@return Page
 function Page:add_raw(string, color)
 
-  local line = Line:new(self.line_count):add({ text = string, color = color })
+  local line = Line:new(0):add({ text = string, color = color })
   local raw = Component:new()
   raw.type = 'RawComponent: ' .. string
   raw:add({ line })

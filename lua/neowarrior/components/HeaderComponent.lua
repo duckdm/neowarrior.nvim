@@ -41,10 +41,10 @@ function HeaderComponent:get()
 
   if nw.config.header.enable_help_line then
     local help = Line:new(line_no)
-    help:add({ text = "(" .. keys.help.key .. ")help | " })
-    help:add({ text = "(" .. keys.add.key .. ")add | " })
-    help:add({ text = "(" .. keys.done.key .. ")done | " })
-    help:add({ text = "(" .. keys.filter.key .. ")filter" })
+    help:add({ text = "(" .. keys.help .. ")help | " })
+    help:add({ text = "(" .. keys.add .. ")add | " })
+    help:add({ text = "(" .. keys.done .. ")done | " })
+    help:add({ text = "(" .. keys.filter .. ")filter" })
     help:add({ meta = { action = 'help' }})
     table.insert(lines, help)
     line_no = line_no + 1
@@ -52,7 +52,7 @@ function HeaderComponent:get()
 
   if nw.config.header.enable_current_report then
     local report = Line:new(line_no)
-    report:add({ text = "(" .. keys.select_report.key .. ")report: " })
+    report:add({ text = "(" .. keys.select_report .. ")report: " })
     report:add({
       text = "Report: " .. nw.current_report,
       color = "NeoWarriorTextInfo"
@@ -72,7 +72,7 @@ function HeaderComponent:get()
 
   if nw.config.header.enable_current_filter then
     local filter = Line:new(line_no)
-    filter:add({ text = "(" .. keys.select_filter.key .. ")filter: " })
+    filter:add({ text = "(" .. keys.select_filter .. ")filter: " })
     filter:add({
       text = nw.current_filter,
       color = "NeoWarriorTextWarning"
