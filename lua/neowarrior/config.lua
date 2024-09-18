@@ -1,4 +1,3 @@
----FIX: test all these
 ---@alias NeoWarrior.Config table
 ---@type NeoWarrior.Config
 return {
