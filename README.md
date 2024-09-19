@@ -206,6 +206,8 @@ require('neowarrior').focus()
     ---@type number Time in milliseconds before detail float is shown
     delay = 200,
   },
+  ---@type number Timezone offset in hours
+  time_offset = 0,
   ---@type table|nil Set config values for specific directories. Most
   --- config values from this file should work per dir basis too.
   dir_setup = nil,
