@@ -558,15 +558,11 @@ function NeoWarrior:create_user_commands()
   end, {})
 
   vim.api.nvim_create_user_command("NeoWarriorFilterSelect", function()
-    self.buffer:save_cursor()
     self:filter_select()
-    self.buffer:restore_cursor()
   end, {})
 
   vim.api.nvim_create_user_command("NeoWarriorReportSelect", function()
-    self.buffer:save_cursor()
     self:report_select()
-    self.buffer:restore_cursor()
   end, {})
 
   vim.api.nvim_create_user_command("NeoWarriorRefresh", function()
@@ -1268,6 +1264,7 @@ end
 
 --- Open telescope filter selection
 function NeoWarrior:filter_select()
+  self.buffer:save_cursor()
   self:close_floats()
   local opts = require("telescope.themes").get_dropdown({})
   local filters = self.config.filters
@@ -1294,6 +1291,7 @@ function NeoWarrior:filter_select()
         self.current_filter = new_filter
         self:refresh()
         self:list()
+        self.buffer:restore_cursor()
       end)
       return true
     end,
@@ -1302,6 +1300,7 @@ function NeoWarrior:filter_select()
 end
 
 function NeoWarrior:report_select()
+  self.buffer:save_cursor()
   self:close_floats()
   local opts = require("telescope.themes").get_dropdown({})
   pickers
@@ -1318,6 +1317,7 @@ function NeoWarrior:report_select()
         self.current_report = selection[1]
         self:refresh()
         self:list()
+        self.buffer:restore_cursor()
       end)
       return true
     end,
