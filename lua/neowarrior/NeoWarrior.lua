@@ -663,6 +663,7 @@ function NeoWarrior:set_keymaps()
   -- Select task dependency
   if self.config.keys.select_dependency then
     vim.keymap.set("n", self.config.keys.select_dependency, function()
+      self.buffer:save_cursor()
       self:close_floats()
       self:refresh()
       local uuid = nil
