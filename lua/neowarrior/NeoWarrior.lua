@@ -66,6 +66,8 @@ local Line = require('neowarrior.Line')
 ---@field public insert_into_tree fun(self: NeoWarrior, tree: table, parts: table, index: number, parent_key: string)
 ---@field public fill_project_tree fun(self: NeoWarrior, tree: table, project: Project, project_pool: ProjectCollection): Project
 ---@field public sort_tree fun(self: NeoWarrior, project: Project): NeoWarrior
+---@field public set_filter fun(self: NeoWarrior, filter: string): NeoWarrior
+---@field public set_report fun(self: NeoWarrior, report: string): NeoWarrior
 local NeoWarrior = {}
 
 --- Constructor
@@ -75,7 +77,7 @@ function NeoWarrior:new()
     setmetatable(neowarrior, self)
     self.__index = self
 
-    neowarrior.version = "v0.1.3"
+    neowarrior.version = "v0.1.4"
     neowarrior.config = nil
     neowarrior.user_config = nil
     neowarrior.buffer = nil
@@ -1326,6 +1328,28 @@ function NeoWarrior:report_select()
     end,
   })
   :find()
+end
+
+--- Set filter, refresh and show list
+---@param filter 
+---@return NeoWarrior
+function NeoWarrior:set_filter(filter)
+  self.current_filter = filter
+  self:refresh()
+  self:list()
+
+  return self
+end
+
+--- Set report, refresh and show list
+---@param report string
+---@return NeoWarrior
+function NeoWarrior:set_report(report)
+  self.current_report = report
+  self:refresh()
+  self:list()
+
+  return self
 end
 
 return NeoWarrior

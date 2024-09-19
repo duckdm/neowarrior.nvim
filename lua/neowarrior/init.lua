@@ -19,5 +19,7 @@ M.open_above = function() _Neowarrior:open({ split = 'above' }) end
 M.open_left = function() _Neowarrior:open({ split = 'left' }) end
 M.open_right = function() _Neowarrior:open({ split = 'right' }) end
 M.focus = function() _Neowarrior:focus() end
+M.set_filter = function(filter) _Neowarrior:set_filter(filter) end
+M.set_report = function(report) _Neowarrior:set_report(report) end
 
 return M

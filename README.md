@@ -96,14 +96,19 @@ return {
 
 # API methods
 ```lua
--- Open NeoWarrior (default to below current buffer)
-require('neowarrior').open()
---- .. or use any of these self-explanatory methods
-require('neowarrior').open_left()
-require('neowarrior').open_right()
-require('neowarrior').open_above()
-require('neowarrior').open_below()
-require('neowarrior').open_current()
+-- Open NeoWarrior
+require('neowarrior').open() --- Default, opens below buffer
+require('neowarrior').open_left() --- Open on the left side
+require('neowarrior').open_right() --- Open on the right side
+require('neowarrior').open_above() --- Open above current buffer
+require('neowarrior').open_below() --- Open below current buffer
+require('neowarrior').open_current() --- Open in current buffer
+
+--- Set filter
+require('neowarrior').set_filter("due.before:2d and project:neowarrior")
+
+--- Set report
+require('neowarrior').set_report("next")
 
 --- Focus NeoWarrior
 require('neowarrior').focus()
@@ -114,28 +119,32 @@ require('neowarrior').focus()
 | Key | Description |
 | --- | ----------- |
 | ? | Help |
+| q | Close help |
+| | |
 | a | Add task |
+| l | Show task/Activate line action |
+| h | Back |
 | d | Mark task done |
 | s | Start task |
-| D | Select dependency |
-| F | Filter tasks |
-| f | Select filter |
-| tg | Toggle grouped view |
-| tt | Toggle tree view |
-| T | Reset tree view |
-| r | Select report |
-| R | Refresh tasks |
-| X | Reset filters |
-| W | Collapse all trees |
-| E | Expand all trees |
-| Tab | Toggle tree |
-| l | Show task details |
-| h | Back |
-| q | Close help |
 | MM | Modify task |
 | Mp | Modify project |
 | MP | Modify priority |
 | Md | Modify due date |
+| D | Select dependency |
+| | |
+| F | Filter tasks |
+| f | Select filter |
+| r | Select report |
+| X | Reset filters |
+| | |
+| tg | Toggle grouped view |
+| tt | Toggle tree view |
+| T | Reset tree view |
+| W | Collapse all trees |
+| E | Expand all trees |
+| Tab | Toggle tree |
+| | |
+| R | Refresh tasks |
 
 # Default config values
 ```lua
