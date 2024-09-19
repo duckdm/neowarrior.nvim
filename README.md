@@ -87,7 +87,7 @@ return {
 | Command | Description |
 | ------- | ----------- |
 | `:NeoWarriorOpen` | Open NeoWarrior (default to below current buffer) |
-| `:NeoWarriorOpen` left,right,above,below,current | Open NeoWarrior on the left, right, above, below current buffer or in current buffer |
+| `:NeoWarriorOpen left,right,above,below,current` | Open NeoWarrior on the left, right, above, below current buffer or in current buffer |
 | `:NeoWarriorAdd` | Add new task |
 | `:NeoWarriorFilter` | Filter |
 | `:NeoWarriorFilterSelect` | Select filter |
