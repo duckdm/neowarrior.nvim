@@ -87,30 +87,22 @@ return {
 | Command | Description |
 | ------- | ----------- |
 | `:NeoWarriorOpen` | Open NeoWarrior (default to below current buffer) |
-| `:NeoWarriorOpen left` | Open NeoWarrior on the left side |
-| `:NeoWarriorOpen right` | Open NeoWarrior on the right side |
-| `:NeoWarriorOpen above` | Open NeoWarrior above current buffer |
-| `:NeoWarriorOpen below` | Open NeoWarrior below current buffer |
-| `:NeoWarriorOpen current` | Open NeoWarrior in current buffer |
+| `:NeoWarriorOpen left|right|above|below|current` | Open NeoWarrior on the left, right, above, below current buffer or in current buffer |
+| `:NeoWarriorAdd` | Add new task |
+| `:NeoWarriorFilter` | Filter |
+| `:NeoWarriorFilterSelect` | Select filter |
+| `:NeoWarriorReport` | Select report |
+| `:NeoWarriorRefresh` | Refresh tasks |
 
 # API methods
 ```lua
 -- Open NeoWarrior (default to below current buffer)
 require('neowarrior').open()
-
---- Open NeoWarrior on the left side
+--- .. or use any of these self-explanatory methods
 require('neowarrior').open_left()
-
---- Open NeoWarrior on the right side
 require('neowarrior').open_right()
-
---- Open NeoWarrior above current buffer
 require('neowarrior').open_above()
-
---- Open NeoWarrior below current buffer
 require('neowarrior').open_below()
-
---- Open NeoWarrior in current buffer
 require('neowarrior').open_current()
 
 --- Focus NeoWarrior
