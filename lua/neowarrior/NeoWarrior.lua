@@ -1058,7 +1058,6 @@ function NeoWarrior:open_help()
   end
 
   width = key_length + sep_length + desc_length + 4
-  print(width)
   self.help_float = Float:new(self, page, {
     title = 'NeoWarrior help',
     width = width,
