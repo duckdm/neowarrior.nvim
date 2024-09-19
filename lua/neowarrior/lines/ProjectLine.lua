@@ -36,12 +36,14 @@ function ProjectLine:get_project_line(arg)
   local indent = arg.indent or ""
   local open = arg.open or false
   local icon = open and conf.icons.project_open or conf.icons.project
+  local icon_alt = conf.icons.project_alt
   local name = self.project.name
   local disable_meta = arg.disable_meta or false
 
   if arg.id_as_name then
     name = self.project.id
   end
+  name = string.gsub(name, "%.", " " .. icon_alt .. " ")
   line:add({
     text = indent .. icon .. " " .. name,
     color = "NeoWarriorTextInfo",

@@ -114,6 +114,7 @@ return {
     task_completed = "\u{f14a}",
     recur = "\u{f021}",
     project = "\u{f07b}",
+    project_alt = "\u{f0256}",
     project_open = "\u{f115}",
     warning = "\u{f071}",
     annotated = "\u{f1781}",
