@@ -58,8 +58,8 @@ function DateTime:parse(str)
   local_time.isdst = os.date('*t').isdst
 
   self.timestamp = os.time(local_time)
-  -- FIX: Dirty trick
-  self.timestamp = self.timestamp + (60 * 60)
+  -- FIX: need a better solution for this
+  self.timestamp = self.timestamp + ((60 * 60) * _Neowarrior.config.time_offset)
 
   return self.timestamp
 end
