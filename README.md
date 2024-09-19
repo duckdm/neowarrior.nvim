@@ -1,6 +1,7 @@
 A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as a sidebar with my tasks inside neovim. 
 
-![Screenshot](./screenshot.png)
+![gif example v0.1.4 1](./docs/gif/neowarrior-0.1.4_1.gif)
+![gif example v0.1.4 2](./docs/gif/neowarrior-0.1.4_2.gif)
 
 # Requirements
 
