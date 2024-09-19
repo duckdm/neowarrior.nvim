@@ -455,6 +455,7 @@ function NeoWarrior:add()
   self.buffer:save_cursor()
   local default_add_input = ""
   local prompt = "Task (ex: task name due:tomorrow etc): "
+  local project_id = self.buffer:get_meta_data('project')
   local task_uuid = self.buffer:get_meta_data('uuid')
   local task = nil
   if task_uuid then
@@ -465,6 +466,8 @@ function NeoWarrior:add()
   end
   if task then
     default_add_input = "project:" .. task.project .. " "
+  elseif project_id then
+    default_add_input = "project:" .. project_id .. " "
   elseif self.current_filter and string.find(self.current_filter, "project:") then
     for k, _ in string.gmatch(self.current_filter, "project:%w+[%.%w]*") do
       default_add_input = k
