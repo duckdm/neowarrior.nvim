@@ -62,7 +62,6 @@ function TaskPage:print(buffer)
   })
   self:task_line({
     disable_meta = true,
-    -- disable_task_icon = true,
     disable_priority = true,
     disable_warning = true,
     disable_due = true,
@@ -75,6 +74,8 @@ function TaskPage:print(buffer)
   self.page:nl()
 
   self:annotations()
+  self:dependencies()
+  self:parents()
 
   self:urgency()
   self:estimate()
@@ -82,9 +83,6 @@ function TaskPage:print(buffer)
   self:scheduled()
   self:due()
 
-  if self.task.depends then
-    table.insert(self.used_keys, "depends")
-  end
 
   for k, v in pairs(self.task:get_attributes()) do
 
@@ -321,6 +319,57 @@ function TaskPage:due()
     }})
   end
 
+end
+
+--- Show task dependencies
+---@return TaskPage
+function TaskPage:dependencies()
+
+  if self.task.depends and self.task.depends:count() > 0 then
+
+    self:row('depends', {{
+      text = "Dependencies",
+      color = "NeoWarriorTextDanger",
+    }})
+
+    for _, task in ipairs(self.task.depends:get()) do
+      local task_line = TaskLine:new(self.neowarrior, 0, task, {
+        disable_meta = true,
+      })
+      self.page:add_line(task_line)
+    end
+
+    self.page:nl()
+
+  end
+
+  return self
+end
+
+--- Show task parents
+function TaskPage:parents()
+
+  local parents = self.task:create_parent_collection()
+
+  if parents then
+
+    self:row('parents', {{
+      text = "Blocking these tasks",
+      color = "NeoWarriorTextWarning",
+    }})
+
+    for _, task in ipairs(parents:get()) do
+      local task_line = TaskLine:new(self.neowarrior, 0, task, {
+        disable_meta = true,
+      })
+      self.page:add_line(task_line)
+    end
+
+    self.page:nl()
+
+  end
+
+  return self
 end
 
 return TaskPage

@@ -12,8 +12,8 @@ function TaskUtil.has_dependencies(task, task_collection)
 
     local dependencies = TaskCollection:new()
 
-    for _, dependency_uuid in ipairs(task.depends) do
-      local dependency_task = task_collection:find_task_by_uuid(dependency_uuid)
+    for _, dependency in ipairs(task.depends) do
+      local dependency_task = task_collection:find_task_by_uuid(dependency.uuid)
       if dependency_task then
         dependencies:add(dependency_task)
       end

@@ -310,14 +310,9 @@ end
 ---@return NeoWarrior
 function NeoWarrior:refresh()
 
-  self.tasks = self.tw:tasks(self.current_report, self.current_filter)
-  self.tasks:sort('urgency')
-  self.project_names = util.extract('project', self.tasks:get())
-
   self.all_tasks = self.tw:tasks('all', 'description.not:')
   self.all_tasks:sort('urgency')
   self.all_project_names = util.extract('project', self.all_tasks:get())
-
   self.all_pending_tasks = TaskCollection:new()
 
   for _, task in ipairs(self.all_tasks:get()) do
@@ -325,6 +320,10 @@ function NeoWarrior:refresh()
       self.all_pending_tasks:add(task)
     end
   end
+
+  self.tasks = self.tw:tasks(self.current_report, self.current_filter)
+  self.tasks:sort('urgency')
+  self.project_names = util.extract('project', self.tasks:get())
 
   self.projects = self:generate_project_collection_from_tasks(self.tasks)
   self.projects:refresh()
@@ -415,6 +414,9 @@ function NeoWarrior:get_config_value(key)
   return self.config[key]
 end
 
+--- Show task, list based on project or special actions (like when
+--- cursor is on help line, report line or filter line in header).
+---@return nil
 function NeoWarrior:show()
 
   self:close_floats()

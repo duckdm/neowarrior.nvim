@@ -90,7 +90,8 @@ function TaskLine:get_task_line(arg)
     task_icon_color = "NeoWarriorTextWarning"
   end
   local has_blocking = false
-  if self.task.depends and TaskUtil.has_dependencies(self.task, self.neowarrior.all_pending_tasks) then
+
+  if self.task.depends then
     task_icon = self.neowarrior.config.icons.depends
     task_icon_color = "NeoWarriorTextDanger"
     has_blocking = true

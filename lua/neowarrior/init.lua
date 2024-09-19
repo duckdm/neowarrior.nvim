@@ -1,5 +1,5 @@
 local NeoWarrior = require('neowarrior.NeoWarrior')
-local neowarrior = NeoWarrior:new()
+_Neowarrior = NeoWarrior:new()
 
 local M = {}
 
@@ -7,17 +7,17 @@ local M = {}
 ---@param opts table
 M.setup = function(opts)
 
-  neowarrior:setup(opts)
-  neowarrior:init()
+  _Neowarrior:setup(opts)
+  _Neowarrior:init()
 
 end
 
-M.open = function() neowarrior:open({ split = 'below' }) end
-M.open_current = function() neowarrior:open({ split = 'current' }) end
-M.open_below = function() neowarrior:open({ split = 'below' }) end
-M.open_above = function() neowarrior:open({ split = 'above' }) end
-M.open_left = function() neowarrior:open({ split = 'left' }) end
-M.open_right = function() neowarrior:open({ split = 'right' }) end
-M.focus = function() neowarrior:focus() end
+M.open = function() _Neowarrior:open({ split = 'below' }) end
+M.open_current = function() _Neowarrior:open({ split = 'current' }) end
+M.open_below = function() _Neowarrior:open({ split = 'below' }) end
+M.open_above = function() _Neowarrior:open({ split = 'above' }) end
+M.open_left = function() _Neowarrior:open({ split = 'left' }) end
+M.open_right = function() _Neowarrior:open({ split = 'right' }) end
+M.focus = function() _Neowarrior:focus() end
 
 return M

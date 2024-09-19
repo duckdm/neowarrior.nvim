@@ -1,4 +1,5 @@
 local DateTime = require('neowarrior.DateTime')
+local TaskCollection = require('neowarrior.TaskCollection')
 
 ---@class Task
 ---@field neowarrior NeoWarrior
@@ -20,6 +21,7 @@ local DateTime = require('neowarrior.DateTime')
 ---@field wait DateTime|nil
 ---@field scheduled DateTime|nil
 ---@field depends TaskCollection|nil
+---@field parents TaskCollection|nil
 ---@field annotations table|nil
 ---@field recur string|nil
 local Task = {}
@@ -35,17 +37,18 @@ function Task:new(neowarrior, task_data)
   self.__index = self
 
   data.id = task_data.id or nil
+  data.uuid = task_data.uuid or nil
   data.status = task_data.status or nil
   data.description = task_data.description or nil
   data.project = task_data.project or neowarrior.config.no_project_name
   data.priority = task_data.priority or nil
   data.tags = task_data.tags or nil
-  data.uuid = task_data.uuid or nil
   data.urgency = task_data.urgency or nil
   data.recur = task_data.recur or nil
   data.estimate = task_data.estimate or nil
   data.estimate_string = self:get_hour_duration_string(task_data.estimate)
-  data.depends = task_data.depends or nil
+  data.depends = self:create_dependency_collection(task_data.depends)
+  data.parents = nil
   -- TODO: Probably need a specific class for annotations (similar
   -- to TaskCollection).
   -- if task_data.annotations then
@@ -68,6 +71,49 @@ function Task:new(neowarrior, task_data)
   data.scheduled = self:get_date_time_object(task_data.scheduled)
 
   return data
+end
+
+--- Create a collection of dependency tasks from uuids
+---@param uuids string[]|nil
+---@return TaskCollection|nil
+function Task:create_dependency_collection(uuids)
+
+  if not uuids then
+    return nil
+  end
+
+  local collection = TaskCollection:new()
+
+  for _, uuid in ipairs(uuids) do
+    local task = _Neowarrior.all_pending_tasks:find(uuid)
+    if task then
+      collection:add(task)
+    end
+  end
+
+  return collection
+end
+
+--- Create a collection of parent tasks
+---@return TaskCollection|nil
+function Task:create_parent_collection()
+
+  local parents = TaskCollection:new()
+  for _, task in ipairs(_Neowarrior.all_pending_tasks:get()) do
+    if task.depends then
+      for _, dependency in ipairs(task.depends:get()) do
+        if dependency.uuid == self.uuid then
+          parents:add(task)
+        end
+      end
+    end
+  end
+
+  if parents:count() == 0 then
+    return nil
+  end
+
+  return parents
 end
 
 function Task:get_hour_duration_string(duration)
