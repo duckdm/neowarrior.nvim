@@ -1,7 +1,6 @@
 local Window = require('neowarrior.Window')
 
 ---@class Float
----@field neowarrior NeoWarrior
 ---@field page Page
 ---@field window Window
 ---@field opt table
@@ -9,12 +8,11 @@ local Window = require('neowarrior.Window')
 ---@field close fun(float: Float):Float
 local Float = {}
 
-function Float:new(neowarrior, page, opt)
+function Float:new(page, opt)
     local float = {}
     setmetatable(float, self)
     self.__index = self
 
-    float.neowarrior = neowarrior
     float.page = page
     float.window = nil
     float.opt = opt

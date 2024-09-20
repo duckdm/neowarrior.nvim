@@ -285,7 +285,7 @@ function NeoWarrior:setup_autocmds()
             if task.estimate then
               page:add_raw('Estimate: ' .. task.estimate_string, colors.get_urgency_color(task.estimate))
             end
-            self.task_float = Float:new(self, page, {
+            self.task_float = Float:new(page, {
               relative = 'cursor',
               width = width,
               col = col,
@@ -1037,7 +1037,7 @@ function NeoWarrior:open_help()
   end
 
   width = key_length + sep_length + desc_length + 4
-  self.help_float = Float:new(self, page, {
+  self.help_float = Float:new(page, {
     title = 'NeoWarrior help',
     width = width,
     col = math.floor((win_width - width) / 2),
