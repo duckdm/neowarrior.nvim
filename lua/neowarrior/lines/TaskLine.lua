@@ -63,6 +63,7 @@ function TaskLine:get_task_line(arg)
   local disable_has_blocking = arg.disable_has_blocking or false
   local project = self.task.project or 'No project'
   local meta = arg.meta or nil
+  local description_color = nil
   local description = ""
   if self.task.description then
     description = tostring(string.gsub(self.task.description, "\n", ""))
@@ -81,6 +82,7 @@ function TaskLine:get_task_line(arg)
   local task_icon_color = "NeoWarriorTextDim"
   if self.task.start then
     task_icon_color = "NeoWarriorTextDanger"
+    description_color = "NeoWarriorTextWarning"
   end
   if self.task.status and self.task.status == "completed" then
     task_icon = self.neowarrior.config.icons.task_completed
@@ -90,8 +92,8 @@ function TaskLine:get_task_line(arg)
     task_icon = self.neowarrior.config.icons.deleted
     task_icon_color = "NeoWarriorTextWarning"
   end
-  local has_blocking = false
 
+  local has_blocking = false
   if self.task.depends then
     task_icon = self.neowarrior.config.icons.depends
     task_icon_color = "NeoWarriorTextDanger"
@@ -180,12 +182,12 @@ function TaskLine:get_task_line(arg)
   if not disable_description then
     line:add({
       text = description,
-      color = has_blocking and "NeoWarriorTextDanger" or nil,
+      color = description_color,
     })
     if has_blocking and (not disable_has_blocking) then
       line:add({
         text = " [has blocking tasks]",
-        color = "NeoWarriorTextDanger",
+        color = "NeoWarriorTextDefault",
       })
     end
   end
