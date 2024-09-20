@@ -688,49 +688,7 @@ function NeoWarrior:set_keymaps()
   -- Select task dependency
   if self.config.keys.select_dependency then
     vim.keymap.set("n", self.config.keys.select_dependency, function()
-      self.buffer:save_cursor()
-      self:close_floats()
-      self:refresh()
-      local uuid = nil
-      local task = nil
-      if self.current_task then
-        uuid = self.current_task.uuid
-      else
-        uuid = self.buffer:get_meta_data('uuid')
-      end
-      if not uuid then
-        return
-      end
-      task = self.tw:task(uuid)
-      local telescope_opts = require("telescope.themes").get_dropdown({})
-      pickers.new(telescope_opts, {
-        prompt_title = "Select dependency",
-        finder = finders.new_table({
-          results = self.all_pending_tasks:get(),
-          entry_maker = function(entry)
-            local task_line = TaskLine:new(self, 0, entry, {})
-            return {
-              value = entry,
-              display = task_line.text,
-              ordinal = task_line.text,
-            }
-          end,
-        }),
-        sorter = conf.generic_sorter(telescope_opts),
-        attach_mappings = function(prompt_bufnr)
-          actions.select_default:replace(function()
-            actions.close(prompt_bufnr)
-            local selection = action_state.get_selected_entry()
-            if task then
-              self.tw:add_dependency(task, selection.value.uuid)
-              self:refresh()
-              self:list()
-            end
-          end)
-          return true
-        end,
-      })
-      :find()
+      self:dependency_select()
     end, default_keymap_opts)
   end
 
@@ -1370,6 +1328,56 @@ function NeoWarrior:set_report(report)
   self:list()
 
   return self
+end
+
+function NeoWarrior:dependency_select()
+
+  self.buffer:save_cursor()
+  self:close_floats()
+  self:refresh()
+
+  local uuid = nil
+  local task = nil
+
+  if self.current_task then
+    uuid = self.current_task.uuid
+  else
+    uuid = self.buffer:get_meta_data('uuid')
+  end
+  if not uuid then
+    return
+  end
+
+  task = self.tw:task(uuid)
+  local telescope_opts = require("telescope.themes").get_dropdown({})
+  pickers.new(telescope_opts, {
+    prompt_title = "Select dependency",
+    finder = finders.new_table({
+      results = self.all_pending_tasks:get(),
+      entry_maker = function(entry)
+        local task_line = TaskLine:new(self, 0, entry, {})
+        return {
+          value = entry,
+          display = task_line.text,
+          ordinal = task_line.text,
+        }
+      end,
+    }),
+    sorter = conf.generic_sorter(telescope_opts),
+    attach_mappings = function(prompt_bufnr)
+      actions.select_default:replace(function()
+        actions.close(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        if task then
+          self.tw:add_dependency(task, selection.value.uuid)
+          self:refresh()
+          self:list()
+        end
+      end)
+      return true
+    end,
+  })
+  :find()
 end
 
 return NeoWarrior

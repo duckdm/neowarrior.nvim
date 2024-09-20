@@ -1,5 +1,3 @@
-local Util = require('neowarrior.util')
-
 ---@class Buffer
 ---@field public id number
 ---@field public listed boolean
@@ -101,12 +99,15 @@ end
 ---@param key string
 ---@return string|nil
 function Buffer:get_meta_data(key)
+
   local line = vim.api.nvim_get_current_line()
   local pattern = "{{{" .. key .. ".-}}}"
   local value = nil
+
   for id in string.gmatch(line, pattern) do
     value = string.gsub(string.gsub(id, "{{{" .. key, ""), "}}}", "")
   end
+
   return value
 end
 
