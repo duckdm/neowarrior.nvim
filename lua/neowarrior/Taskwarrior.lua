@@ -2,19 +2,15 @@ local Task = require("neowarrior.Task")
 local TaskCollection = require("neowarrior.TaskCollection")
 
 ---@class Taskwarrior
----@field neowarrior NeoWarrior
 ---@field syscall fun(self: Taskwarrior, cmd: string[]): string
 local Taskwarrior = {}
 
 --- Create new taskwarrior instance
----@param neowarrior NeoWarrior
 ---@return Taskwarrior
-function Taskwarrior:new(neowarrior)
+function Taskwarrior:new()
   local taskwarrior = {}
   setmetatable(taskwarrior, self)
   self.__index = self
-
-  taskwarrior.neowarrior = neowarrior
 
   return taskwarrior
 end

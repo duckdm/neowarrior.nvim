@@ -85,7 +85,7 @@ function NeoWarrior:new()
     neowarrior.help_float = nil
     neowarrior.task_float = nil
     neowarrior.task_floats = {}
-    neowarrior.tw = Taskwarrior:new(neowarrior or self)
+    neowarrior.tw = Taskwarrior:new()
     neowarrior.tasks = TaskCollection:new()
     neowarrior.all_tasks = TaskCollection:new()
     neowarrior.all_pending_tasks = TaskCollection:new()
