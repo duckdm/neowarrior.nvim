@@ -252,8 +252,26 @@ function NeoWarrior:setup_autocmds()
               disable_meta = true,
               disable_due = true,
               disable_estimate = true,
+              disable_has_blocking = true,
             }))
-            page:add_raw(' ', '')
+
+            if task.depends and task.depends:count() > 0 then
+
+              page:nl()
+              page:add_raw('Blocked by ' .. task.depends:count() .. ' task(s)', 'NeoWarriorTextDanger')
+
+            end
+
+            local task_parents = task:create_parent_collection()
+            if task_parents then
+
+              page:nl()
+              page:add_raw('Blocking ' .. task_parents:count() .. ' task(s)', 'NeoWarriorTextDanger')
+
+            end
+
+            page:nl()
+
             page:add_raw('Urgency: ' .. task.urgency, colors.get_urgency_color(task.urgency))
             if task.priority then
               local priority_color = colors.get_priority_color(task.priority)

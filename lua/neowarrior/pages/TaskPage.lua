@@ -62,6 +62,7 @@ function TaskPage:print(buffer)
   })
   self:task_line({
     disable_meta = true,
+    disable_has_blocking = true,
     disable_priority = true,
     disable_warning = true,
     disable_due = true,
@@ -183,7 +184,9 @@ function TaskPage:project()
   table.insert(self.used_keys, 'project')
   if self.task.project then
     local project = Project:new({ name = self.task.project })
-    local project_line = ProjectLine:new(self.neowarrior, self.line_no, project, {})
+    local project_line = ProjectLine:new(self.neowarrior, self.line_no, project, {
+      disable_meta = true,
+    })
     self.page:add_line(project_line)
   end
 
@@ -193,7 +196,7 @@ end
 function TaskPage:task_line(arg)
 
   table.insert(self.used_keys, 'description')
-  local task_line = TaskLine:new(self.neowarrior, self.line_no, self.task, arg)
+  local task_line = TaskLine:new(self.neowarrior, 0, self.task, arg)
   self.page:add_line(task_line)
 
 end

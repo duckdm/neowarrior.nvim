@@ -60,6 +60,7 @@ function TaskLine:get_task_line(arg)
   end
   local disable_annotations = arg.disable_annotations or false
   local disable_start = arg.disable_start or false
+  local disable_has_blocking = arg.disable_has_blocking or false
   local project = self.task.project or 'No project'
   local meta = arg.meta or nil
   local description = ""
@@ -181,7 +182,7 @@ function TaskLine:get_task_line(arg)
       text = description,
       color = has_blocking and "NeoWarriorTextDanger" or nil,
     })
-    if has_blocking then
+    if has_blocking and (not disable_has_blocking) then
       line:add({
         text = " [has blocking tasks]",
         color = "NeoWarriorTextDanger",
