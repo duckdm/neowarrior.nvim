@@ -35,7 +35,7 @@ function ListComponent:get_lines()
 
   if nw.current_mode == 'tree' then
 
-    local tree = TreeComponent:new(nw, nw.project_tree)
+    local tree = TreeComponent:new(nw.project_tree)
     return tree:get_lines()
 
   elseif nw.current_mode == 'grouped' then
