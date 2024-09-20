@@ -35,7 +35,7 @@ function HeaderComponent:get()
     if header_text_has_version then
       if string.match(nw.version, "dev") then
         header_text_color = "NeoWarriorTextDanger"
-      elseif string.match(nw.version, "pre") then
+      elseif string.match(nw.version, "pre") or string.match(nw.version, "alpha") or string.match(nw.version, "beta") then
         header_text_color = "NeoWarriorTextWarning"
       end
     end
