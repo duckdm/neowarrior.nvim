@@ -30,8 +30,17 @@ function HeaderComponent:get()
 
   if nw.config.header.text then
     local header = Line:new(line_no)
+    local header_text_color = "NeoWarriorTextInfo"
+    local header_text_has_version = string.match(nw.config.header.text, "{version}")
+    if header_text_has_version then
+      if string.match(nw.version, "dev") then
+        header_text_color = "NeoWarriorTextDanger"
+      elseif string.match(nw.version, "pre") then
+        header_text_color = "NeoWarriorTextWarning"
+      end
+    end
     local header_text = nw.config.header.text:gsub("{version}", nw.version)
-    header:add({ text = header_text, color = "NeoWarriorTextHeader" })
+    header:add({ text = header_text, color = header_text_color })
     table.insert(lines, header)
     line_no = line_no + 1
   end
