@@ -6,14 +6,11 @@ local Component = require('neowarrior.Component')
 local HeaderComponent = {}
 
 --- Create a new HeaderComponent
----@param neowarrior NeoWarrior
 ---@return Component
-function HeaderComponent:new(neowarrior)
+function HeaderComponent:new()
     local header_component = {}
     setmetatable(header_component, self)
     self.__index = self
-
-    self.neowarrior = neowarrior
 
     local component = Component:new()
     component.type = 'HeaderComponent'
@@ -26,7 +23,7 @@ end
 ---@return Line[]
 function HeaderComponent:get()
 
-  local nw = self.neowarrior
+  local nw = _Neowarrior
   local keys = nw.config.keys
   local lines = {}
   local line_no = 0

@@ -1207,7 +1207,7 @@ function NeoWarrior:list()
   end
 
   Page:new(self.buffer)
-    :add(HeaderComponent:new(self))
+    :add(HeaderComponent:new())
     :add(ListComponent:new(self, self.tasks))
     :print()
 
