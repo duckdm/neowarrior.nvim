@@ -5,21 +5,20 @@ local Line = require('neowarrior.Line')
 ---@class GroupedComponent
 ---@field neowarrior NeoWarrior
 ---@field projects ProjectCollection
+---@field line_no number
 ---@field lines Line[]
----@field new fun(self: GroupedComponent, neowarrior: NeoWarrior, project: Project): GroupedComponent
+---@field new fun(self: GroupedComponent, projects: ProjectCollection): GroupedComponent
 ---@field get_lines fun(self: GroupedComponent): Line[]
 ---@field generate_lines fun(self: GroupedComponent, projects: ProjectCollection, line_no: number): number
 local GroupedComponent = {}
 
 --- Create a new GroupedComponent
----@param neowarrior NeoWarrior
 ---@param projects ProjectCollection
-function GroupedComponent:new(neowarrior, projects)
+function GroupedComponent:new(projects)
     local grouped_component = {}
     setmetatable(grouped_component, self)
     self.__index = self
 
-    grouped_component.neowarrior = neowarrior
     grouped_component.projects = projects
     grouped_component.lines = {}
     grouped_component.line_no = 0
@@ -40,7 +39,7 @@ end
 ---@return number Line number
 function GroupedComponent:generate_lines(projects, line_no)
 
-  local nw = self.neowarrior
+  local nw = _Neowarrior
 
   for _, project in ipairs(projects:get()) do
 

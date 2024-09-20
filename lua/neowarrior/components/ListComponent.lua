@@ -41,7 +41,7 @@ function ListComponent:get_lines()
 
   elseif nw.current_mode == 'grouped' then
 
-    local grouped = GroupedComponent:new(nw, nw.projects)
+    local grouped = GroupedComponent:new(nw.projects)
     return grouped:get_lines()
 
   end
