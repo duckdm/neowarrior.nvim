@@ -27,10 +27,9 @@ local TaskCollection = require('neowarrior.TaskCollection')
 local Task = {}
 
 --- Create new task
----@param neowarrior NeoWarrior
 ---@param task_data table
 ---@return Task
-function Task:new(neowarrior, task_data)
+function Task:new(task_data)
 
   local data = {}
   setmetatable(data, self)
@@ -40,7 +39,7 @@ function Task:new(neowarrior, task_data)
   data.uuid = task_data.uuid or nil
   data.status = task_data.status or nil
   data.description = task_data.description or nil
-  data.project = task_data.project or neowarrior.config.no_project_name
+  data.project = task_data.project or _Neowarrior.config.no_project_name
   data.priority = task_data.priority or nil
   data.tags = task_data.tags or nil
   data.urgency = task_data.urgency or nil

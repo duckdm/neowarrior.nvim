@@ -35,7 +35,7 @@ function Taskwarrior:task(uuid)
   local json_data = self:syscall({ "task", uuid, "export" })
   local task = vim.json.decode(json_data)
 
-  return Task:new(self.neowarrior, task[1])
+  return Task:new(task[1])
 end
 
 --- Get tasks
@@ -66,7 +66,7 @@ function Taskwarrior:tasks(report, filter)
   --- of the data, like dates etc.
   --- TODO: Make set method that can handle all that jazz too
   for _, task in ipairs(data) do
-    task_collection:add(Task:new(self.neowarrior, task))
+    task_collection:add(Task:new(task))
   end
 
   return task_collection
