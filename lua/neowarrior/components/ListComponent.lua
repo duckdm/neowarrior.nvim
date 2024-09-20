@@ -4,19 +4,18 @@ local TreeComponent = require('neowarrior.components.TreeComponent')
 local GroupedComponent = require('neowarrior.components.GroupedComponent')
 
 ---@class ListComponent
----@field neowarrior NeoWarrior
+---@field task_collection TaskCollection
+---@field line_no number
 local ListComponent = {}
 
 --- Create a new ListComponent
----@param neowarrior NeoWarrior
 ---@param task_collection TaskCollection
 ---@return Component
-function ListComponent:new(neowarrior, task_collection)
+function ListComponent:new(task_collection)
     local header_component = {}
     setmetatable(header_component, self)
     self.__index = self
 
-    self.neowarrior = neowarrior
     self.task_collection = task_collection
     self.line_no = 0
 
@@ -31,7 +30,7 @@ end
 ---@return Line[]
 function ListComponent:get_lines()
 
-  local nw = self.neowarrior
+  local nw = _Neowarrior
   nw:refresh()
 
   if nw.current_mode == 'tree' then
@@ -55,7 +54,7 @@ function ListComponent:get_task_lines(task_collection, lines)
 
   for _, task in ipairs(task_collection:get()) do
 
-    table.insert(lines, TaskLine:new(self.neowarrior, self.line_no, task, {}))
+    table.insert(lines, TaskLine:new(_Neowarrior, self.line_no, task, {}))
     self.line_no = self.line_no + 1
 
   end

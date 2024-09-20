@@ -1208,7 +1208,7 @@ function NeoWarrior:list()
 
   Page:new(self.buffer)
     :add(HeaderComponent:new())
-    :add(ListComponent:new(self, self.tasks))
+    :add(ListComponent:new(self.tasks))
     :print()
 
   self.buffer:restore_cursor()
