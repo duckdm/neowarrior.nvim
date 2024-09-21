@@ -1,47 +1,48 @@
-local Window = require('neowarrior.Window')
+local Window = require('trambampolin.Window')
 
 ---@class Float
----@field page Page
+---@field tram Trambampolin
 ---@field window Window
 ---@field opt table
 ---@field open fun(float: Float):Float
 ---@field close fun(float: Float):Float
 local Float = {}
 
-function Float:new(page, opt)
+function Float:new(tram, opt)
     local float = {}
     setmetatable(float, self)
     self.__index = self
 
-    float.page = page
-    float.window = nil
-    float.opt = opt
+    self.tram = tram
+    self.window = nil
+    self.opt = opt
 
-    return float
+    return self
 end
 
 --- Open float
 ---@return Float
 function Float:open()
 
+  local buffer = self.tram:get_buffer()
+
   self.window = Window:new({
     id = -1,
-    buffer = self.page.buffer,
+    buffer = buffer,
     enter = self.opt.enter or false,
   }, {
     relative = self.opt.relative or 'editor',
     border = self.opt.border or 'rounded',
     title = self.opt.title or nil,
     width = self.opt.width or 30,
-    height = self.opt.height or self.page:get_line_count(),
+    height = self.opt.height or self.tram:get_line_no(),
     col = self.opt.col or 0,
     row = self.opt.row or 1,
     anchor = self.opt.anchor or 'NW',
     style = self.opt.style or 'minimal'
   })
-  self.page.buffer:option('wrap', true, { win = self.window.id })
-  self.page.buffer:option('linebreak', true, { win = self.window.id })
-  self.page:print()
+  buffer:option('wrap', true, { win = self.window.id })
+  buffer:option('linebreak', true, { win = self.window.id })
 
   return self
 end

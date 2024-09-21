@@ -1,12 +1,12 @@
+local Tram = require('trambampolin')
+local Buffer = require('trambampolin.Buffer')
+
 local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
-local Buffer = require('neowarrior.Buffer')
 local Window = require('neowarrior.Window')
-local Float = require('neowarrior.Float')
-local Page = require('neowarrior.Page')
 local Taskwarrior = require('neowarrior.Taskwarrior')
 local TaskPage = require('neowarrior.pages.TaskPage')
 local colors   = require('neowarrior.colors')
@@ -19,7 +19,6 @@ local Project = require('neowarrior.Project')
 local ProjectCollection = require('neowarrior.ProjectCollection')
 local ProjectLine = require('neowarrior.lines.ProjectLine')
 local util = require('neowarrior.util')
-local Line = require('neowarrior.Line')
 
 ---@class NeoWarrior
 ---@field public version string
@@ -188,12 +187,15 @@ function NeoWarrior:setup(config)
 end
 
 function NeoWarrior:close_floats()
+
   if self.task_float then
     self.task_float:close()
   end
+
   if self.help_float then
     self.help_float:close()
   end
+
   if util.table_size(self.task_floats) > 0 then
     for _, float in ipairs(self.task_floats) do
       if float then
@@ -202,6 +204,7 @@ function NeoWarrior:close_floats()
     end
     self.task_floats = {}
   end
+
 end
 
 function NeoWarrior:setup_autocmds()
@@ -240,52 +243,57 @@ function NeoWarrior:setup_autocmds()
             local task = self.tw:task(uuid)
             local project = self.all_projects:find(task.project)
 
-            local float_buffer = Buffer:new({
-              listed = false,
-              scratch = true,
-            })
-            local page = Page:new(float_buffer)
-            page:add_line(ProjectLine:new(self, 0, project, {
+            local tram = Tram:new()
+            ProjectLine:new(self, tram, project):into_line({
               disable_meta = true,
-            }))
-            page:add_line(TaskLine:new(self, 0, task, {
+            })
+            tram:into_line({})
+
+            TaskLine:new(tram, task):into_line({
               disable_meta = true,
               disable_due = true,
               disable_estimate = true,
               disable_has_blocking = true,
-            }))
+            })
 
             if task.depends and task.depends:count() > 0 then
 
-              page:nl()
-              page:add_raw('Blocked by ' .. task.depends:count() .. ' task(s)', 'NeoWarriorTextDanger')
+              tram:nl()
+              tram:line('Blocked by ' .. task.depends:count() .. ' task(s)', { color = 'NeoWarriorTextDanger' })
 
             end
 
             local task_parents = task:create_parent_collection()
+
+            ---FIX: this does not work anymore?
             if task_parents then
 
-              page:nl()
-              page:add_raw('Blocking ' .. task_parents:count() .. ' task(s)', 'NeoWarriorTextDanger')
+              tram:nl()
+              tram:line(
+                'Blocking ' .. task_parents:count() .. ' task(s)',
+                { color = 'NeoWarriorTextDanger' }
+              )
 
             end
 
-            page:nl()
+            tram:nl()
 
-            page:add_raw('Urgency: ' .. task.urgency, colors.get_urgency_color(task.urgency))
+            tram:line('Urgency: ' .. task.urgency, colors.get_urgency_color(task.urgency))
+
             if task.priority then
               local priority_color = colors.get_priority_color(task.priority)
-              page:add_raw('Priority: ' .. task.priority, priority_color)
+              tram:line('Priority: ' .. task.priority, priority_color)
             end
             if task.due then
               local due_relative = task.due:relative()
               local due_formatted = task.due:default_format()
-              page:add_raw('Due: ' .. due_relative .. " (" .. due_formatted .. ")", colors.get_due_color(due_relative))
+              tram:line('Due: ' .. due_relative .. " (" .. due_formatted .. ")", colors.get_due_color(due_relative))
             end
             if task.estimate then
-              page:add_raw('Estimate: ' .. task.estimate_string, colors.get_urgency_color(task.estimate))
+              tram:line('Estimate: ' .. task.estimate_string, colors.get_urgency_color(task.estimate))
             end
-            self.task_float = Float:new(page, {
+
+            self.task_float = tram:open_float({
               relative = 'cursor',
               width = width,
               col = col,
@@ -293,7 +301,6 @@ function NeoWarrior:setup_autocmds()
               enter = false,
               anchor = anchor,
             })
-            self.task_float:open()
             table.insert(self.task_floats, self.task_float)
 
           end
@@ -452,6 +459,7 @@ function NeoWarrior:show()
   elseif project then
 
     self.current_filter = "project:" .. project
+    self:refresh()
     self:list()
 
   elseif action then
@@ -990,11 +998,11 @@ function NeoWarrior:open_help()
 
   self:close_floats()
 
-  local page = Page:new(Buffer:new({
-    listed = false,
-    scratch = true,
-  }))
-
+  -- local page = Page:new(Buffer:new({
+  --   listed = false,
+  --   scratch = true,
+  -- }))
+  local tram = Tram:new()
   local width = 0
   local win_width = self.window:get_width()
   local pad = 0
@@ -1012,39 +1020,39 @@ function NeoWarrior:open_help()
 
   pad = pad + 2
 
-  page:add_raw(' ', '')
+  tram:line(' ', '')
 
   for _, group in ipairs(self.keys) do
 
     if group.name then
-      page:add_raw(string.format("%" .. pad + 4 .. "s", " ") .. group.name, 'NeoWarriorTextInfo')
+      tram:line(string.format("%" .. pad + 4 .. "s", " ") .. group.name, 'NeoWarriorTextInfo')
     end
 
     for _, key in ipairs(group.keys) do
+
       local conf_key = self.config.keys[key.key]
-      local key_line = Line:new(0)
-      key_line:add({ text = string.format("%" .. pad .. "s", conf_key), color = 'NeoWarriorTextInfo' })
-      key_line:add({ text = " -> " .. key.desc, color = '' })
-      page:add_line(key_line)
+      local desc = key.desc
+
+      tram:col(string.format("%" .. pad .. "s", conf_key), 'NeoWarriorTextInfo')
+      tram:col(" -> " .. desc, '')
+      tram:into_line({})
 
       if string.len(key.desc) > desc_length then
         desc_length = string.len(key.desc)
       end
     end
 
-    page:add_raw(' ', '')
+    tram:line(' ', '')
 
   end
 
   width = key_length + sep_length + desc_length + 4
-  self.help_float = Float:new(page, {
+  self.help_float = tram:open_float({
     title = 'NeoWarrior help',
     width = width,
     col = math.floor((win_width - width) / 2),
     row = 5,
-    enter = false,
   })
-  self.help_float:open()
 
   return self.help_float
 end
@@ -1172,6 +1180,12 @@ function NeoWarrior:open(opts)
       split = split,
     })
   end
+  vim.api.nvim_set_current_buf(self.buffer.id)
+  self.window = Window:new({
+    id = vim.api.nvim_get_current_win(),
+    buffer = self.buffer,
+    enter = true,
+  }, {})
 
   self.buffer:set_name('neowarrior')
   self.buffer:lock()
@@ -1191,6 +1205,20 @@ function NeoWarrior:open(opts)
   self:after_initial_refresh()
   self:list()
 
+  -- local tram = Tram:new()
+  -- tram:set_buffer(self.buffer)
+  -- tram:col('prefix', 'NeoWarriorTextDanger')
+  -- tram:into_line({
+  --   meta = {
+  --     test = 123
+  --   }
+  -- })
+  -- tram:line('123', { color = 'NeoWarriorTextInfo' })
+  -- tram:virt_line('VR', { pos = "right_align", col = 10, color = 'NeoWarriorTextDangerBg' })
+  -- tram:line('456', { color = 'NeoWarriorTextWarning' })
+  -- tram:line('789', { color = 'NeoWarriorTextSuccess' })
+  -- tram:print()
+
   return self
 end
 
@@ -1206,10 +1234,16 @@ function NeoWarrior:list()
     self.current_filter = self.current_filter:gsub("project:" .. self.config.no_project_name, "project:")
   end
 
-  Page:new(self.buffer)
-    :add(HeaderComponent:new())
-    :add(ListComponent:new(self.tasks))
-    :print()
+  -- Page:new(self.buffer)
+  --   :add(HeaderComponent:new())
+  --   :add(ListComponent:new(self.tasks))
+  --   :print()
+  local tram = Tram:new()
+  tram:set_buffer(self.buffer)
+  HeaderComponent:new(tram):set()
+  ListComponent:new(tram, self.tasks):set()
+
+  tram:print()
 
   self.buffer:restore_cursor()
 
@@ -1223,7 +1257,7 @@ function NeoWarrior:task(uuid)
   self.buffer:save_cursor()
 
   local task = self.tw:task(uuid)
-  local task_page = TaskPage:new(self, task)
+  local task_page = TaskPage:new(self.buffer, task)
   task_page:print(self.buffer)
   self.current_task = task
 

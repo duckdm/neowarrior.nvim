@@ -15,20 +15,20 @@ function Window:new(arg, opt)
     setmetatable(window, self)
     self.__index = self
 
-    window.id = arg.id or -1
-    window.buffer = arg.buffer
-    window.enter = arg.enter or false
+    self.id = arg.id or -1
+    self.buffer = arg.buffer
+    self.enter = arg.enter or false
 
-    window.opt = vim.tbl_extend('force', {
-        win = window.id,
+    self.opt = vim.tbl_extend('force', {
+        win = self.id,
         split = 'below',
     }, opt or {})
 
-    if window.id == -1 then
-      window.id = vim.api.nvim_open_win(window.buffer.id, window.enter, opt)
+    if self.id == -1 then
+      self.id = vim.api.nvim_open_win(self.buffer.id, self.enter, opt)
     end
 
-    return window
+    return self
 end
 
 --- Get window width

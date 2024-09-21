@@ -1,4 +1,5 @@
-local Line = require('neowarrior.Line')
+local TramLine = require('trambampolin.Line')
+local Tram = require('trambampolin')
 
 --- Component class. A collection of lines.
 ---@class Component
@@ -19,7 +20,7 @@ local Line = require('neowarrior.Line')
 ---@field nl fun(self: Component): Component
 ---@field get_text fun(self: Component): string[]
 ---@field get_colors fun(self: Component): table[]
----@field print fun(self: Component, buffer: Buffer): Component
+---@field print fun(self: Component, buffer: TramBuffer): Component
 ---@field debug fun(self: Component, arg: { level: number, prefix: string|nil }): Component
 local Component = {}
 
@@ -107,16 +108,15 @@ function Component:nl()
 end
 
 --- Print component
----@param buffer Buffer
+---@param buffer TramBuffer
 ---@return Component
 function Component:print(buffer)
 
-  buffer:print(
-    self.text,
-    self.colors,
-    self.start_at,
-    self.start_at + self.line_count
-  )
+  -- buffer:print(
+  --   self.text,
+  --   self.colors,
+  --   self.start_at,
+  -- )
 
   return self
 end

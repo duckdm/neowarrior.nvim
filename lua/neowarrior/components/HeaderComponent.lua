@@ -1,97 +1,89 @@
-local Line = require('neowarrior.Line')
-local Component = require('neowarrior.Component')
-
 ---@class HeaderComponent
----@field neowarrior NeoWarrior
 local HeaderComponent = {}
 
 --- Create a new HeaderComponent
----@return Component
-function HeaderComponent:new()
+---@return HeaderComponent
+function HeaderComponent:new(tram)
     local header_component = {}
     setmetatable(header_component, self)
     self.__index = self
 
-    local component = Component:new()
-    component.type = 'HeaderComponent'
-    component:add(self:get())
+    self.tram = tram
 
-    return component
+    return self
 end
 
---- Get header line data
----@return Line[]
-function HeaderComponent:get()
+--- Print header
+function HeaderComponent:set()
 
   local nw = _Neowarrior
   local keys = nw.config.keys
-  local lines = {}
-  local line_no = 0
 
   if nw.config.header.text then
-    local header = Line:new(line_no)
+
     local header_text_color = "NeoWarriorTextInfo"
     local header_text_has_version = string.match(nw.config.header.text, "{version}")
+
     if header_text_has_version then
+
       if string.match(nw.version, "dev") then
         header_text_color = "NeoWarriorTextDanger"
       elseif string.match(nw.version, "pre") or string.match(nw.version, "alpha") or string.match(nw.version, "beta") then
         header_text_color = "NeoWarriorTextWarning"
       end
+
     end
+
     local header_text = nw.config.header.text:gsub("{version}", nw.version)
-    header:add({ text = header_text, color = header_text_color })
-    table.insert(lines, header)
-    line_no = line_no + 1
+    self.tram:col(header_text, header_text_color)
+    self.tram:into_line({})
+
   end
 
   if nw.config.header.enable_help_line then
-    local help = Line:new(line_no)
-    help:add({ text = "(" .. keys.help .. ")help | " })
-    help:add({ text = "(" .. keys.add .. ")add | " })
-    help:add({ text = "(" .. keys.done .. ")done | " })
-    help:add({ text = "(" .. keys.filter .. ")filter" })
-    help:add({ meta = { action = 'help' }})
-    table.insert(lines, help)
-    line_no = line_no + 1
+
+    self.tram:col("(" .. keys.help .. ")help | ", "")
+    self.tram:col("(" .. keys.add .. ")add | ", "")
+    self.tram:col("(" .. keys.done .. ")done | ", "")
+    self.tram:col("(" .. keys.filter .. ")filter", "")
+    self.tram:into_line({
+      meta = { action = 'help' }
+    })
+
   end
 
   if nw.config.header.enable_current_report then
-    local report = Line:new(line_no)
-    report:add({ text = "(" .. keys.select_report .. ")report: " })
-    report:add({
-      text = "Report: " .. nw.current_report,
-      color = "NeoWarriorTextInfo"
-    })
-    report:add({ meta = { action = 'report' }})
+
+    self.tram:col("(" .. keys.select_report .. ")report: ", "")
+    self.tram:col("Report: " .. nw.current_report, "NeoWarriorTextInfo")
 
     if nw.config.header.enable_current_view then
       if nw.current_mode == 'grouped' then
-        report:add({ text = " (Grouped by project)" })
+        self.tram:col(" (Grouped by project)", "")
       elseif nw.current_mode == 'tree' then
-        report:add({ text = " (Tree view)" })
+        self.tram:col(" (Tree view)", "")
       end
     end
-    table.insert(lines, report)
-    line_no = line_no + 1
+
+    self.tram:into_line({
+      meta = { action = 'report' }
+    })
+
   end
 
   if nw.config.header.enable_current_filter then
-    local filter = Line:new(line_no)
-    filter:add({ text = "(" .. keys.select_filter .. ")filter: " })
-    filter:add({
-      text = nw.current_filter,
-      color = "NeoWarriorTextWarning"
+
+    self.tram:col("(" .. keys.select_filter .. ")filter: ", "")
+    self.tram:col(nw.current_filter, "NeoWarriorTextWarning")
+    self.tram:into_line({
+      meta = { action = 'filter' }
     })
-    filter:add({ meta = { action = 'filter' }})
-    table.insert(lines, filter)
-    line_no = line_no + 1
+
   end
 
-  --- Add new line
-  table.insert(lines, Line:new(line_no + 3):add({ text = "" }))
+  self.tram:nl()
 
-  return lines
+  return self
 end
 
 return HeaderComponent

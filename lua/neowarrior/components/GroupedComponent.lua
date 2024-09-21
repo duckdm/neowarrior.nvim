@@ -7,65 +7,57 @@ local Line = require('neowarrior.Line')
 ---@field projects ProjectCollection
 ---@field line_no number
 ---@field lines Line[]
----@field new fun(self: GroupedComponent, projects: ProjectCollection): GroupedComponent
+---@field new fun(self: GroupedComponent, tram: Trambampolin, projects: ProjectCollection): GroupedComponent
 ---@field get_lines fun(self: GroupedComponent): Line[]
 ---@field generate_lines fun(self: GroupedComponent, projects: ProjectCollection, line_no: number): number
 local GroupedComponent = {}
 
 --- Create a new GroupedComponent
 ---@param projects ProjectCollection
-function GroupedComponent:new(projects)
+function GroupedComponent:new(tram, projects)
     local grouped_component = {}
     setmetatable(grouped_component, self)
     self.__index = self
 
-    grouped_component.projects = projects
-    grouped_component.lines = {}
-    grouped_component.line_no = 0
+    self.projects = projects
+    self.tram = tram
 
-    return grouped_component
+    return self
 end
 
 --- Get grouped lines
----@return Line[]
-function GroupedComponent:get_lines()
-  self:generate_lines(self.projects, self.line_no)
-  return self.lines
+---@return GroupedComponent
+function GroupedComponent:set()
+  self:_set(self.projects)
+  return self
 end
 
 --- Generate grouped lines
 ---@param projects ProjectCollection
----@param line_no number 
----@return number Line number
-function GroupedComponent:generate_lines(projects, line_no)
+---@return GroupedComponent
+function GroupedComponent:_set(projects)
 
   local nw = _Neowarrior
 
   for _, project in ipairs(projects:get()) do
 
-    local project_line = ProjectLine:new(nw, line_no, project, {
+    ProjectLine:new(nw, self.tram, project):into_line({
       id_as_name = true,
       enable_task_count = nw.config.project_line.enable_task_count,
       enable_average_urgency = nw.config.project_line.enable_average_urgency,
       enable_total_urgency = nw.config.project_line.enable_total_urgency,
       enable_total_estimate = nw.config.project_line.enable_total_estimate,
     })
-    table.insert(self.lines, project_line)
-    line_no = line_no + 1
-    -- table.insert(self.lines, Line:new(line_no):add({ text = "" }))
-    -- line_no = line_no + 1
 
     for _, task in ipairs(project.tasks:get()) do
-      table.insert(self.lines, TaskLine:new(nw, line_no, task, {}))
-      line_no = line_no + 1
+      TaskLine:new(self.tram, task):into_line({})
     end
 
-    table.insert(self.lines, Line:new(line_no):add({ text = "" }))
-    line_no = line_no + 1
+    self.tram:nl()
 
   end
 
-  return line_no
+  return self
 end
 
 return GroupedComponent
