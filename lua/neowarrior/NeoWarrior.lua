@@ -1205,20 +1205,6 @@ function NeoWarrior:open(opts)
   self:after_initial_refresh()
   self:list()
 
-  -- local tram = Tram:new()
-  -- tram:set_buffer(self.buffer)
-  -- tram:col('prefix', 'NeoWarriorTextDanger')
-  -- tram:into_line({
-  --   meta = {
-  --     test = 123
-  --   }
-  -- })
-  -- tram:line('123', { color = 'NeoWarriorTextInfo' })
-  -- tram:virt_line('VR', { pos = "right_align", col = 10, color = 'NeoWarriorTextDangerBg' })
-  -- tram:line('456', { color = 'NeoWarriorTextWarning' })
-  -- tram:line('789', { color = 'NeoWarriorTextSuccess' })
-  -- tram:print()
-
   return self
 end
 
@@ -1234,10 +1220,6 @@ function NeoWarrior:list()
     self.current_filter = self.current_filter:gsub("project:" .. self.config.no_project_name, "project:")
   end
 
-  -- Page:new(self.buffer)
-  --   :add(HeaderComponent:new())
-  --   :add(ListComponent:new(self.tasks))
-  --   :print()
   local tram = Tram:new()
   tram:set_buffer(self.buffer)
   HeaderComponent:new(tram):set()
