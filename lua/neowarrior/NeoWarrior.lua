@@ -768,11 +768,11 @@ function NeoWarrior:set_keymaps()
           finder = finders.new_table({
             results = self.all_projects:get(),
             entry_maker = function(entry)
-              local project_line = ProjectLine:new(self, 0, entry, {})
+              -- local project_line = ProjectLine:new(self, 0, entry, {})
               return {
                 value = entry.id,
-                display = project_line.text,
-                ordinal = project_line.text,
+                display = entry.id,
+                ordinal = entry.id,
               }
             end,
           }),
@@ -1371,11 +1371,10 @@ function NeoWarrior:dependency_select()
     finder = finders.new_table({
       results = self.all_pending_tasks:get(),
       entry_maker = function(entry)
-        local task_line = TaskLine:new(self, 0, entry, {})
         return {
           value = entry,
-          display = task_line.text,
-          ordinal = task_line.text,
+          display = entry.description .. " - " .. entry.urgency,
+          ordinal = entry.description,
         }
       end,
     }),
