@@ -151,30 +151,43 @@ require('neowarrior').focus()
 ```lua
 {
   ---@type table Task line config
+  --- Note: Using more than one of these on the right currently causes some
+  --- visual issues, the leftmost value's color will be used for the entire right
+  --- "column".
   task_line = {
-    ---@type boolean Show warning icon colored based on urgency
-    enable_warning_icon = true,
-    ---@type boolean Show task-has-recurrance indicator
-    enable_recur_icon = true,
-    ---@type boolean Show priority (H, M, L)
-    enable_priority = true,
-    ---@type boolean Show due date
-    enable_due_date = true,
-    ---@type boolean Show urgency
-    enable_urgency = true,
-    ---@type boolean Show estimate. NOTE: This is not a default field in taskwarrior
-    enable_estimate = true,
+    ---@type false|"left"|"right" Show warning icon colored based on urgency
+    enable_warning_icon = "left",
+    ---@type false|"eol"|"right" Show urgency
+    enable_urgency = "eol",
+    ---@type false|"left" Show task-has-recurrance indicator
+    enable_recur_icon = "left",
+    ---@type false|"left" Show priority (H, M, L)
+    enable_priority = "left",
+    ---@type false|"left" Show due date
+    enable_due_date = "left",
+    ---@type false|"left" Show estimate. Note: This is not a default
+    ---field in taskwarrior
+    enable_estimate = "left",
   },
-  ---@type table Project line config. This is only used in tree view.
+  ---@type table Project line config.
+  ---
+  --- Note: These values are not always shown (on the task detail page for
+  --- instance). Set values to either false, "eol" or "right" to enable
+  --- or show them at specific positions.
+  ---
+  --- Note: Using more than one of these on the right currently causes some
+  --- visual issues, the leftmost value's color will be used for the entire right
+  --- "column".
   project_line = {
-    ---@type boolean Show task count
-    enable_task_count = true,
-    ---@type boolean Show average urgency
-    enable_average_urgency = true,
-    ---@type boolean Show total urgency
+    ---@type false|"eol"|"right" Show task count
+    enable_task_count = "eol",
+    ---@type false|"eol"|"right" Show average urgency
+    enable_average_urgency = "eol",
+    ---@type false|"eol"|"right" Show total urgency
     enable_total_urgency = false,
-    ---@type boolean Show total estimate
-    enable_total_estimate = true,
+    ---@type false|"eol"|"right" Show total estimate (Note: This is not a
+    ---default field in taskwarrior)
+    enable_total_estimate = "eol",
   },
   ---@type table Header config
   header = {
@@ -193,7 +206,7 @@ require('neowarrior').focus()
   filter = "",
   ---@type string Default taskwarrior report
   report = "next",
-  ---@type "normal"|"grouped"|"tree"
+  ---@type "normal"|"grouped"|"tree" Default view mode
   mode = "normal",
   ---@type boolean Whether to expand all trees at start
   expanded = false,
@@ -263,6 +276,7 @@ require('neowarrior').focus()
     task_completed = "\u{f14a}",
     recur = "\u{f021}",
     project = "\u{f07b}",
+    project_alt = "\u{f0256}",
     project_open = "\u{f115}",
     warning = "\u{f071}",
     annotated = "\u{f1781}",
