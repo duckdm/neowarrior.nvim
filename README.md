@@ -142,7 +142,6 @@ require('neowarrior').focus()
 | | |
 | tg | Toggle grouped view |
 | tt | Toggle tree view |
-| T | Reset tree view |
 | W | Collapse all trees |
 | E | Expand all trees |
 | Tab | Toggle tree |
