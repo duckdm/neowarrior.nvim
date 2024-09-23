@@ -1,24 +1,20 @@
 local colors = require "neowarrior.colors"
-local Line = require "neowarrior.Line"
 
 ---@class ProjectLine
----@field neowarrior NeoWarrior
 ---@field line_no number
 ---@field project Project
 ---@field arg table
 local ProjectLine = {}
 
 --- Create a new ProjectLine
----@param neowarrior NeoWarrior
 ---@param tram Trambampolin
 ---@param project Project
 ---@return ProjectLine
-function ProjectLine:new(neowarrior, tram, project)
+function ProjectLine:new(tram, project)
     local project_component = {}
     setmetatable(project_component, self)
     self.__index = self
 
-    self.neowarrior = neowarrior
     self.tram = tram
     self.project = project
 
@@ -30,7 +26,7 @@ end
 ---@return Line[]
 function ProjectLine:into_line(arg)
 
-  local conf = self.neowarrior.config
+  local conf = _Neowarrior.config
   local indent = arg.indent or ""
   local open = arg.open or false
   local icon = open and conf.icons.project_open or conf.icons.project

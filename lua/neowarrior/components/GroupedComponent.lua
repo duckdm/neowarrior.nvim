@@ -41,7 +41,7 @@ function GroupedComponent:_set(projects)
 
   for _, project in ipairs(projects:get()) do
 
-    ProjectLine:new(nw, self.tram, project):into_line({
+    ProjectLine:new(self.tram, project):into_line({
       id_as_name = true,
       enable_task_count = nw.config.project_line.enable_task_count,
       enable_average_urgency = nw.config.project_line.enable_average_urgency,

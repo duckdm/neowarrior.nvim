@@ -172,7 +172,7 @@ function TaskPage:project()
   table.insert(self.used_keys, 'project')
   if self.task.project then
     local project = Project:new({ name = self.task.project })
-    ProjectLine:new(_Neowarrior, self.tram, project):into_line({
+    ProjectLine:new(self.tram, project):into_line({
       disable_meta = true,
     })
   end

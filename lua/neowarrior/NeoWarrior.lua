@@ -258,7 +258,7 @@ function NeoWarrior:cursor_hold_task_float()
       local project = self.all_projects:find(task.project)
 
       local tram = Tram:new()
-      ProjectLine:new(self, tram, project):into_line({
+      ProjectLine:new(tram, project):into_line({
         disable_meta = true,
       })
       tram:into_line({})
@@ -775,7 +775,6 @@ function NeoWarrior:set_keymaps()
           finder = finders.new_table({
             results = self.all_projects:get(),
             entry_maker = function(entry)
-              -- local project_line = ProjectLine:new(self, 0, entry, {})
               return {
                 value = entry.id,
                 display = entry.id,

@@ -33,7 +33,7 @@ function TreeComponent:_set(project, indent)
 
   for _, sub_project in ipairs(project.projects:get()) do
 
-    ProjectLine:new(_Neowarrior, self.tram, sub_project):into_line({
+    ProjectLine:new(self.tram, sub_project):into_line({
       indent = indent,
       enable_task_count = config.enable_task_count,
       enable_average_urgency = config.enable_average_urgency,
