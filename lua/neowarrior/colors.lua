@@ -1,7 +1,7 @@
 local Colors = {}
 
 Colors.set = function()
-  vim.cmd("highlight NeoWarriorTextDim guifg=#666666")
+  vim.cmd("highlight NeoWarriorTextDim guifg=#333333")
   vim.cmd("highlight NeoWarriorTextDanger guifg=#cc0000")
   vim.cmd("highlight NeoWarriorTextWarning guifg=#ccaa00")
   vim.cmd("highlight NeoWarriorTextSuccess guifg=#00cc00")

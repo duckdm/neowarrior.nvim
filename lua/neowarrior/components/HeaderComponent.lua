@@ -9,8 +9,26 @@ function HeaderComponent:new(tram)
     self.__index = self
 
     self.tram = tram
+    self.meta_enabled = true
+    self.report_enabled = true
+    self.filter_enabled = true
 
     return self
+end
+
+function HeaderComponent:disable_meta()
+  self.meta_enabled = false
+  return self
+end
+
+function HeaderComponent:disable_report()
+  self.report_enabled = false
+  return self
+end
+
+function HeaderComponent:disable_filter()
+  self.filter_enabled = false
+  return self
 end
 
 --- Print header
@@ -55,13 +73,17 @@ function HeaderComponent:set()
     self.tram:col("(" .. keys.add .. ")add | ", "")
     self.tram:col("(" .. keys.done .. ")done | ", "")
     self.tram:col("(" .. keys.filter .. ")filter", "")
-    self.tram:into_line({
-      meta = { action = 'help' }
-    })
+    if self.meta_enabled then
+      self.tram:into_line({
+        meta = { action = 'help' }
+      })
+    else
+      self.tram:into_line({})
+    end
 
   end
 
-  if nw.config.header.enable_current_report then
+  if nw.config.header.enable_current_report and self.report_enabled then
 
     self.tram:col("(" .. keys.select_report .. ")report: ", "")
     self.tram:col("Report: " .. nw.current_report, "NeoWarriorTextInfo")
@@ -74,19 +96,27 @@ function HeaderComponent:set()
       end
     end
 
-    self.tram:into_line({
-      meta = { action = 'report' }
-    })
+    if not self.disable_meta then
+      self.tram:into_line({
+        meta = { action = 'report' }
+      })
+    else
+      self.tram:into_line({})
+    end
 
   end
 
-  if nw.config.header.enable_current_filter then
+  if nw.config.header.enable_current_filter and self.filter_enabled then
 
     self.tram:col("(" .. keys.select_filter .. ")filter: ", "")
     self.tram:col(nw.current_filter, "NeoWarriorTextWarning")
-    self.tram:into_line({
-      meta = { action = 'filter' }
-    })
+    if not self.disable_meta then
+      self.tram:into_line({
+        meta = { action = 'filter' }
+      })
+    else
+      self.tram:into_line({})
+    end
 
   end
 

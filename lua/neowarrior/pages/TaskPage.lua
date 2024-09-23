@@ -4,6 +4,7 @@ local DateTime = require('neowarrior.DateTime')
 local TaskLine = require('neowarrior.lines.TaskLine')
 local Project = require('neowarrior.Project')
 local ProjectLine = require('neowarrior.lines.ProjectLine')
+local HeaderComponent = require('neowarrior.components.HeaderComponent')
 
 ---@class TaskPage
 ---@field task Task
@@ -37,7 +38,13 @@ function TaskPage:new(buffer, task)
   self.buffer = buffer
   self.tram = Tram:new()
   self.tram:set_buffer(buffer)
+  self.win_width = vim.api.nvim_win_get_width(_Neowarrior.window.id)
 
+  return self
+end
+
+function TaskPage:from(from)
+  self.tram:from(from)
   return self
 end
 
@@ -49,6 +56,12 @@ function TaskPage:print(buffer)
 
   buffer:option("wrap", true, { win = _Neowarrior.window.id })
   self.tram:set_buffer(buffer)
+
+  HeaderComponent:new(self.tram)
+    :disable_meta()
+    :disable_report()
+    :disable_filter()
+    :set()
 
   self:completed()
   self:project()
@@ -115,10 +128,10 @@ function TaskPage:print(buffer)
         if k == "due" or k == "scheduled" then
           time_color = colors.get_due_color(time_string)
         end
-        self.tram:col(prefix, '')
-        self.tram:col(time_string, time_color)
-        self.tram:col(" (" .. v:default_format() .. ")", '')
-        self.tram:into_line({})
+        self:row(k, {
+          { text = k },
+          { text = time_string .. " " .. v:default_format(), color = time_color }
+        })
 
       elseif not (k == "description") and not (k == "parent") and not (k == "imask") and v then
         if type(k) == "table" then
@@ -129,7 +142,7 @@ function TaskPage:print(buffer)
           value = table.concat(value, ", ")
         end
         self:row(k, {
-          { text = string.format(self.prefix_format, k) },
+          { text = k },
           { text = value, color = '' }
         })
       end
@@ -148,10 +161,22 @@ function TaskPage:row(key, cols)
 
   table.insert(self.used_keys, key)
 
+  local len = 5
+
   for _, col in ipairs(cols) do
-    self.tram:col(col.text, col.color or '')
+    len = len + string.len(tostring(col.text))
   end
+
+  self.tram:col(cols[1].text, cols[1].color or '')
+  self.tram:col(self:get_row_border(len), "NeoWarriorTextDim")
   self.tram:into_line({})
+
+  if cols[2] and cols[2].text then
+    self.tram:virt_line(cols[2].text, {
+      color = cols[2].color or '',
+      pos = "right_align",
+    })
+  end
 
   return self
 end
@@ -226,25 +251,27 @@ function TaskPage:annotations()
 
     end
 
+    self.tram:into_line({})
+
     self.tram:nl()
   end
 
 end
 
+--- Get row border
+function TaskPage:get_row_border(offset)
+  return string.rep("_", self.win_width - offset - 1)
+end
+
 --- Urgency row
 function TaskPage:urgency()
 
-  self.tram:col(string.format(self.prefix_format, "Urgency"), "")
-
-  if self.task.urgency > 5 then
-    self.tram:col(
-      _Neowarrior.config.icons.warning .. " ",
-      colors.get_urgency_color(self.task.urgency)
-    )
-  end
-
-  self.tram:col(self.task.urgency, colors.get_urgency_color(self.task.urgency))
-  self.tram:into_line({})
+  self:row('urgency', {{
+    text = "Urgency",
+  }, {
+    text = self.task.urgency,
+    color = colors.get_urgency_color(self.task.urgency),
+  }})
 
 end
 
@@ -256,7 +283,7 @@ function TaskPage:estimate()
   end
 
   self:row('estimate', {{
-    text = string.format(self.prefix_format, "Estimate"),
+    text = "Estimate",
   }, {
     text = self.task.estimate_string,
     color = colors.get_estimate_color(self.task.estimate),
@@ -273,7 +300,7 @@ function TaskPage:priority()
   end
 
   self:row('priority', {{
-    text = string.format(self.prefix_format, "Priority"),
+    text = "Priority",
   }, {
     text = self.task.priority,
     color = colors.get_priority_color(self.task.priority),
@@ -287,7 +314,7 @@ function TaskPage:scheduled()
 
   if self.task.scheduled then
     self:row('scheduled', {{
-      text = string.format(self.prefix_format, "Scheduled"),
+      text = "Scheduled",
     }, {
       text = self.task.scheduled:relative() .. " (" .. self.task.scheduled:default_format() .. ")",
       color = colors.get_due_color(self.task.scheduled:relative()),
@@ -300,8 +327,9 @@ end
 function TaskPage:due()
 
   if self.task.due then
+
     self:row('due', {{
-      text = string.format(self.prefix_format, "Due"),
+      text = "Due",
     }, {
       text = _Neowarrior.config.icons.due .. " " .. self.task.due:relative() .. " (" .. self.task.due:default_format() .. ")",
       color = colors.get_due_color(self.task.due:relative()),
