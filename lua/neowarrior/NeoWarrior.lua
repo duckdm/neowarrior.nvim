@@ -246,7 +246,7 @@ function NeoWarrior:open_task_float()
 
     local uuid = self.buffer:get_meta_data('uuid')
     local max_width = self.config.float.max_width
-    local win_width = vim.api.nvim_win_get_width(0)
+    local win_width = self.window:get_width()
     local width = max_width
     local anchor = 'SW'
     local cursor = self.buffer:get_cursor()
@@ -1169,22 +1169,25 @@ function NeoWarrior:open(opts)
   local split = opts.split or 'below'
 
   self.buffer = Buffer:new({})
-  self:init()
   self:set_keymaps()
   self:setup_autocmds()
 
   if split == 'current' then
+
     vim.api.nvim_set_current_buf(self.buffer.id)
     self.window = Window:new({
       id = vim.api.nvim_get_current_win(),
       buffer = self.buffer,
       enter = true,
     }, {})
+
   else
+
     local win = -1
     if split == 'below' or split == 'above' then
       win = 0
     end
+
     self.window = Window:new({
       buffer = self.buffer,
       win = win,
@@ -1192,13 +1195,8 @@ function NeoWarrior:open(opts)
     }, {
       split = split,
     })
+
   end
-  vim.api.nvim_set_current_buf(self.buffer.id)
-  self.window = Window:new({
-    id = vim.api.nvim_get_current_win(),
-    buffer = self.buffer,
-    enter = true,
-  }, {})
 
   self.buffer:set_name('neowarrior')
   self.buffer:lock()
@@ -1234,8 +1232,7 @@ function NeoWarrior:list()
     self.current_filter = self.current_filter:gsub("project:" .. self.config.no_project_name, "project:")
   end
 
-  local tram = Tram:new()
-  tram:set_buffer(self.buffer)
+  local tram = Tram:new():set_buffer(self.buffer)
   HeaderComponent:new(tram):set()
   ListComponent:new(tram, self.tasks):set()
 
@@ -1339,7 +1336,7 @@ function NeoWarrior:report_select()
 end
 
 --- Set filter, refresh and show list
----@param filter 
+---@param filter string
 ---@return NeoWarrior
 function NeoWarrior:set_filter(filter)
   self.current_filter = filter
