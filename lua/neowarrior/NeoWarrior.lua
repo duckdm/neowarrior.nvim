@@ -213,104 +213,111 @@ function NeoWarrior:setup_autocmds()
     vim.api.nvim_create_autocmd('CursorMoved', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
       callback = function()
+
         self:close_floats()
+
       end,
     })
     vim.o.updatetime = self.config.float.delay
     vim.api.nvim_create_autocmd('CursorHold', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-hold', { clear = true }),
       callback = function()
-        local description = self.buffer:get_meta_data('description')
-        if description then
-          local uuid = self.buffer:get_meta_data('uuid')
-          local max_width = self.config.float.max_width
-          local win_width = vim.api.nvim_win_get_width(0)
-          local width = max_width
-          local anchor = 'SW'
-          local cursor = self.buffer:get_cursor()
-          local row = 0
-          local col = 0 - cursor[2]
-          if cursor[1] <= 10 then
-            anchor = 'NW'
-            row = 1
-          end
-          if win_width < max_width then
-            width = win_width
-          end
 
-          if uuid then
+          self:cursor_hold_task_float()
 
-            local task = self.tw:task(uuid)
-            local project = self.all_projects:find(task.project)
-
-            local tram = Tram:new()
-            ProjectLine:new(self, tram, project):into_line({
-              disable_meta = true,
-            })
-            tram:into_line({})
-
-            TaskLine:new(tram, task):into_line({
-              disable_meta = true,
-              disable_due = true,
-              disable_estimate = true,
-              disable_has_blocking = true,
-            })
-
-            if task.depends and task.depends:count() > 0 then
-
-              tram:nl()
-              tram:line('Blocked by ' .. task.depends:count() .. ' task(s)', { color = 'NeoWarriorTextDanger' })
-
-            end
-
-            local task_parents = task:create_parent_collection()
-
-            ---FIX: this does not work anymore?
-            if task_parents then
-
-              tram:nl()
-              tram:line(
-                'Blocking ' .. task_parents:count() .. ' task(s)',
-                { color = 'NeoWarriorTextDanger' }
-              )
-
-            end
-
-            tram:nl()
-
-            tram:line('Urgency: ' .. task.urgency, colors.get_urgency_color(task.urgency))
-
-            if task.priority then
-              local priority_color = colors.get_priority_color(task.priority)
-              tram:line('Priority: ' .. task.priority, priority_color)
-            end
-            if task.due then
-              local due_relative = task.due:relative()
-              local due_formatted = task.due:default_format()
-              tram:line('Due: ' .. due_relative .. " (" .. due_formatted .. ")", colors.get_due_color(due_relative))
-            end
-            if task.estimate then
-              tram:line('Estimate: ' .. task.estimate_string, colors.get_urgency_color(task.estimate))
-            end
-
-            self.task_float = tram:open_float({
-              relative = 'cursor',
-              width = width,
-              col = col,
-              row = row,
-              enter = false,
-              anchor = anchor,
-            })
-            table.insert(self.task_floats, self.task_float)
-
-          end
-        end
       end,
     })
   end
 
 end
 
+function NeoWarrior:cursor_hold_task_float()
+
+  local description = self.buffer:get_meta_data('description')
+
+  if description then
+    local uuid = self.buffer:get_meta_data('uuid')
+    local max_width = self.config.float.max_width
+    local win_width = vim.api.nvim_win_get_width(0)
+    local width = max_width
+    local anchor = 'SW'
+    local cursor = self.buffer:get_cursor()
+    local row = 0
+    local col = 0 - cursor[2]
+    if cursor[1] <= 10 then
+      anchor = 'NW'
+      row = 1
+    end
+    if win_width < max_width then
+      width = win_width
+    end
+
+    if uuid then
+
+      local task = self.tw:task(uuid)
+      local project = self.all_projects:find(task.project)
+
+      local tram = Tram:new()
+      ProjectLine:new(self, tram, project):into_line({
+        disable_meta = true,
+      })
+      tram:into_line({})
+
+      TaskLine:new(tram, task):into_line({
+        disable_meta = true,
+        disable_due = true,
+        disable_estimate = true,
+        disable_has_blocking = true,
+      })
+
+      if task.depends and task.depends:count() > 0 then
+
+        tram:nl()
+        tram:line('Blocked by ' .. task.depends:count() .. ' task(s)', { color = 'NeoWarriorTextDanger' })
+
+      end
+
+      local task_parents = task:create_parent_collection()
+      if task_parents then
+
+        tram:nl()
+        tram:line(
+          'Blocking ' .. task_parents:count() .. ' task(s)',
+          { color = 'NeoWarriorTextDanger' }
+        )
+
+      end
+
+      tram:nl()
+
+      tram:line('Urgency: ' .. task.urgency, colors.get_urgency_color(task.urgency))
+
+      if task.priority then
+        local priority_color = colors.get_priority_color(task.priority)
+        tram:line('Priority: ' .. task.priority, priority_color)
+      end
+      if task.due then
+        local due_relative = task.due:relative()
+        local due_formatted = task.due:default_format()
+        tram:line('Due: ' .. due_relative .. " (" .. due_formatted .. ")", colors.get_due_color(due_relative))
+      end
+      if task.estimate then
+        tram:line('Estimate: ' .. task.estimate_string, colors.get_urgency_color(task.estimate))
+      end
+
+      self.task_float = tram:open_float({
+        relative = 'cursor',
+        width = width,
+        col = col,
+        row = row,
+        enter = false,
+        anchor = anchor,
+      })
+      table.insert(self.task_floats, self.task_float)
+    end
+  end
+
+end
 --- Init neowarrior
 ---@return NeoWarrior
 function NeoWarrior:init()
