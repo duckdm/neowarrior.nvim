@@ -1,12 +1,12 @@
 local Tram = require('trambampolin')
 local Buffer = require('trambampolin.Buffer')
+local Window = require('trambampolin.Window')
 
 local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
-local Window = require('neowarrior.Window')
 local Taskwarrior = require('neowarrior.Taskwarrior')
 local TaskPage = require('neowarrior.pages.TaskPage')
 local colors   = require('neowarrior.colors')
@@ -186,6 +186,7 @@ function NeoWarrior:setup(config)
   return self
 end
 
+--- Close all floats
 function NeoWarrior:close_floats()
 
   if self.task_float then
@@ -207,9 +208,11 @@ function NeoWarrior:close_floats()
 
 end
 
+--- Setup auto commands
 function NeoWarrior:setup_autocmds()
 
   if self.config.float.enabled then
+
     vim.api.nvim_create_autocmd('CursorMoved', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
       callback = function()
@@ -218,24 +221,29 @@ function NeoWarrior:setup_autocmds()
 
       end,
     })
+
+    --- Delay before task float is shown
     vim.o.updatetime = self.config.float.delay
     vim.api.nvim_create_autocmd('CursorHold', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-hold', { clear = true }),
       callback = function()
 
-          self:cursor_hold_task_float()
+          self:open_task_float()
 
       end,
     })
+
   end
 
 end
 
-function NeoWarrior:cursor_hold_task_float()
+--- Show task float
+function NeoWarrior:open_task_float()
 
   local description = self.buffer:get_meta_data('description')
 
   if description then
+
     local uuid = self.buffer:get_meta_data('uuid')
     local max_width = self.config.float.max_width
     local win_width = vim.api.nvim_win_get_width(0)
@@ -296,11 +304,13 @@ function NeoWarrior:cursor_hold_task_float()
         local priority_color = colors.get_priority_color(task.priority)
         tram:line('Priority: ' .. task.priority, priority_color)
       end
+
       if task.due then
         local due_relative = task.due:relative()
         local due_formatted = task.due:default_format()
         tram:line('Due: ' .. due_relative .. " (" .. due_formatted .. ")", colors.get_due_color(due_relative))
       end
+
       if task.estimate then
         tram:line('Estimate: ' .. task.estimate_string, colors.get_urgency_color(task.estimate))
       end
@@ -314,6 +324,7 @@ function NeoWarrior:cursor_hold_task_float()
         anchor = anchor,
       })
       table.insert(self.task_floats, self.task_float)
+
     end
   end
 
@@ -1004,10 +1015,6 @@ function NeoWarrior:open_help()
 
   self:close_floats()
 
-  -- local page = Page:new(Buffer:new({
-  --   listed = false,
-  --   scratch = true,
-  -- }))
   local tram = Tram:new()
   local width = 0
   local win_width = self.window:get_width()
@@ -1202,6 +1209,7 @@ function NeoWarrior:open(opts)
   self.buffer:option('concealcursor', 'nc', { win = self.window.id })
   self.buffer:option('wrap', false, { win = self.window.id })
   self.buffer:option('filetype', 'neowarrior', { buf = self.buffer.id })
+
   vim.cmd([[
   syntax match Metadata /{{{.*}}}/ conceal
   syntax match MetadataConceal /{{{[^}]*}}}/ contained conceal
@@ -1352,6 +1360,8 @@ function NeoWarrior:set_report(report)
   return self
 end
 
+--- Show depepndency select dropdown
+---@return NeoWarrior
 function NeoWarrior:dependency_select()
 
   self.buffer:save_cursor()
@@ -1367,7 +1377,7 @@ function NeoWarrior:dependency_select()
     uuid = self.buffer:get_meta_data('uuid')
   end
   if not uuid then
-    return
+    return self
   end
 
   task = self.tw:task(uuid)
@@ -1399,6 +1409,8 @@ function NeoWarrior:dependency_select()
     end,
   })
   :find()
+
+  return self
 end
 
 return NeoWarrior
