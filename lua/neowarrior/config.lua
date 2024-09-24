@@ -1,8 +1,10 @@
 ---@alias NeoWarrior.Config table
 ---@type NeoWarrior.Config
 return {
+
   ---@type boolean Enable debug mode
   debug = false,
+
   ---@type table Task line config
   --- Note: Using more than one of these on the right currently causes some
   --- visual issues, the leftmost value's color will be used for the entire right
@@ -22,6 +24,7 @@ return {
     ---field in taskwarrior
     enable_estimate = "left",
   },
+
   ---@type table Project line config.
   ---
   --- Note: These values are not always shown (on the task detail page for
@@ -42,6 +45,7 @@ return {
     ---default field in taskwarrior)
     enable_total_estimate = "eol",
   },
+
   ---@type table Header config
   header = {
     ---@type string|nil Custom header text (disable with nil)
@@ -55,16 +59,22 @@ return {
     ---@type boolean Whether to show the current filter at the top
     enable_current_filter = true,
   },
+
   ---@type string Default taskwarrior filter
   filter = "",
+
   ---@type string Default taskwarrior report
   report = "next",
+
   ---@type "normal"|"grouped"|"tree" Default view mode
   mode = "normal",
+
   ---@type boolean Whether to expand all trees at start
   expanded = false,
+
   ---@type string Default project name for tasks without project
   no_project_name = "no-project",
+
   ---@type table Task float
   float = {
     ---@type boolean Enable floating window for tasks
@@ -74,11 +84,15 @@ return {
     ---@type number Time in milliseconds before detail float is shown
     delay = 200,
   },
+
   ---@type number Timezone offset in hours
   time_offset = 0,
-  ---@type table Colors and hl groups. You can use custom hl groups or just
-  ---define colors for the existing highlight groups. A nil/false value for
-  ---a color means it's disabled/transparent.
+
+  ---@type table Colors and hl groups.
+  ---
+  ---You can use custom hl groups or just define colors for the existing
+  ---highlight groups. A nil/false value for a color means it's
+  ---disabled/transparent.
   colors = {
     dim = { group = "NeoWarriorTextDim", fg = "#333333", bg = nil },
     danger = { group = "NeoWarriorTextDanger", fg = "#cc0000", bg = nil },
@@ -88,9 +102,21 @@ return {
     danger_bg = { group = "NeoWarriorTextDangerBg", fg = "#ffffff", bg = "#cc0000" },
     project = { group = "NeoWarriorGroup", fg = "#00aaff", bg = nil },
   },
+  --- Example using builtin highlight groups:
+  -- colors = {
+  --   dim = { group = "Whitespace" },
+  --   danger = { group = "ErrorMsg" },
+  --   warning = { group = "WarningMsg" },
+  --   success = { group = "FloatTitle" },
+  --   info = { group = "Question" },
+  --   danger_bg = { group = "ErrorMsg" },
+  --   project = { group = "Directory" },
+  -- },
+
   ---@type table|nil Set config values for specific directories. Most
   --- config values from this file should work per dir basis too.
   dir_setup = nil,
+
   ---@type table Default reports available (valid taskwarrior reports). Used
   ---in selects.
   reports = {
@@ -98,6 +124,7 @@ return {
     "ls", "minimal", "newest", "next", "oldest", "overdue", "projects",
     "ready", "recurring", "summary", "tags", "unblocked", "waiting",
   },
+
   ---@type table Default filters available (valid taskwarrior filters). Used
   ---in selects.
   filters = {
@@ -107,6 +134,7 @@ return {
     "priority.not:L", "priority:", "priority.not:", "project:",
     "project.not:",
   },
+
   ---@type table Default key mappings. Disable all by setting keys to nil or false.
   keys = {
     help = '?', --- Show help
@@ -132,6 +160,7 @@ return {
     modify_select_priority = 'MP', --- Modify priority
     modify_due = 'Md', --- Modify due date
   },
+
   ---@type table Default icons
   icons = {
     tree_line = "│", --- NOTE: Not currently used
