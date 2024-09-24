@@ -1,31 +1,28 @@
 local Colors = {}
 
-Colors.set = function()
-  vim.cmd("highlight NeoWarriorTextDim guifg=#333333")
-  vim.cmd("highlight NeoWarriorTextDanger guifg=#cc0000")
-  vim.cmd("highlight NeoWarriorTextWarning guifg=#ccaa00")
-  vim.cmd("highlight NeoWarriorTextSuccess guifg=#00cc00")
-  vim.cmd("highlight NeoWarriorTextInfo guifg=#00aaff")
-  vim.cmd("highlight NeoWarriorGroup guifg=#00aaff")
-  vim.cmd("highlight NeoWarriorVirt guifg=#00aaff guibg=#000000")
-  vim.cmd("highlight NeoWarriorHide guifg=#000000 guibg=#000000")
+Colors.set = function(config_colors)
 
-  vim.cmd("highlight NeoWarriorTextDefaultBg guifg=#ffffff guibg=#333333")
-  vim.cmd("highlight NeoWarriorTextInfoBg guifg=#ffffff guibg=#005588")
-  vim.cmd("highlight NeoWarriorTextDangerBg guifg=#ffffff guibg=#cc0000")
+  for _, color in pairs(config_colors) do
+    if color.bg then
+      vim.cmd("highlight " .. color.group .. " guifg=" .. color.fg .. " guibg=" .. color.bg)
+    else
+      vim.cmd("highlight " .. color.group .. " guifg=" .. color.fg)
+    end
+  end
+
 end
 
 Colors.get_urgency_color = function(urgency)
   if not urgency then
-    return "NeoWarriorTextDim"
+    return _Neowarrior.config.colors.dim.group
   end
   if (urgency + 0.0) >= 10 then
-    return "NeoWarriorTextDanger"
+    return _Neowarrior.config.colors.danger.group
   end
   if (urgency + 0.0) >= 5 then
-    return "NeoWarriorTextWarning"
+    return _Neowarrior.config.colors.warning.group
   end
-  return "NeoWarriorTextDim"
+  return _Neowarrior.config.colors.dim.group
 end
 
 --- Get estimate color
@@ -34,12 +31,12 @@ end
 Colors.get_estimate_color = function(est)
   if est then
     if est < 1 then
-      return "NeoWarriorTextSuccess"
+      return _Neowarrior.config.colors.success.group
     elseif est < 8 then
-      return "NeoWarriorTextInfo"
+      return _Neowarrior.config.colors.info.group
     end
   end
-  return "NeoWarriorTextWarning"
+  return _Neowarrior.config.colors.warning.group
 end
 
 --- Get due color
@@ -47,17 +44,17 @@ end
 ---@return string
 Colors.get_due_color = function(due)
   if string.find(due, "-") then
-    return "NeoWarriorTextDangerBg"
+    return _Neowarrior.config.colors.danger_bg.group
   end
   if (string.find(due, "m") and not (string.find(due, "mon"))) or string.find(due, "h") then
-    return "NeoWarriorTextDanger"
+    return _Neowarrior.config.colors.danger.group
   elseif string.find(due, "d") then
     local no_days = tonumber(string.match(due, "%d+"))
     if no_days <= 7 then
-      return "NeoWarriorTextWarning"
+      return _Neowarrior.config.colors.warning.group
     end
   end
-  return "NeoWarriorTextInfo"
+  return _Neowarrior.config.colors.info.group
 end
 
 --- Get priority color
@@ -65,13 +62,13 @@ end
 ---@return string
 Colors.get_priority_color = function(priority)
   if priority == "H" then
-    return "NeoWarriorTextDanger"
+    return _Neowarrior.config.colors.danger.group
   end
   if priority == "M" then
-    return "NeoWarriorTextWarning"
+    return _Neowarrior.config.colors.warning.group
   end
   if priority == "L" then
-    return "NeoWarriorTextSuccess"
+    return _Neowarrior.config.colors.success.group
   end
   return ""
 end

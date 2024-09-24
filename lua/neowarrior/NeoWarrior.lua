@@ -179,7 +179,7 @@ function NeoWarrior:setup(config)
   self.config.default_filter = self.config.filter or ""
   self.config.default_report = self.config.report or "next"
 
-  colors.set()
+  colors.set(self.config.colors)
 
   self:create_user_commands()
 
@@ -281,7 +281,7 @@ function NeoWarrior:open_task_float()
       if task.depends and task.depends:count() > 0 then
 
         tram:nl()
-        tram:line('Blocked by ' .. task.depends:count() .. ' task(s)', { color = 'NeoWarriorTextDanger' })
+        tram:line('Blocked by ' .. task.depends:count() .. ' task(s)', { color = _Neowarrior.config.colors.danger.group })
 
       end
 
@@ -291,7 +291,7 @@ function NeoWarrior:open_task_float()
         tram:nl()
         tram:line(
           'Blocking ' .. task_parents:count() .. ' task(s)',
-          { color = 'NeoWarriorTextDanger' }
+          { color = _Neowarrior.config.colors.danger.group }
         )
 
       end
@@ -1035,7 +1035,7 @@ function NeoWarrior:open_help()
   for _, group in ipairs(self.keys) do
 
     if group.name then
-      tram:line(string.format("%" .. pad + 4 .. "s", " ") .. group.name, 'NeoWarriorTextInfo')
+      tram:line(string.format("%" .. pad + 4 .. "s", " ") .. group.name, _Neowarrior.config.colors.info.group)
     end
 
     for _, key in ipairs(group.keys) do
@@ -1043,7 +1043,7 @@ function NeoWarrior:open_help()
       local conf_key = self.config.keys[key.key]
       local desc = key.desc
 
-      tram:col(string.format("%" .. pad .. "s", conf_key), 'NeoWarriorTextInfo')
+      tram:col(string.format("%" .. pad .. "s", conf_key), _Neowarrior.config.colors.info.group)
       tram:col(" -> " .. desc, '')
       tram:into_line({})
 

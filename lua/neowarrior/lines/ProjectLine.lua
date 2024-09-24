@@ -40,11 +40,11 @@ function ProjectLine:into_line(arg)
     name = self.project.id
   end
   name = string.gsub(name, "%.", " " .. icon_alt .. " ")
-  self.tram:col(indent .. icon .. " " .. name, "NeoWarriorTextInfo")
+  self.tram:col(indent .. icon .. " " .. name, _Neowarrior.config.colors.project.group)
 
   local task_count = self.project.task_count
   if arg.enable_task_count == "eol" and task_count > 0 then
-    self.tram:col(" " .. conf.icons.task .. " " .. task_count, "NeoWarriorTextDefault")
+    self.tram:col(" " .. conf.icons.task .. " " .. task_count, "")
   end
 
   local total_estimate = self.project.estimate.total

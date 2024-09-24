@@ -168,7 +168,7 @@ function TaskPage:row(key, cols)
   end
 
   self.tram:col(cols[1].text, cols[1].color or '')
-  self.tram:col(self:get_row_border(len), "NeoWarriorTextDim")
+  self.tram:col(self:get_row_border(len), _Neowarrior.config.colors.dim.group)
   self.tram:into_line({})
 
   if cols[2] and cols[2].text then
@@ -186,7 +186,7 @@ function TaskPage:completed()
 
   if self.task.status and self.task.status == "completed" then
     table.insert(self.used_keys, 'status')
-    self.tram:col("Task completed", "NeoWarriorTextSuccess")
+    self.tram:col("Task completed", _Neowarrior.config.colors.success.group)
   end
 
 end
@@ -220,7 +220,7 @@ function TaskPage:started()
       text = "Task started: ",
     }, {
       text = self.task.start:default_format(),
-      color = "NeoWarriorTextDangerBg",
+      color = _Neowarrior.config.colors.danger_bg.group,
     }})
   end
 
@@ -234,7 +234,7 @@ function TaskPage:annotations()
 
     self:row('annotations', {{
       text = "Annotations",
-      color = "NeoWarriorTextInfo",
+      color = _Neowarrior.config.colors.info.group,
     }})
 
     for _, annotation in ipairs(annotations) do
@@ -244,10 +244,10 @@ function TaskPage:annotations()
       if annotation.entry then
         local anno_entry_dt = DateTime:new(annotation.entry)
         anno_entry = " " .. anno_entry_dt:default_format()
-        self.tram:col(anno_entry, "NeoWarriorTextInfo")
+        self.tram:col(anno_entry, _Neowarrior.config.colors.info.group)
       end
 
-      self.tram:col(" " .. annotation.description, "NeoWarriorTextInfo")
+      self.tram:col(" " .. annotation.description, _Neowarrior.config.colors.info.group)
 
     end
 
@@ -346,7 +346,7 @@ function TaskPage:dependencies()
 
     self:row('depends', {{
       text = "Dependencies",
-      color = "NeoWarriorTextDanger",
+      color = _Neowarrior.config.colors.danger.group,
     }})
 
     for _, task in ipairs(self.task.depends:get()) do
@@ -371,7 +371,7 @@ function TaskPage:parents()
 
     self:row('parents', {{
       text = "Blocking these tasks",
-      color = "NeoWarriorTextWarning",
+      color = _Neowarrior.config.colors.warning.group,
     }})
 
     for _, task in ipairs(parents:get()) do

@@ -39,24 +39,24 @@ function HeaderComponent:set()
 
   if nw.config.debug then
     self.tram:col("Window:", "")
-    self.tram:col(nw.window.id, "NeoWarriorTextInfo")
+    self.tram:col(nw.window.id, _Neowarrior.config.colors.info.group)
     self.tram:into_line({})
     self.tram:col("Buffer:", "")
-    self.tram:col(nw.buffer.id, "NeoWarriorTextInfo")
+    self.tram:col(nw.buffer.id, _Neowarrior.config.colors.info.group)
     self.tram:into_line({})
   end
 
   if nw.config.header.text then
 
-    local header_text_color = "NeoWarriorTextInfo"
+    local header_text_color = _Neowarrior.config.colors.info.group
     local header_text_has_version = string.match(nw.config.header.text, "{version}")
 
     if header_text_has_version then
 
       if string.match(nw.version, "dev") then
-        header_text_color = "NeoWarriorTextDanger"
+        header_text_color = _Neowarrior.config.colors.danger.group
       elseif string.match(nw.version, "pre") or string.match(nw.version, "alpha") or string.match(nw.version, "beta") then
-        header_text_color = "NeoWarriorTextWarning"
+        header_text_color = _Neowarrior.config.colors.warning.group
       end
 
     end
@@ -86,7 +86,7 @@ function HeaderComponent:set()
   if nw.config.header.enable_current_report and self.report_enabled then
 
     self.tram:col("(" .. keys.select_report .. ")report: ", "")
-    self.tram:col("Report: " .. nw.current_report, "NeoWarriorTextInfo")
+    self.tram:col("Report: " .. nw.current_report, _Neowarrior.config.colors.info.group)
 
     if nw.config.header.enable_current_view then
       if nw.current_mode == 'grouped' then
@@ -109,7 +109,7 @@ function HeaderComponent:set()
   if nw.config.header.enable_current_filter and self.filter_enabled then
 
     self.tram:col("(" .. keys.select_filter .. ")filter: ", "")
-    self.tram:col(nw.current_filter, "NeoWarriorTextWarning")
+    self.tram:col(nw.current_filter, _Neowarrior.config.colors.warning.group)
     if not self.disable_meta then
       self.tram:into_line({
         meta = { action = 'filter' }

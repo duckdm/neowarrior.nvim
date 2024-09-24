@@ -151,6 +151,8 @@ require('neowarrior').focus()
 # Default config values
 ```lua
 {
+  ---@type boolean Enable debug mode
+  debug = false,
   ---@type table Task line config
   --- Note: Using more than one of these on the right currently causes some
   --- visual issues, the leftmost value's color will be used for the entire right
@@ -224,6 +226,18 @@ require('neowarrior').focus()
   },
   ---@type number Timezone offset in hours
   time_offset = 0,
+  ---@type table Colors and hl groups. You can use custom hl groups or just
+  ---define colors for the existing highlight groups. A nil/false value for
+  ---a color means it's disabled/transparent.
+  colors = {
+    dim = { group = "NeoWarriorTextDim", fg = "#333333", bg = nil },
+    danger = { group = "NeoWarriorTextDanger", fg = "#cc0000", bg = nil },
+    warning = { group = "NeoWarriorTextWarning", fg = "#ccaa00", bg = nil },
+    success = { group = "NeoWarriorTextSuccess", fg = "#00cc00", bg = nil },
+    info = { group = "NeoWarriorTextInfo", fg = "#00aaff", bg = nil },
+    danger_bg = { group = "NeoWarriorTextDangerBg", fg = "#ffffff", bg = "#cc0000" },
+    project = { group = "NeoWarriorGroup", fg = "#00aaff", bg = nil },
+  },
   ---@type table|nil Set config values for specific directories. Most
   --- config values from this file should work per dir basis too.
   dir_setup = nil,

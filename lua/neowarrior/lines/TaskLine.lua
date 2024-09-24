@@ -72,24 +72,24 @@ function TaskLine:into_line(arg)
     due = due:relative()
   end
   local task_icon = conf.icons.task
-  local task_icon_color = "NeoWarriorTextDim"
+  local task_icon_color = _Neowarrior.config.colors.dim.group
   if self.task.start then
-    task_icon_color = "NeoWarriorTextDanger"
-    description_color = "NeoWarriorTextWarning"
+    task_icon_color = _Neowarrior.config.colors.danger.group
+    description_color = _Neowarrior.config.colors.warning.group
   end
   if self.task.status and self.task.status == "completed" then
     task_icon = conf.icons.task_completed
-    task_icon_color = "NeoWarriorTextSuccess"
+    task_icon_color = _Neowarrior.config.colors.success.group
   end
   if self.task.status and self.task.status == "deleted" then
     task_icon = conf.icons.deleted
-    task_icon_color = "NeoWarriorTextWarning"
+    task_icon_color = _Neowarrior.config.colors.warning.group
   end
 
   local has_blocking = false
   if self.task.depends then
     task_icon = conf.icons.depends
-    task_icon_color = "NeoWarriorTextDanger"
+    task_icon_color = _Neowarrior.config.colors.danger.group
     has_blocking = true
   end
 
@@ -118,7 +118,7 @@ function TaskLine:into_line(arg)
   end
 
   if self.task.start and (not disable_start) then
-    self.tram:col(conf.icons.start .. " ", "NeoWarriorTextDanger")
+    self.tram:col(conf.icons.start .. " ", _Neowarrior.config.colors.danger.group)
   end
 
   if urgency_val > 5 and (not disable_warning) and line_conf.enable_warning_icon == "left" then
@@ -133,7 +133,7 @@ function TaskLine:into_line(arg)
   end
 
   if not disable_recur and self.task.recur and line_conf.enable_recur_icon == "left" then
-    self.tram:col(conf.icons.recur .. " ", "NeoWarriorTextInfo")
+    self.tram:col(conf.icons.recur .. " ", _Neowarrior.config.colors.info.group)
   end
 
   if due and (due ~= '') and (not disable_due) and line_conf.enable_due_date == "left" then
@@ -148,13 +148,13 @@ function TaskLine:into_line(arg)
   end
 
   if (not disable_annotations) and self.task.annotations and line_conf.enable_annotations_icon == "left" then
-    self.tram:col(conf.icons.annotated .. " ", "NeoWarriorTextInfo")
+    self.tram:col(conf.icons.annotated .. " ", _Neowarrior.config.colors.info.group)
   end
 
   if not disable_description then
     self.tram:col(description, description_color)
     if has_blocking and (not disable_has_blocking) then
-      self.tram:col(" [has blocking tasks]", "NeoWarriorTextDanger")
+      self.tram:col(" [has blocking tasks]", _Neowarrior.config.colors.danger.group)
     end
   end
 
