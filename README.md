@@ -5,7 +5,7 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
 
 # Requirements
 
-- [Neovim v0.10.0](https://github.com/neovim/neovim/releases/tag/v0.10.0)
+- [Neovim >=0.10.0](https://github.com/neovim/neovim/releases/tag/v0.10.0)
 - [Taskwarrior](https://taskwarrior.org/)
 
 ## Optional
