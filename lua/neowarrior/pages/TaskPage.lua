@@ -187,8 +187,9 @@ end
 function TaskPage:completed()
 
   if self.task.status and self.task.status == "completed" then
-    table.insert(self.used_keys, 'status')
+    -- table.insert(self.used_keys, 'status')
     self.tram:col("Task completed", _Neowarrior.config.colors.success.group)
+    self.tram:into_line({})
   end
 
 end
