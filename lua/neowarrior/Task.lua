@@ -98,8 +98,8 @@ end
 function Task:create_parent_collection()
 
   local parents = TaskCollection:new()
-  for _, task in ipairs(_Neowarrior.all_pending_tasks:get()) do
-    if task.depends then
+  for _, task in ipairs(_Neowarrior.all_tasks:get()) do
+    if task.depends and task.depends:count() > 0 then
       for _, dependency in ipairs(task.depends:get()) do
         if dependency.uuid == self.uuid then
           parents:add(task)

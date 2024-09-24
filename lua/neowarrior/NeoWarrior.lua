@@ -355,19 +355,16 @@ end
 ---@return NeoWarrior
 function NeoWarrior:refresh()
 
+  self.all_pending_tasks = self.tw:tasks('all', 'status:pending')
+  self.all_pending_tasks:sort('urgency')
+
   self.all_tasks = self.tw:tasks('all', 'description.not:')
   self.all_tasks:sort('urgency')
   self.all_project_names = util.extract('project', self.all_tasks:get())
-  self.all_pending_tasks = TaskCollection:new()
-
-  for _, task in ipairs(self.all_tasks:get()) do
-    if task.status == 'pending' then
-      self.all_pending_tasks:add(task)
-    end
-  end
 
   self.tasks = self.tw:tasks(self.current_report, self.current_filter)
   self.tasks:sort('urgency')
+
   self.project_names = util.extract('project', self.tasks:get())
 
   self.projects = self:generate_project_collection_from_tasks(self.tasks)
