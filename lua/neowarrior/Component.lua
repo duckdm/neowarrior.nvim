@@ -6,18 +6,19 @@
 ---@field text string[]
 ---@field colors table[]
 ---@field type string
+---@field start_at number
 ---@field new fun(self: Component): Component
+---@field from fun(self: Component, line_no: number): Component
 ---@field reset fun(self: Component): Component
 ---@field add fun(self: Component, lines: Line[]): Component
----@field add_raw fun(self: Component, string: string): Line
+---@field add_raw fun(self: Component, string: string|number): Component
+---@field nl fun(self: Component): Component
+---@field print fun(self: Component, buffer: Buffer): Component
+---@field get_line_count fun(self: Component): number
 ---@field pop fun(self: Component): Line
 ---@field get fun(self: Component): Line[]
----@field get_line_count fun(self: Component): number
----@field from fun(self: Component, line_no: number): Component
----@field nl fun(self: Component): Component
 ---@field get_text fun(self: Component): string[]
 ---@field get_colors fun(self: Component): table[]
----@field print fun(self: Component, buffer: TramBuffer): Component
 ---@field debug fun(self: Component, arg: { level: number, prefix: string|nil }): Component
 local Component = {}
 

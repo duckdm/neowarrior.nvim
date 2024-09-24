@@ -1,4 +1,4 @@
---- FIX: this whole class should not be used
+--- FIX: this class should not be used anymore and should be removed
 local Tram = require('trambampolin.init')
 local Component = require('neowarrior.Component')
 local Line = require('neowarrior.Line')

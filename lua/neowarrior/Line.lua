@@ -4,9 +4,14 @@ local util = require 'neowarrior.util'
 ---@field line_no number
 ---@field text string
 ---@field meta_text string
----@field colors table
+---@field colors table[]
 ---@field current_col number
 ---@field last_col number
+---@field debug_level number
+---@field new fun(self: Line, line_no: number): Line
+---@field add fun(self: Line, block: table): Line
+---@field set_debug_level fun(self: Line, level: number): Line
+---@field log fun(self: Line): nil
 local Line = {}
 
 --- Create a new Line

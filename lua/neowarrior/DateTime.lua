@@ -7,6 +7,11 @@
 ---@field minute number
 ---@field second number
 ---@field timestamp number
+---@field new fun(self: DateTime, date: string): DateTime
+---@field parse fun(self: DateTime, str: string): number
+---@field format fun(self: DateTime, format: string): string|osdate
+---@field default_format fun(self: DateTime): string|osdate
+---@field relative fun(self: DateTime): string
 local DateTime = {}
 
 --- Create new datetime
@@ -71,6 +76,8 @@ function DateTime:format(format)
   return os.date(format, self.timestamp)
 end
 
+--- Get default formatted date
+---@return string|osdate
 function DateTime:default_format()
   if self.timestamp == 0 then
     return ''
