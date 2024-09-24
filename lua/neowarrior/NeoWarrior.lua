@@ -582,6 +582,7 @@ function NeoWarrior:mark_done()
     end
 
     if self.current_task then
+      self:refresh()
       self:task(self.current_task.uuid)
     else
       self:refresh()
