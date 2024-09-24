@@ -307,9 +307,6 @@ require('neowarrior').focus()
 
   ---@type table Default icons
   icons = {
-    tree_line = "│", --- NOTE: Not currently used
-    tree_item = "├", --- NOTE: Not currently used
-    tree_item_last = "└", --- NOTE: Not currently used
     task = "\u{f1db}",
     task_completed = "\u{f14a}",
     recur = "\u{f021}",
