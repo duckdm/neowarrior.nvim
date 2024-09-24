@@ -12,8 +12,20 @@ function HeaderComponent:new(tram)
     self.meta_enabled = true
     self.report_enabled = true
     self.filter_enabled = true
+    self.help_items = {
+      help = true,
+      add = true,
+      done = true,
+      modify = false,
+      filter = true,
+    }
 
     return self
+end
+
+function HeaderComponent:set_help_item(key, value)
+  self.help_items[key] = value
+  return self
 end
 
 function HeaderComponent:disable_meta()
@@ -69,10 +81,22 @@ function HeaderComponent:set()
 
   if nw.config.header.enable_help_line then
 
-    self.tram:col("(" .. keys.help .. ")help | ", "")
-    self.tram:col("(" .. keys.add .. ")add | ", "")
-    self.tram:col("(" .. keys.done .. ")done | ", "")
-    self.tram:col("(" .. keys.filter .. ")filter", "")
+    if self.help_items.help then
+      self.tram:col("(" .. keys.help .. ")help | ", "")
+    end
+    if self.help_items.add then
+      self.tram:col("(" .. keys.add .. ")add | ", "")
+    end
+    if self.help_items.done then
+      self.tram:col("(" .. keys.done .. ")done | ", "")
+    end
+    if self.help_items.modify then
+      self.tram:col("(" .. keys.modify .. ")modify | ", "")
+    end
+    if self.help_items.filter then
+      self.tram:col("(" .. keys.filter .. ")filter | ", "")
+    end
+
     if self.meta_enabled then
       self.tram:into_line({
         meta = { action = 'help' }

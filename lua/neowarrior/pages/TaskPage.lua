@@ -61,6 +61,8 @@ function TaskPage:print(buffer)
     :disable_meta()
     :disable_report()
     :disable_filter()
+    :set_help_item("modify", true)
+    :set_help_item("filter", false)
     :set()
 
   self:completed()
