@@ -111,11 +111,17 @@ end
 function Taskwarrior:annotate(task, annotation)
   self:syscall({ "task", "annotate", task.uuid, annotation })
 end
----
+
 --- Complete task / mark done
 ---@param task Task
 function Taskwarrior:done(task)
   self:syscall({ "task", "done", task.uuid })
+end
+
+--- Mark task as undone
+---@param task Task
+function Taskwarrior:undone(task)
+  self:modify(task, "status:pending")
 end
 
 --- Delete task

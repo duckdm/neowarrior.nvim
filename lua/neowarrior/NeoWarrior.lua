@@ -564,10 +564,20 @@ function NeoWarrior:mark_done()
 
     elseif uuid then
 
-      local choice = vim.fn.confirm("Are you sure you want to mark this task done?\n[" .. task.description .. "]\n", "Yes\nNo", 1, "question")
+      local choice = nil
+
+      if task.status == 'completed' then
+        choice = vim.fn.confirm("Are you sure you want to mark this task un-done?\n[" .. task.description .. "]\n", "Yes\nNo", 1, "question")
+      else
+        choice = vim.fn.confirm("Are you sure you want to mark this task done?\n[" .. task.description .. "]\n", "Yes\nNo", 1, "question")
+      end
 
       if choice == 1 then
-        self.tw:done(task)
+        if task.status == 'completed' then
+          self.tw:undone(task)
+        else
+          self.tw:done(task)
+        end
       end
     end
 
