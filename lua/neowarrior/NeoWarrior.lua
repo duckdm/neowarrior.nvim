@@ -1,4 +1,4 @@
-local Tram = require('trambampolin')
+local Tram = require('trambampolin.init')
 local Buffer = require('trambampolin.Buffer')
 local Window = require('trambampolin.Window')
 
