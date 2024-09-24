@@ -1,6 +1,3 @@
-local TramLine = require('trambampolin.Line')
-local Tram = require('trambampolin')
-
 --- Component class. A collection of lines.
 ---@class Component
 ---

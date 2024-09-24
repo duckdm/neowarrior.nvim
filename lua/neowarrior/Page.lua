@@ -1,5 +1,5 @@
 --- FIX: this whole class should not be used
-local Tram = require('trambampolin')
+local Tram = require('trambampolin.init')
 local Component = require('neowarrior.Component')
 local Line = require('neowarrior.Line')
 local util = require('neowarrior.util')

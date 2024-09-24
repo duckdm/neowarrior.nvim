@@ -1,4 +1,4 @@
-local Tram = require('trambampolin')
+local Tram = require('trambampolin.init')
 local colors = require('neowarrior.colors')
 local DateTime = require('neowarrior.DateTime')
 local TaskLine = require('neowarrior.lines.TaskLine')

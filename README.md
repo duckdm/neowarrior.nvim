@@ -37,7 +37,6 @@ A simple taskwarrior plugin for NeoVim. Made this mostly for my self to have as 
 return {
   'duckdm/neowarrior.nvim',
   dependencies = {
-    'duckdm/trambampolin',
     'nvim-telescope/telescope.nvim',
     --- Optional but recommended for nicer inputs
     --- 'folke/noice.nvim',
@@ -54,7 +53,6 @@ return {
   'duckdm/neowarrior.nvim',
   event = 'VeryLazy',
   dependencies = {
-    'duckdm/trambampolin',
     'nvim-telescope/telescope.nvim',
     --- Optional but recommended for nicer inputs
     --- 'folke/noice.nvim',
