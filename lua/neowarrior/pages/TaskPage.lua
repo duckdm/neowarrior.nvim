@@ -379,6 +379,7 @@ function TaskPage:parents()
     for _, task in ipairs(parents:get()) do
       TaskLine:new(self.tram, task):into_line({
         disable_meta = true,
+        disable_has_blocking = true,
       })
     end
 
