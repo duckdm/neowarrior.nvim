@@ -498,19 +498,23 @@ end
 
 --- Show add input
 function NeoWarrior:add()
+
   self:close_floats()
   self.buffer:save_cursor()
+
   local default_add_input = ""
   local prompt = "Task (ex: task name due:tomorrow etc): "
   local project_id = self.buffer:get_meta_data('project')
   local task_uuid = self.buffer:get_meta_data('uuid')
   local task = nil
+
   if task_uuid then
     task = self.all_tasks:find_task_by_uuid(task_uuid)
     if (not task) or (not task.project) then
       task = nil
     end
   end
+
   if task then
     default_add_input = "project:" .. task.project .. " "
   elseif project_id then
@@ -521,10 +525,12 @@ function NeoWarrior:add()
       break
     end
   end
+
   if self.current_task then
     default_add_input = ""
     prompt = "Annotate task"
   end
+
   vim.ui.input({
     prompt = prompt,
     default = default_add_input,
@@ -533,6 +539,7 @@ function NeoWarrior:add()
     if input then
       if self.current_task then
         self.tw:annotate(self.current_task, input)
+        self:refresh()
         self:task(self.current_task.uuid)
       else
         self.tw:add(input)
@@ -542,6 +549,7 @@ function NeoWarrior:add()
       end
     end
   end)
+
 end
 
 --- Mark task as done
