@@ -298,21 +298,21 @@ function NeoWarrior:open_task_float()
 
       tram:nl()
 
-      tram:line('Urgency: ' .. task.urgency, colors.get_urgency_color(task.urgency))
+      tram:line('Urgency: ' .. task.urgency, { color = colors.get_urgency_color(task.urgency) })
 
       if task.priority then
         local priority_color = colors.get_priority_color(task.priority)
-        tram:line('Priority: ' .. task.priority, priority_color)
+        tram:line('Priority: ' .. task.priority, { color = priority_color })
       end
 
       if task.due then
         local due_relative = task.due:relative()
         local due_formatted = task.due:default_format()
-        tram:line('Due: ' .. due_relative .. " (" .. due_formatted .. ")", colors.get_due_color(due_relative))
+        tram:line('Due: ' .. due_relative .. " (" .. due_formatted .. ")", { color = colors.get_due_color(due_relative) })
       end
 
       if task.estimate then
-        tram:line('Estimate: ' .. task.estimate_string, colors.get_urgency_color(task.estimate))
+        tram:line('Estimate: ' .. task.estimate_string, { color = colors.get_urgency_color(task.estimate) })
       end
 
       self.task_float = tram:open_float({
