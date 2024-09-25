@@ -62,28 +62,24 @@ Colors.get_due_color = function(due)
 
   for _, d in ipairs(_Neowarrior.config.breakpoints.due) do
 
-    if string.find(due, d[1][2]) then
+    if not d[1] then
+      goto continue
+    end
+
+    local cmp_period = d[1][2]
+    local cmp_value = d[1][1]
+    local due_period = string.match(due, cmp_period)
+    local due_value = tonumber(string.match(due, "%d+"))
+
+    if due_period == cmp_period and due_value <= cmp_value then
       return _Neowarrior.config.colors[d[2]].group
     end
 
+    ::continue::
+
   end
 
-  local a = _Neowarrior.config.breakpoints.due[1]
-  local b = _Neowarrior.config.breakpoints.due[2]
-  local c = _Neowarrior.config.breakpoints.due[3]
-
-  if string.find(due, "-") then
-    return _Neowarrior.config.colors.danger_bg.group
-  end
-  if (string.find(due, "m") and not (string.find(due, "mon"))) or string.find(due, "h") then
-    return _Neowarrior.config.colors.danger.group
-  elseif string.find(due, "d") then
-    local no_days = tonumber(string.match(due, "%d+"))
-    if no_days <= 7 then
-      return _Neowarrior.config.colors.warning.group
-    end
-  end
-  return _Neowarrior.config.colors.info.group
+  return ""
 end
 
 --- Get priority color
