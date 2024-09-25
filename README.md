@@ -164,6 +164,8 @@ require('neowarrior').focus()
     enable_priority = "left",
     ---@type false|"left" Show due date
     enable_due_date = "left",
+    ---@type false|"left" Show annotations icon
+    enable_annotations_icon = "left",
     ---@type false|"left" Show estimate. Note: This is not a default
     ---field in taskwarrior
     enable_estimate = "left",
