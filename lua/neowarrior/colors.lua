@@ -12,43 +12,45 @@ Colors.set = function(config_colors)
 
 end
 
-Colors.get_urgency_color = function(urgency)
+Colors.get_geq = function(cmp_value, values, default_value)
 
-  local a = _Neowarrior.config.breakpoints.urgency[1]
-  local b = _Neowarrior.config.breakpoints.urgency[2]
-  local c = _Neowarrior.config.breakpoints.urgency[3]
+  local hl_group = default_value
 
-  if (not urgency) or ((urgency + 0.0) < tonumber(c[1])) then
-    return _Neowarrior.config.colors[a[2]].group
+  for _, val in ipairs(values) do
+
+    if cmp_value >= tonumber(val[1]) then
+      hl_group = _Neowarrior.config.colors[val[2]].group
+    end
+
   end
-  if (urgency + 0.0) >= tonumber(c[1]) then return _Neowarrior.config.colors[c[2]].group end
-  if (urgency + 0.0) >= tonumber(b[1]) then return _Neowarrior.config.colors[b[2]].group end
 
-  return _Neowarrior.config.colors[a[2]].group
+  return hl_group
+end
+
+Colors.get_leq = function(cmp_value, values, default_value)
+
+  local hl_group = default_value
+
+  for _, val in ipairs(values) do
+
+    if tonumber(val[1]) <= cmp_value then
+      hl_group = _Neowarrior.config.colors[val[2]].group
+    end
+
+  end
+
+  return hl_group
+end
+
+Colors.get_urgency_color = function(urgency)
+  return Colors.get_geq(urgency, _Neowarrior.config.breakpoints.urgency, "")
 end
 
 --- Get estimate color
 ---@param est number
 ---@return string
 Colors.get_estimate_color = function(est)
-
-  local a = _Neowarrior.config.breakpoints.estimate[1]
-  local b = _Neowarrior.config.breakpoints.estimate[2]
-  local c = _Neowarrior.config.breakpoints.estimate[3]
-
-  if est then
-
-    if (est + 0.0) >= tonumber(c[1]) then
-      return _Neowarrior.config.colors[c[2]].group
-    end
-
-    if (est + 0.0) >= tonumber(b[1]) then
-      return _Neowarrior.config.colors[b[2]].group
-    end
-
-  end
-
-  return _Neowarrior.config.colors[a[2]].group
+  return Colors.get_geq(est, _Neowarrior.config.breakpoints.estimate, "")
 end
 
 --- Get due color
@@ -60,42 +62,43 @@ Colors.get_due_color = function(due)
     return ""
   end
 
-  for _, d in ipairs(_Neowarrior.config.breakpoints.due) do
+  local due_hours = 0
 
-    if not d[1] then
-      goto continue
-    end
-
-    local cmp_period = d[1][2]
-    local cmp_value = d[1][1]
-    local due_period = string.match(due, cmp_period)
-    local due_value = tonumber(string.match(due, "%d+"))
-
-    if due_period == cmp_period and due_value <= cmp_value then
-      return _Neowarrior.config.colors[d[2]].group
-    end
-
-    ::continue::
-
+  if due:find("y") then
+    due_hours = tonumber(due:match("%d+")) * 24 * 365
+  elseif due:find("mon") then
+    due_hours = tonumber(due:match("%d+")) * 24 * 30
+  elseif due:find("w") then
+    due_hours = tonumber(due:match("%d+")) * 24 * 7
+  elseif due:find("d") then
+    due_hours = tonumber(due:match("%d+")) * 24
+  elseif due:find("h") then
+    due_hours = due:match("%d+")
+  elseif due:find("m") then
+    due_hours = math.floor(tonumber(due:match("%d+")) / 60)
   end
 
-  return ""
+  return Colors.get_leq(due_hours, _Neowarrior.config.breakpoints.due, "")
 end
 
 --- Get priority color
 ---@param priority string|nil
 ---@return string
 Colors.get_priority_color = function(priority)
+
+  local breakpoints = _Neowarrior.config.breakpoints.priority
+
   if priority == "H" then
-    return _Neowarrior.config.colors.danger.group
+    return _Neowarrior.config.colors[breakpoints.H].group
   end
   if priority == "M" then
-    return _Neowarrior.config.colors.warning.group
+    return _Neowarrior.config.colors[breakpoints.M].group
   end
   if priority == "L" then
-    return _Neowarrior.config.colors.success.group
+    return _Neowarrior.config.colors[breakpoints.L].group
   end
-  return ""
+
+  return _Neowarrior.config.colors[breakpoints.None].group
 end
 
 return Colors

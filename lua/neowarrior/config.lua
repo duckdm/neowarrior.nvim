@@ -89,9 +89,8 @@ return {
 
   ---@type number Timezone offset in hours
   time_offset = 0,
-  ---
+
   ---@type table Colors and hl groups.
-  ---
   ---You can use custom hl groups or just define colors for the existing
   ---highlight groups. A nil/false value for a color means it's
   ---disabled/transparent.
@@ -119,38 +118,37 @@ return {
 
   ---@type table Breakpoints for coloring urgency, priorities etc.
   breakpoints = {
-    ---
-    ---@type table Urgency breakpoints. Locked to three levels.
+
+    ---@type table Urgency breakpoints. Uses equal or greater than for comparison.
     urgency = {
-      { nil, "dim" }, --- Default (everything else)
+      { 0, "dim" }, --- Default (everything else)
       { 5, "warning" }, --- Equal or higher than 5
       { 10, "danger" }, --- Equal or higher than 10
     },
 
     ---@type table Estimate breakpoints (note that this is not a default
-    ---taskwarrior field). Locked to three levels.
+    ---taskwarrior field). Uses equal or greater than for comparison.
     estimate = {
-      { nil, "danger" }, --- Default (everything else)
+      { 0, "danger" }, --- Default (everything else)
       { 1, "warning" }, --- Equal or higher than 1
       { 8, "default" }, --- Equal or higher than 8
     },
 
-    ---@type table Due date breakpoints. Note the "less than" on these.
-    --- You can create as many of these as you want.
+    ---@type table Due date breakpoints. Uses hours, and equal or lesser than
+    ---for comparison.
     due = {
-      { { 1, "mon" }, "info" }, --- Due in less than or equal to 1 month
-      { { 7, "d" }, "info" }, --- Due in less than or equal to 7 days
-      { { 8, "h" }, "warning" }, --- Due in less than or equal to 8 hours
-      { { 1, "h" }, "danger" }, --- Due in less than or equal to 1 hour
-      { nil, "default" }, --- Default (everything else)
+      { 0, "danger" }, --- Default (everything else)
+      { 1, "danger" }, --- Equal or lesser than 1 hour
+      { 8, "warning" }, --- Equal or lesser than 8 hours
+      { 24, "success" }, --- Equal or lesser than 24 hours
     },
 
     ---@type table Priority colors.
     priority = {
-      { "H", "danger" },
-      { "M", "warning" },
-      { "L", "dim" },
-      { "None", "dim" },
+      H = "danger",
+      M = "warning",
+      L = "success",
+      None = "default",
     },
   },
 
