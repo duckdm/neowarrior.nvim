@@ -34,6 +34,7 @@ local util = require('neowarrior.util')
 ---@field public all_tasks TaskCollection
 ---@field public all_pending_tasks TaskCollection
 ---@field public projects ProjectCollection
+---@field public grouped_projects ProjectCollection
 ---@field public project_names table
 ---@field public all_projects ProjectCollection
 ---@field public all_project_names table
@@ -89,6 +90,7 @@ function NeoWarrior:new()
     neowarrior.all_tasks = TaskCollection:new()
     neowarrior.all_pending_tasks = TaskCollection:new()
     neowarrior.projects = ProjectCollection:new()
+    neowarrior.grouped_projects = ProjectCollection:new()
     neowarrior.all_projects = ProjectCollection:new()
     neowarrior.project_names = {}
     neowarrior.all_project_names = {}
@@ -367,9 +369,13 @@ function NeoWarrior:refresh()
 
   self.project_names = util.extract('project', self.tasks:get())
 
+  self.grouped_projects = self:generate_project_collection_from_tasks(self.tasks)
+  self.grouped_projects:refresh()
+  self.grouped_projects:sort('urgency.average')
+
   self.projects = self:generate_project_collection_from_tasks(self.tasks)
   self.projects:refresh()
-  self.projects:sort('estimate.total')
+  self.projects:sort('urgency.average')
 
   self.all_projects = self:generate_project_collection_from_tasks(self.all_tasks)
   self.all_projects:refresh()
@@ -378,7 +384,7 @@ function NeoWarrior:refresh()
   self.project_tree = self:fill_project_tree(
     self:generate_tree(self.project_names),
     Project:new({ name = 'root' }),
-    self.projects
+    util.copy(self.projects)
   )
 
   return self

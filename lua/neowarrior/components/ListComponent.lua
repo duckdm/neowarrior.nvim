@@ -33,7 +33,7 @@ function ListComponent:set()
 
   elseif _Neowarrior.current_mode == 'grouped' then
 
-    GroupedComponent:new(self.tram, _Neowarrior.projects):set()
+    GroupedComponent:new(self.tram, _Neowarrior.grouped_projects):set()
     return self
 
   end
