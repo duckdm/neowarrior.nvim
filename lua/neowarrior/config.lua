@@ -91,11 +91,11 @@ return {
   time_offset = 0,
 
   ---@type table Colors and hl groups.
-  ---
   ---You can use custom hl groups or just define colors for the existing
   ---highlight groups. A nil/false value for a color means it's
   ---disabled/transparent.
   colors = {
+    default = { group = "", fg = nil, bg = nil },
     dim = { group = "NeoWarriorTextDim", fg = "#333333", bg = nil },
     danger = { group = "NeoWarriorTextDanger", fg = "#cc0000", bg = nil },
     warning = { group = "NeoWarriorTextWarning", fg = "#ccaa00", bg = nil },
@@ -106,6 +106,7 @@ return {
   },
   --- Example using builtin highlight groups:
   -- colors = {
+  --   default = { group = "" },
   --   dim = { group = "Whitespace" },
   --   danger = { group = "ErrorMsg" },
   --   warning = { group = "WarningMsg" },
@@ -114,6 +115,42 @@ return {
   --   danger_bg = { group = "ErrorMsg" },
   --   project = { group = "Directory" },
   -- },
+
+  ---@type table Breakpoints for coloring urgency, priorities etc.
+  breakpoints = {
+
+    ---@type table Urgency breakpoints. Uses equal or greater than for comparison.
+    urgency = {
+      { 0, "dim" }, --- Default (everything else)
+      { 5, "warning" }, --- Equal or higher than 5
+      { 10, "danger" }, --- Equal or higher than 10
+    },
+
+    ---@type table Estimate breakpoints (note that this is not a default
+    ---taskwarrior field). Uses equal or greater than for comparison.
+    estimate = {
+      { 0, "danger" }, --- Default (everything else)
+      { 1, "warning" }, --- Equal or higher than 1
+      { 8, "default" }, --- Equal or higher than 8
+    },
+
+    ---@type table Due date breakpoints. Uses hours, and equal or lesser than
+    ---for comparison.
+    due = {
+      { 0, "danger" }, --- Default (everything else)
+      { 1, "danger" }, --- Equal or lesser than 1 hour
+      { 8, "warning" }, --- Equal or lesser than 8 hours
+      { 24, "success" }, --- Equal or lesser than 24 hours
+    },
+
+    ---@type table Priority colors.
+    priority = {
+      H = "danger",
+      M = "warning",
+      L = "success",
+      None = "default",
+    },
+  },
 
   ---@type table|nil Set config values for specific directories. Most
   --- config values from this file should work per dir basis too.
