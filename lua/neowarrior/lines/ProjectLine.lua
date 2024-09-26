@@ -51,7 +51,7 @@ function ProjectLine:into_line(arg)
   if arg.enable_total_estimate == "eol" and total_estimate > 0 then
     self.tram:col(
       " " .. conf.icons.est .. " " .. string.format("%.1f", total_estimate) .. "h",
-      colors.get_urgency_color(total_estimate)
+      colors.get_estimate_color(total_estimate)
     )
   end
 
