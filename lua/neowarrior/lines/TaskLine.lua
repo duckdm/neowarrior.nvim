@@ -67,9 +67,11 @@ function TaskLine:into_line(arg)
     project = ""
   end
   local priority = self.task.priority or "-"
-  local due = self.task.due or nil
-  if due then
-    due = due:relative()
+  local due = nil
+  local due_no = 0
+  if self.task.due then
+    due = self.task.due:relative()
+    due_no = self.task.due:relative_hours()
   end
   local task_icon = conf.icons.task
   local task_icon_color = _Neowarrior.config.colors.dim.group
@@ -137,7 +139,8 @@ function TaskLine:into_line(arg)
   end
 
   if due and (due ~= '') and (not disable_due) and line_conf.enable_due_date == "left" then
-    self.tram:col(due .. " ", colors.get_due_color(due))
+    self.tram:col(due, colors.get_due_color(due_no))
+    self.tram:col(" ", "")
   end
 
   if (not disable_estimate) and line_conf.enable_estimate == "left" and self.task.estimate and self.task.estimate > 0 then

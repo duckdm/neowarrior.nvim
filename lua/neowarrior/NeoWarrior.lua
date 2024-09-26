@@ -308,7 +308,7 @@ function NeoWarrior:open_task_float()
       end
 
       if task.due then
-        local due_relative = task.due:relative()
+        local due_relative = task.due:relative_hours()
         local due_formatted = task.due:default_format()
         tram:line('Due: ' .. due_relative .. " (" .. due_formatted .. ")", { color = colors.get_due_color(due_relative) })
       end

@@ -335,7 +335,7 @@ function TaskPage:due()
       text = "Due",
     }, {
       text = _Neowarrior.config.icons.due .. " " .. self.task.due:relative() .. " (" .. self.task.due:default_format() .. ")",
-      color = colors.get_due_color(self.task.due:relative()),
+      color = colors.get_due_color(self.task.due:relative_hours()),
     }})
   end
 

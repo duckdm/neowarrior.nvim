@@ -121,7 +121,7 @@ return {
 
     ---@type table Urgency breakpoints. Uses equal or greater than for comparison.
     urgency = {
-      { 0, "dim" }, --- Default (everything else)
+      { 0, "dim" }, --- Equal or higher than 0
       { 5, "warning" }, --- Equal or higher than 5
       { 10, "danger" }, --- Equal or higher than 10
     },
@@ -129,18 +129,18 @@ return {
     ---@type table Estimate breakpoints (note that this is not a default
     ---taskwarrior field). Uses equal or greater than for comparison.
     estimate = {
-      { 0, "danger" }, --- Default (everything else)
+      { 0, "danger" }, --- Equal or higher than 0
       { 1, "warning" }, --- Equal or higher than 1
       { 8, "default" }, --- Equal or higher than 8
     },
 
     ---@type table Due date breakpoints. Uses hours, and equal or lesser than
-    ---for comparison.
+    ---for comparison. Use nil for a "catch all" value.
     due = {
-      { 0, "danger" }, --- Default (everything else)
-      { 1, "danger" }, --- Equal or lesser than 1 hour
-      { 8, "warning" }, --- Equal or lesser than 8 hours
-      { 24, "success" }, --- Equal or lesser than 24 hours
+      { 0.5, "danger_bg" }, --- Equal or lesser than 0.5 hours
+      { 4, "danger" }, --- Equal or lesser than 4 hours
+      { 48, "warning" }, --- Equal or lesser than 48 hours
+      { nil, "dim" }, --- "Catch all" for the rest
     },
 
     ---@type table Priority colors.

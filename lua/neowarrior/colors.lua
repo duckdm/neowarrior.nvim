@@ -33,8 +33,11 @@ Colors.get_leq = function(cmp_value, values, default_value)
 
   for _, val in ipairs(values) do
 
-    if tonumber(val[1]) <= cmp_value then
+    if val[1] == nil then
       hl_group = _Neowarrior.config.colors[val[2]].group
+    elseif cmp_value <= tonumber(val[1]) then
+      hl_group = _Neowarrior.config.colors[val[2]].group
+      break
     end
 
   end
@@ -54,7 +57,7 @@ Colors.get_estimate_color = function(est)
 end
 
 --- Get due color
----@param due string
+---@param due number Hours
 ---@return string
 Colors.get_due_color = function(due)
 
@@ -62,23 +65,7 @@ Colors.get_due_color = function(due)
     return ""
   end
 
-  local due_hours = 0
-
-  if due:find("y") then
-    due_hours = tonumber(due:match("%d+")) * 24 * 365
-  elseif due:find("mon") then
-    due_hours = tonumber(due:match("%d+")) * 24 * 30
-  elseif due:find("w") then
-    due_hours = tonumber(due:match("%d+")) * 24 * 7
-  elseif due:find("d") then
-    due_hours = tonumber(due:match("%d+")) * 24
-  elseif due:find("h") then
-    due_hours = due:match("%d+")
-  elseif due:find("m") then
-    due_hours = math.floor(tonumber(due:match("%d+")) / 60)
-  end
-
-  return Colors.get_leq(due_hours, _Neowarrior.config.breakpoints.due, "")
+  return Colors.get_leq(due, _Neowarrior.config.breakpoints.due, "")
 end
 
 --- Get priority color
