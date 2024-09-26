@@ -24,6 +24,8 @@ return {
     enable_due_date = "left",
     ---@type false|"left" Show annotations icon
     enable_annotations_icon = "left",
+    ---@type false|"left" Show tags in task line
+    enable_tags = false,
     ---@type false|"left" Show estimate. Note: This is not a default
     ---field in taskwarrior
     enable_estimate = "left",
@@ -105,6 +107,7 @@ return {
     success = { group = "NeoWarriorTextSuccess", fg = "#00cc00", bg = nil },
     info = { group = "NeoWarriorTextInfo", fg = "#00aaff", bg = nil },
     danger_bg = { group = "NeoWarriorTextDangerBg", fg = "#ffffff", bg = "#cc0000" },
+    info_bg = { group = "NeoWarriorTextInfoBg", fg = "#000000", bg = "#00aaff" },
     project = { group = "NeoWarriorGroup", fg = "#00aaff", bg = nil },
   },
   --- Example using builtin highlight groups:
@@ -154,6 +157,19 @@ return {
       None = "default",
     },
   },
+
+  ---@type table Tag colors. Use nil to disable all. You can also use a table
+  ---to specify a match pattern and color.
+  tag_colors = {
+    next = "danger_bg", --- matches tags called "next"
+    version = { match = "v.%..", color = "info_bg" }, -- match v*.*, v1.*, etc.
+    version_full = { match = "v.%..%..", color = "info_bg" }, -- match v*.*.*, v1.*.*, etc.
+  },
+
+  ---@type nil|string Pad start of tags with this string. Use nil to disable.
+  tag_padding_start = " +",
+  ---@type nil|string Pad end of tags with this string. Use nil to disable.
+  tag_padding_end = " ",
 
   ---@type table|nil Set config values for specific directories. Most
   --- config values from this file should work per dir basis too.

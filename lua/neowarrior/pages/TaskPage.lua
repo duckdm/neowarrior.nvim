@@ -5,6 +5,7 @@ local TaskLine = require('neowarrior.lines.TaskLine')
 local Project = require('neowarrior.Project')
 local ProjectLine = require('neowarrior.lines.ProjectLine')
 local HeaderComponent = require('neowarrior.components.HeaderComponent')
+local TagsComponent = require('neowarrior.components.TagsComponent')
 
 ---@class TaskPage
 ---@field task Task
@@ -27,7 +28,7 @@ function TaskPage:new(buffer, task)
   self.__index = self
 
   self.task = task
-  self.used_keys = {}
+  self.used_keys = { "tags" }
   self.prefix_format = "%-13s | "
   self.time_fields = {
     "modified",
@@ -68,11 +69,14 @@ function TaskPage:print(buffer)
   self:completed()
   self:project()
   self:started()
-  self:task_line({
-    disable_meta = true,
-    disable_description = true,
-    disable_task_icon = true,
-  })
+  -- self:task_line({
+  --   disable_meta = true,
+  --   disable_description = true,
+  --   disable_task_icon = true,
+  --   disable_has_blocking = true,
+  --   disable_urgency = true,
+  --   disable_priority = true,
+  -- })
   self:task_line({
     disable_meta = true,
     disable_has_blocking = true,
@@ -84,7 +88,13 @@ function TaskPage:print(buffer)
     disable_annotations = true,
     disable_start = true,
     disable_urgency = true,
+    disable_tags = true,
   })
+
+  if self.task.tags then
+    self.tram:nl()
+    TagsComponent:new(self.tram, self.task.tags):line()
+  end
 
   self.tram:nl()
 
@@ -112,7 +122,7 @@ function TaskPage:print(buffer)
     end
 
     if not used then
-      local prefix = string.format(self.prefix_format, k)
+
       local is_time_field = false
       for _, field in ipairs(self.time_fields) do
         if field == k then
@@ -120,13 +130,9 @@ function TaskPage:print(buffer)
           break
         end
       end
-      if k == "tags" and v then
-        local tags = table.unpack(v)
-        self:row(k, {
-          { text = k },
-          { text = tags, color = '' }
-        })
-      elseif is_time_field then
+
+      if is_time_field then
+
         local time_color = ''
         local time_string = v:relative()
         if k == "due" or k == "scheduled" then

@@ -14,6 +14,7 @@ local default_config = require('neowarrior.config')
 local TaskCollection = require('neowarrior.TaskCollection')
 local HeaderComponent = require('neowarrior.components.HeaderComponent')
 local ListComponent = require('neowarrior.components.ListComponent')
+local TagsComponent = require('neowarrior.components.TagsComponent')
 local TaskLine = require('neowarrior.lines.TaskLine')
 local Project = require('neowarrior.Project')
 local ProjectCollection = require('neowarrior.ProjectCollection')
@@ -278,7 +279,13 @@ function NeoWarrior:open_task_float()
         disable_due = true,
         disable_estimate = true,
         disable_has_blocking = true,
+        disable_tags = true,
       })
+
+      if task.tags then
+        tram:nl()
+        TagsComponent:new(tram, task.tags):line()
+      end
 
       if task.depends and task.depends:count() > 0 then
 
@@ -308,9 +315,10 @@ function NeoWarrior:open_task_float()
       end
 
       if task.due then
-        local due_relative = task.due:relative_hours()
+        local due_relative = task.due:relative()
+        local due_hours = task.due:relative_hours()
         local due_formatted = task.due:default_format()
-        tram:line('Due: ' .. due_relative .. " (" .. due_formatted .. ")", { color = colors.get_due_color(due_relative) })
+        tram:line('Due: ' .. due_relative .. " (" .. due_formatted .. ")", { color = colors.get_due_color(due_hours) })
       end
 
       if task.estimate then

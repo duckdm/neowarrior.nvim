@@ -1,4 +1,5 @@
 local colors = require "neowarrior.colors"
+local TagsComponent = require "neowarrior.components.TagsComponent"
 
 ---@class TaskLine
 ---@field neowarrior NeoWarrior
@@ -47,6 +48,10 @@ function TaskLine:into_line(arg)
     disable_recur = true
   end
   local disable_task_icon = arg.disable_task_icon or false
+  local disable_tags = arg.disable_tags or false
+  if line_conf.enable_tags == false then
+    disable_tags = true
+  end
   local disable_estimate = arg.disable_estimate or false
   if line_conf.enable_estimate == false then
     disable_estimate = true
@@ -152,6 +157,11 @@ function TaskLine:into_line(arg)
 
   if (not disable_annotations) and self.task.annotations and line_conf.enable_annotations_icon == "left" then
     self.tram:col(conf.icons.annotated .. " ", _Neowarrior.config.colors.info.group)
+  end
+
+  if self.task.tags and (not disable_tags) then
+    TagsComponent:new(self.tram, self.task.tags):cols()
+    self.tram:col(" ", "")
   end
 
   if not disable_description then
