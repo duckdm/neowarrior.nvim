@@ -61,7 +61,7 @@ function TaskLine:into_line(arg)
   local disable_has_blocking = arg.disable_has_blocking or false
   local project = self.task.project or 'No project'
   local meta = arg.meta or nil
-  local description_color = nil
+  local description_color = ""
   local description = ""
   if self.task.description then
     description = tostring(string.gsub(self.task.description, "\n", ""))
@@ -159,6 +159,14 @@ function TaskLine:into_line(arg)
     self.tram:col(conf.icons.annotated .. " ", _Neowarrior.config.colors.annotation.group)
   end
 
+  if has_blocking and (not disable_has_blocking) then
+    if (not self.task.tags) or (type(self.task.tags) ~= "table") then
+      self.task.tags = { "blocked" }
+    elseif not vim.tbl_contains(self.task.tags, "blocked") then
+      table.insert(self.task.tags, "blocked")
+    end
+  end
+
   if self.task.tags and (not disable_tags) then
     TagsComponent:new(self.tram, self.task.tags):cols()
     self.tram:col(" ", "")
@@ -166,9 +174,9 @@ function TaskLine:into_line(arg)
 
   if not disable_description then
     self.tram:col(description, description_color)
-    if has_blocking and (not disable_has_blocking) then
-      self.tram:col(" [has blocking tasks]", _Neowarrior.config.colors.danger.group)
-    end
+    -- if has_blocking and (not disable_has_blocking) then
+    --   self.tram:col(" [has blocking tasks]", _Neowarrior.config.colors.danger.group)
+    -- end
   end
 
   if (not arg.disable_urgency) and line_conf.enable_urgency == "eol" then

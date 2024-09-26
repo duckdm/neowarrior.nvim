@@ -160,6 +160,7 @@ return {
   ---to specify a match pattern and color.
   tag_colors = {
     next = "danger_bg", --- matches tags called "next"
+    blocked = "danger_bg", --- matches tags called "blocked"
     version = { match = "v.%..", color = "info_bg" }, -- match v*.*, v1.*, etc.
     version_full = { match = "v.%..%..", color = "info_bg" }, -- match v*.*.*, v1.*.*, etc.
   },
