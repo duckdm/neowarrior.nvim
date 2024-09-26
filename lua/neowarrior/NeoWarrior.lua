@@ -463,7 +463,7 @@ function NeoWarrior:generate_project_collection_from_tasks(tasks)
 
         local task_in_project = project.tasks:find(task.uuid)
 
-        if not task_in_project then
+        if not task_in_project and task.project == project_id then
           project.tasks:add(task)
         end
         project_collection:add(project)
