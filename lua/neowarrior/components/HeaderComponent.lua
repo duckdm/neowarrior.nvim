@@ -60,7 +60,8 @@ function HeaderComponent:set()
 
   if nw.config.header.text then
 
-    local header_text_color = _Neowarrior.config.colors.info.group
+    local dev = _Neowarrior.config.dev or false
+    local header_text_color = _Neowarrior.config.colors.neowarrior.group
     local header_text_has_version = string.match(nw.config.header.text, "{version}")
 
     if header_text_has_version then
@@ -74,7 +75,12 @@ function HeaderComponent:set()
     end
 
     local header_text = nw.config.header.text:gsub("{version}", nw.version)
-    self.tram:col(header_text, header_text_color)
+
+    if dev then
+      self.tram:col(" LOCAL DEV ", _Neowarrior.config.colors.danger_bg.group)
+    end
+
+    self.tram:col(" " .. header_text .. " ", header_text_color)
     self.tram:into_line({})
 
   end

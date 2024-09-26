@@ -1,6 +1,8 @@
 ---@alias NeoWarrior.Config table
 ---@type NeoWarrior.Config
 return {
+  ---@type boolean
+  dev = false,
 
   ---@type boolean Enable debug mode
   debug = false,
@@ -95,6 +97,7 @@ return {
   ---highlight groups. A nil/false value for a color means it's
   ---disabled/transparent.
   colors = {
+    neowarrior = { group = "NeoWarrior", fg = "#3eeafa", bg = "black" },
     default = { group = "", fg = nil, bg = nil },
     dim = { group = "NeoWarriorTextDim", fg = "#333333", bg = nil },
     danger = { group = "NeoWarriorTextDanger", fg = "#cc0000", bg = nil },
