@@ -120,10 +120,12 @@ function TaskPage:print(buffer)
           break
         end
       end
-      -- TODO:Show tags
       if k == "tags" and v then
         local tags = table.unpack(v)
-        self.tram:line(string.format("%s%s", prefix, tags), '')
+        self:row(k, {
+          { text = k },
+          { text = tags, color = '' }
+        })
       elseif is_time_field then
         local time_color = ''
         local time_string = v:relative()
