@@ -167,9 +167,9 @@ return {
   },
 
   ---@type nil|string Pad start of tags with this string. Use nil to disable.
-  tag_padding_start = " +",
+  tag_padding_start = "+",
   ---@type nil|string Pad end of tags with this string. Use nil to disable.
-  tag_padding_end = " ",
+  tag_padding_end = nil,
 
   ---@type table|nil Set config values for specific directories. Most
   --- config values from this file should work per dir basis too.
