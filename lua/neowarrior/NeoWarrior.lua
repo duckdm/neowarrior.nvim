@@ -422,36 +422,56 @@ function NeoWarrior:generate_project_collection_from_tasks(tasks)
   for _, task in ipairs(tasks:get()) do
 
     local project_name = self.config.no_project_name
-    local project_id = ""
+    local project_names = {}
 
     if task.project and task.project ~= "" then
 
       project_name = task.project
-      project_id = task.project
 
     end
 
-    if project_name then
+    local name_parts = {}
+    local last_part = nil
 
-      local project = project_collection:find(project_name)
+    if string.find(project_name, "%.") then
+      name_parts = vim.split(project_name, "%.")
+    else
+      name_parts = { project_name }
+    end
 
-      if not project then
+    for _, part in ipairs(name_parts) do
+      local part_name = last_part and last_part .. "." .. part or part
+      table.insert(project_names, part_name)
+      last_part = part_name
+    end
 
-        project = Project:new({
-          id = project_id,
-          name = project_name
-        })
+    for _, project_name in ipairs(project_names) do
+
+      if project_name then
+
+        local project_id = project_name
+        local project = project_collection:find(project_name)
+
+        if not project then
+
+          project = Project:new({
+            id = project_id,
+            name = project_name
+          })
+
+        end
+
+        local task_in_project = project.tasks:find(task.uuid)
+
+        if not task_in_project then
+          project.tasks:add(task)
+        end
+        project_collection:add(project)
 
       end
-
-      local task_in_project = project.tasks:find(task.uuid)
-
-      if not task_in_project then
-        project.tasks:add(task)
-      end
-      project_collection:add(project)
 
     end
+
   end
 
   return project_collection
