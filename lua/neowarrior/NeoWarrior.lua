@@ -395,6 +395,9 @@ function NeoWarrior:refresh()
     util.copy(self.projects)
   )
 
+  self.project_tree:refresh_recursive()
+  self:sort_tree(self.project_tree)
+
   return self
 end
 
@@ -1174,9 +1177,6 @@ function NeoWarrior:fill_project_tree(tree, project, project_pool)
     project.projects:add(p)
     self:fill_project_tree(ids, p, project_pool)
   end
-
-  project:refresh_recursive()
-  self:sort_tree(project)
 
   return project
 end
