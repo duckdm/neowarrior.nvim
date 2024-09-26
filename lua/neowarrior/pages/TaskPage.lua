@@ -229,6 +229,7 @@ function TaskPage:started()
   if self.task.start then
     self:row('start', {{
       text = "Task started: ",
+      color = _Neowarrior.config.colors.danger.group,
     }, {
       text = self.task.start:default_format(),
       color = _Neowarrior.config.colors.danger_bg.group,
