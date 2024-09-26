@@ -245,7 +245,7 @@ function TaskPage:annotations()
 
     self:row('annotations', {{
       text = "Annotations",
-      color = _Neowarrior.config.colors.info.group,
+      color = _Neowarrior.config.colors.annotation.group,
     }})
 
     for _, annotation in ipairs(annotations) do
@@ -254,15 +254,14 @@ function TaskPage:annotations()
 
       if annotation.entry then
         local anno_entry_dt = DateTime:new(annotation.entry)
-        anno_entry = " " .. anno_entry_dt:default_format()
-        self.tram:col(anno_entry, _Neowarrior.config.colors.info.group)
+        anno_entry = "" .. anno_entry_dt:default_format()
+        self.tram:col(anno_entry, _Neowarrior.config.colors.annotation.group)
       end
 
-      self.tram:col(" " .. annotation.description, _Neowarrior.config.colors.info.group)
+      self.tram:col(" " .. annotation.description, "")
+      self.tram:into_line({})
 
     end
-
-    self.tram:into_line({})
 
     self.tram:nl()
   end

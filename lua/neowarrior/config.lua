@@ -109,6 +109,7 @@ return {
     danger_bg = { group = "NeoWarriorTextDangerBg", fg = "#ffffff", bg = "#cc0000" },
     info_bg = { group = "NeoWarriorTextInfoBg", fg = "#000000", bg = "#00aaff" },
     project = { group = "NeoWarriorGroup", fg = "#00aaff", bg = nil },
+    annotation = { group = "NeoWarriorAnnotation", fg = "#00aaff", bg = nil },
   },
   --- Example using builtin highlight groups:
   -- colors = {

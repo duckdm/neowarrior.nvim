@@ -156,7 +156,7 @@ function TaskLine:into_line(arg)
   end
 
   if (not disable_annotations) and self.task.annotations and line_conf.enable_annotations_icon == "left" then
-    self.tram:col(conf.icons.annotated .. " ", _Neowarrior.config.colors.info.group)
+    self.tram:col(conf.icons.annotated .. " ", _Neowarrior.config.colors.annotation.group)
   end
 
   if self.task.tags and (not disable_tags) then
