@@ -158,7 +158,7 @@ return {
     },
   },
 
-  ---@type table Tag colors. Use nil to disable all. You can also use a table
+  ---@type table|boolean Tag colors. Set to false to disable all. You can also use a table
   ---to specify a match pattern and color.
   tag_colors = {
     next = "danger_bg", --- matches tags called "next"

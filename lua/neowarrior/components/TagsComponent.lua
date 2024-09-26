@@ -45,14 +45,16 @@ function TagsComponent:cols()
     local seperator = " "
     if last then seperator = "" end
 
-    for key, value in pairs(tag_colors) do
+    if tag_colors then
+      for key, value in pairs(tag_colors) do
 
-      if type(value) == 'table' and value.match and tag:find(value.match) then
-        hl_group = colors[value.color] and colors[value.color].group or ""
-      elseif tag == key then
-        hl_group = colors[value] and colors[value].group or ""
+        if type(value) == 'table' and value.match and tag:find(value.match) then
+          hl_group = colors[value.color] and colors[value.color].group or ""
+        elseif tag == key then
+          hl_group = colors[value] and colors[value].group or ""
+        end
+
       end
-
     end
 
     self.tram:col(pad_start .. tag .. pad_end, hl_group)
