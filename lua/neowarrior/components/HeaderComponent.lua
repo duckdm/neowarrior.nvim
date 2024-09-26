@@ -49,15 +49,6 @@ function HeaderComponent:set()
   local nw = _Neowarrior
   local keys = nw.config.keys
 
-  if nw.config.debug then
-    self.tram:col("Window:", "")
-    self.tram:col(nw.window.id, _Neowarrior.config.colors.info.group)
-    self.tram:into_line({})
-    self.tram:col("Buffer:", "")
-    self.tram:col(nw.buffer.id, _Neowarrior.config.colors.info.group)
-    self.tram:into_line({})
-  end
-
   if nw.config.header.text then
 
     local dev = _Neowarrior.config.dev or false

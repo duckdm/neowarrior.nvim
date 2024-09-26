@@ -10,8 +10,6 @@ local TaskCollection = require('neowarrior.TaskCollection')
 ---@field estimate table @{ total = 0, average = 0, max = 0, min = 0 }
 ---@field new fun(self: Project, data: table): Project
 ---@field refresh fun(self: Project): nil
----@field debug fun(self: Project, arg: table): nil
----@field debug_print_tree fun(self: Project, project: Project, indent: string): nil
 local Project = {}
 
 function Project:new(data)
@@ -66,32 +64,6 @@ function Project:refresh()
 
     self.estimate.max = self.tasks:find_max('estimate')
     self.estimate.min = self.tasks:find_min('estimate')
-end
-
---- Debug
----@param arg table
-function Project:debug(arg)
-
-    if arg.tree then
-        self:debug_print_tree(self, '')
-    else
-        print('Project: ' .. self.name)
-        print('Tasks: ' .. self.tasks:count())
-        print('Projects: ' .. self.projects:count())
-        print('Urgency: ' .. self.urgency.total)
-        print('Estimate: ' .. self.estimate.total)
-    end
-
-end
-
---- Debug print tree
----@param project Project
----@param indent string
-function Project:debug_print_tree(project, indent)
-    print(indent .. project.name .. ' (' .. project.id .. ')')
-    for _, p in ipairs(project.projects:get()) do
-        p:debug_print_tree(p, indent .. '  ')
-    end
 end
 
 return Project

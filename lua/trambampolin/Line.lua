@@ -6,10 +6,8 @@
 ---@field current_col number
 ---@field last_col number
 ---@field ns_name string
----@field debug_level number
 ---@field new fun(self: Line): Line
 ---@field col fun(self: Line, block: table): Line
----@field set_debug_level fun(self: Line, level: number): Line
 local Line = {}
 
 --- Create a new Line
@@ -28,7 +26,6 @@ function Line:new()
   line.strict_col_num = 0
   line.current_col = 0
   line.last_col = 0
-  line.debug_level = 0
 
   return line
 end
@@ -80,11 +77,6 @@ function Line:col(block)
 
   end
 
-  return self
-end
-
-function Line:set_debug_level(level)
-  self.debug_level = level
   return self
 end
 

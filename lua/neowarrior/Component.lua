@@ -19,7 +19,6 @@
 ---@field get fun(self: Component): Line[]
 ---@field get_text fun(self: Component): string[]
 ---@field get_colors fun(self: Component): table[]
----@field debug fun(self: Component, arg: { level: number, prefix: string|nil }): Component
 local Component = {}
 
 --- Create new component
@@ -147,38 +146,6 @@ end
 ---@return table[]
 function Component:get_colors()
   return self.colors
-end
-
---- Debug component and print to console
----@return Component
----@param arg { level: number, prefix: string|nil }
-function Component:debug(arg)
-
-  local level = arg.level or 1
-  local type = self.type or 'unknown component type'
-  local prefix = arg.prefix or nil
-
-  if prefix then
-    print(prefix)
-  end
-  print('Component [' .. type .. ']:')
-  print('line_count: ' .. self.line_count)
-
-  if level >= 2 then
-    print('text:')
-    for _, line in ipairs(self.text) do
-      print('    ' .. line)
-    end
-    if level >= 3 then
-      print('colors:')
-      for _, color in ipairs(self.colors) do
-        print('    ' .. vim.inspect(color))
-      end
-    end
-  end
-  print('-------------------')
-
-  return self
 end
 
 return Component
