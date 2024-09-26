@@ -125,7 +125,7 @@ return {
 
     ---@type table Urgency breakpoints. Uses equal or greater than for comparison.
     urgency = {
-      { 0, "dim" }, --- Equal or higher than 0
+      { -100, "dim" }, --- Equal or higher than -100
       { 5, "warning" }, --- Equal or higher than 5
       { 10, "danger" }, --- Equal or higher than 10
     },
