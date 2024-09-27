@@ -78,7 +78,7 @@ function NeoWarrior:new()
     setmetatable(neowarrior, self)
     self.__index = self
 
-    neowarrior.version = "v0.2.0-beta-3"
+    neowarrior.version = "v0.2.0"
     neowarrior.config = nil
     neowarrior.user_config = nil
     neowarrior.buffer = nil
@@ -824,6 +824,7 @@ function NeoWarrior:set_keymaps()
   if self.config.keys.modify_select_project then
     vim.keymap.set("n", self.config.keys.modify_select_project, function()
       self:close_floats()
+      self.buffer:save_cursor()
       local uuid = nil
       if self.current_task then
         uuid = self.current_task.uuid
@@ -1043,6 +1044,7 @@ function NeoWarrior:start_stop()
   if task and task.start then
 
     self.tw:stop(task)
+    self:refresh()
 
     if self.current_task then
       self:task(self.current_task.uuid)
@@ -1055,6 +1057,7 @@ function NeoWarrior:start_stop()
   elseif task then
 
     self.tw:start(task)
+    self:refresh()
     self:task(task.uuid)
 
   end
