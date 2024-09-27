@@ -1433,8 +1433,8 @@ function NeoWarrior:open(opts)
         col = col,
         anchor = "NW",
         border = "rounded",
-        style = "minimal",
       }
+
     end
 
     self.window = Window:new({
