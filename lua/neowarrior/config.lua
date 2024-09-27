@@ -90,6 +90,15 @@ return {
     max_width = 60,
   },
 
+  project_float = {
+    ---@type boolean Enable floating window for projects
+    enabled = true,
+    ---@type number Max width of float in columns
+    max_width = 60,
+    ---@type number Time in milliseconds before detail float is shown
+    delay = 200,
+  },
+
   ---@type number Timezone offset in hours
   time_offset = 0,
 
