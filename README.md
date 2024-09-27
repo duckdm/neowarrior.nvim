@@ -225,12 +225,25 @@ require('neowarrior').focus()
 
   ---@type table Task float
   float = {
-    ---@type boolean Enable floating window for tasks
+    ---@type boolean|string Set to true to enable task float on hover. Alternatively
+    ---you can set it to a key (string) to enable it on key press.
     enabled = true,
+    ---@type number Time in milliseconds before detail float is shown. Only used if
+    ---enabled is set to true.
+    delay = 200,
     ---@type number Max width of float in columns
     max_width = 60,
+  },
+
+  ---@type table Project float
+  project_float = {
+    ---@type boolean|string Set to true to enable project float on hover. Alternatively
+    ---you can set it to a key (string) to enable it on key press.
+    enabled = "e",
     ---@type number Time in milliseconds before detail float is shown
     delay = 200,
+    ---@type number Max width of float in columns
+    max_width = 40,
   },
 
   ---@type number Timezone offset in hours
@@ -344,7 +357,7 @@ require('neowarrior').focus()
     help = '?', --- Show help
     add = 'a', --- Add task
     done = 'd', --- Mark task as done
-    start = 's', --- Start task
+    start = 'S', --- Start task
     select_dependency = 'D', --- Select dependency
     filter = 'F', --- Input filter
     select_filter = 'f', --- Select filter

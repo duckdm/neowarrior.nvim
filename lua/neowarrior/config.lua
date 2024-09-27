@@ -90,6 +90,17 @@ return {
     max_width = 60,
   },
 
+  ---@type table Project float
+  project_float = {
+    ---@type boolean|string Set to true to enable project float on hover. Alternatively
+    ---you can set it to a key (string) to enable it on key press.
+    enabled = "e",
+    ---@type number Time in milliseconds before detail float is shown
+    delay = 200,
+    ---@type number Max width of float in columns
+    max_width = 40,
+  },
+
   ---@type number Timezone offset in hours
   time_offset = 0,
 
