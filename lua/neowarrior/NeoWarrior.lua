@@ -31,6 +31,8 @@ local util = require('neowarrior.util')
 ---@field public help_float Float|nil
 ---@field public task_float Float|nil
 ---@field public task_floats Float[]
+---@field public project_float Float|nil
+---@field public project_floats Float[]
 ---@field public tw Taskwarrior
 ---@field public tasks TaskCollection
 ---@field public all_tasks TaskCollection
@@ -87,6 +89,8 @@ function NeoWarrior:new()
     neowarrior.help_float = nil
     neowarrior.task_float = nil
     neowarrior.task_floats = {}
+    neowarrior.project_float = nil
+    neowarrior.project_floats = {}
     neowarrior.tw = Taskwarrior:new()
     neowarrior.tasks = TaskCollection:new()
     neowarrior.all_tasks = TaskCollection:new()
@@ -197,6 +201,10 @@ function NeoWarrior:close_floats()
     self.task_float:close()
   end
 
+  if self.project_float then
+    self.project_float:close()
+  end
+
   if self.help_float then
     self.help_float:close()
   end
@@ -210,24 +218,30 @@ function NeoWarrior:close_floats()
     self.task_floats = {}
   end
 
+  if util.table_size(self.project_floats) > 0 then
+    for _, float in ipairs(self.project_floats) do
+      if float then
+        float:close()
+      end
+    end
+    self.project_floats = {}
+  end
+
 end
 
 --- Setup auto commands
 function NeoWarrior:setup_autocmds()
 
-  if self.config.float.enabled then
+  vim.api.nvim_create_autocmd('CursorMoved', {
+    group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
+    callback = function()
 
-    vim.api.nvim_create_autocmd('CursorMoved', {
-      group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
-      callback = function()
+      self:close_floats()
+      self.task_float = nil
+      self.project_float = nil
 
-        self:close_floats()
-        self.task_float = nil
-
-      end,
-    })
-
-  end
+    end,
+  })
 
   if self.config.float.enabled == true then
 
@@ -244,6 +258,105 @@ function NeoWarrior:setup_autocmds()
 
   end
 
+  if self.config.project_float.enabled == true then
+
+    --- Delay before task float is shown
+    vim.o.updatetime = self.config.project_float.delay
+    vim.api.nvim_create_autocmd('CursorHold', {
+      group = vim.api.nvim_create_augroup('neowarrior-cursor-hold', { clear = true }),
+      callback = function()
+
+          self:open_project_float()
+
+      end,
+    })
+
+  end
+
+end
+
+--- Show task float
+function NeoWarrior:open_project_float()
+
+  local project_id = self.buffer:get_meta_data('project')
+
+  if project_id then
+
+    local max_width = self.config.float.max_width
+    local win_width = self.window:get_width()
+    local width = max_width
+    local anchor = 'SW'
+    local cursor = self.buffer:get_cursor()
+    local row = 0
+    local col = 0 - cursor[2]
+    if cursor[1] <= 10 then
+      anchor = 'NW'
+      row = 1
+    end
+    if win_width < max_width then
+      width = win_width
+    end
+
+    local project = self.all_projects:find(project_id)
+
+    local tram = Tram:new()
+    ProjectLine:new(tram, project):into_line({
+      disable_meta = true,
+    })
+    tram:into_line({})
+
+    tram:nl()
+
+    tram:col("Tasks: ", "")
+    tram:col(project.task_count, _Neowarrior.config.colors.info.group)
+    tram:into_line({})
+
+    tram:nl()
+
+    tram:col("Avg. urgency: ", "")
+    tram:col(project.urgency.average, colors.get_urgency_color(project.urgency.average))
+    tram:into_line({})
+
+    tram:col("Total urgency: ", "")
+    tram:col(project.urgency.total, colors.get_urgency_color(project.urgency.total))
+    tram:into_line({})
+
+    tram:col("Max urgency: ", "")
+    tram:col(project.urgency.max, colors.get_urgency_color(project.urgency.max))
+    tram:into_line({})
+
+    tram:col("Min urgency: ", "")
+    tram:col(project.urgency.min, colors.get_urgency_color(project.urgency.min))
+    tram:into_line({})
+
+    tram:nl()
+
+    tram:col("Avg. estimate: ", "")
+    tram:col(project.estimate.average, colors.get_urgency_color(project.estimate.average))
+    tram:into_line({})
+
+    tram:col("Total estimate: ", "")
+    tram:col(project.estimate.total, colors.get_urgency_color(project.estimate.total))
+    tram:into_line({})
+
+    tram:col("Max estimate: ", "")
+    tram:col(project.estimate.max, colors.get_urgency_color(project.estimate.max))
+    tram:into_line({})
+
+    tram:col("Min estimate: ", "")
+    tram:col(project.estimate.min, colors.get_urgency_color(project.estimate.min))
+    tram:into_line({})
+
+    self.project_float = tram:open_float({
+      relative = 'cursor',
+      width = width,
+      col = col,
+      row = row,
+      enter = false,
+      anchor = anchor,
+    })
+    table.insert(self.project_floats, self.project_float)
+  end
 end
 
 --- Show task float
@@ -346,6 +459,7 @@ function NeoWarrior:open_task_float()
   end
 
 end
+
 --- Init neowarrior
 ---@return NeoWarrior
 function NeoWarrior:init()
@@ -1022,6 +1136,20 @@ function NeoWarrior:set_keymaps()
           self:open_task_float()
         else
           self.task_float = nil
+        end
+      end, default_keymap_opts)
+    end
+
+    if self.config.project_float.enabled and type(self.config.project_float.enabled) == "string" then
+      vim.keymap.set("n", self.config.project_float.enabled, function()
+        local uuid = self.buffer:get_meta_data('uuid')
+        self:close_floats()
+        if not uuid then
+          if not self.project_float then
+            self:open_project_float()
+          else
+            self.project_float = nil
+          end
         end
       end, default_keymap_opts)
     end
