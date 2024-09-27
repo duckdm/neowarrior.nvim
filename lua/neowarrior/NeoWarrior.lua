@@ -1406,7 +1406,7 @@ function NeoWarrior:open(opts)
       win = 0
     end
 
-    local opts = {
+    opts = {
       split = split,
     }
 
@@ -1414,15 +1414,24 @@ function NeoWarrior:open(opts)
 
       local win_width = vim.api.nvim_win_get_width(0)
       local win_height = vim.api.nvim_win_get_height(0)
-      local width = 60
-      local height = 40
+      local width = self.config.float.width
+      local height = self.config.float.height
+
+      if width <= 1 then
+        width = math.floor(win_width * width)
+      end
+
+      if height <= 1 then
+        height = math.floor(win_height * height)
+      end
+
       if win_width < width then
         width = win_width
       end
       if win_height < height then
         height = win_height
       end
-      local row = 10
+      local row = math.floor(win_height / 2) - (height / 2)
       local col = math.floor(win_width / 2) - (width / 2)
 
       opts = {

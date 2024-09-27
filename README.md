@@ -229,6 +229,16 @@ require('neowarrior').focus()
   ---@type string Default project name for tasks without project
   no_project_name = "no-project",
 
+  ---@type table NeoWarrior float settings
+  float = {
+    ---@type number Width of float in columns, or if set to a number below 1,
+    ---it will be calculated as a percentage of the window width.
+    width = 60,
+    ---@type number Height of float in rows, or if set to a number below 1,
+    ---it will be calculated as a percentage of the window height.
+    height = 0.8,
+  },
+
   ---@type table Task float
   task_float = {
     ---@type boolean|string Set to true to enable task float on hover. Alternatively
