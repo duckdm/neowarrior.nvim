@@ -80,12 +80,14 @@ return {
 
   ---@type table Task float
   float = {
-    ---@type boolean Enable floating window for tasks
+    ---@type boolean|string Set to true to enable task float on hover. Alternatively
+    ---you can set it to a key (string) to enable it on key press.
     enabled = true,
+    ---@type number Time in milliseconds before detail float is shown. Only used if
+    ---enabled is set to true.
+    delay = 200,
     ---@type number Max width of float in columns
     max_width = 60,
-    ---@type number Time in milliseconds before detail float is shown
-    delay = 200,
   },
 
   ---@type number Timezone offset in hours

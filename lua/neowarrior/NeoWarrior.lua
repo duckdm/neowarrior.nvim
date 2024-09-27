@@ -221,9 +221,14 @@ function NeoWarrior:setup_autocmds()
       callback = function()
 
         self:close_floats()
+        self.task_float = nil
 
       end,
     })
+
+  end
+
+  if self.config.float.enabled == true then
 
     --- Delay before task float is shown
     vim.o.updatetime = self.config.float.delay
@@ -993,6 +998,18 @@ function NeoWarrior:set_keymaps()
         self.buffer:restore_cursor()
       end
     end, default_keymap_opts)
+
+    if self.config.float.enabled and type(self.config.float.enabled) == "string" then
+      vim.keymap.set("n", self.config.float.enabled, function()
+        self:close_floats()
+        if not self.task_float then
+          self:open_task_float()
+        else
+          self.task_float = nil
+        end
+      end, default_keymap_opts)
+    end
+
   end
 
   -- Back to list/refresh
