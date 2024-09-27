@@ -251,6 +251,8 @@ require('neowarrior').focus()
     danger_bg = { group = "NeoWarriorTextDangerBg", fg = "#ffffff", bg = "#cc0000" },
     info_bg = { group = "NeoWarriorTextInfoBg", fg = "#000000", bg = "#00aaff" },
     project = { group = "NeoWarriorGroup", fg = "#00aaff", bg = nil },
+    annotation = { group = "NeoWarriorAnnotation", fg = "#00aaff", bg = nil },
+    tag = { group = "NeoWarriorTag", fg = "#ffffff", bg = "#333333" },
   },
   --- Example using builtin highlight groups:
   -- colors = {
@@ -269,7 +271,7 @@ require('neowarrior').focus()
 
     ---@type table Urgency breakpoints. Uses equal or greater than for comparison.
     urgency = {
-      { 0, "dim" }, --- Equal or higher than 0
+      { -100, "dim" }, --- Equal or higher than -100
       { 5, "warning" }, --- Equal or higher than 5
       { 10, "danger" }, --- Equal or higher than 10
     },
@@ -300,12 +302,14 @@ require('neowarrior').focus()
     },
   },
 
-  ---@type table Tag colors. Use nil to disable all. You can also use a table
+  ---@type table|boolean Tag colors. Set to false to disable all. You can also use a table
   ---to specify a match pattern and color.
   tag_colors = {
     next = "danger_bg", --- matches tags called "next"
+    blocked = "danger_bg", --- matches tags called "blocked"
     version = { match = "v.%..", color = "info_bg" }, -- match v*.*, v1.*, etc.
     version_full = { match = "v.%..%..", color = "info_bg" }, -- match v*.*.*, v1.*.*, etc.
+    default = { match = ".*", color = "tag" }, -- match all other tags
   },
 
   ---@type nil|string Pad start of tags with this string. Use nil to disable.
