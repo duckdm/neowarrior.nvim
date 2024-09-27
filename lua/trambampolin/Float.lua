@@ -38,7 +38,8 @@ function Float:open()
     col = self.opt.col or 0,
     row = self.opt.row or 1,
     anchor = self.opt.anchor or 'NW',
-    style = self.opt.style or 'minimal'
+    style = self.opt.style or 'minimal',
+    zindex = self.opt.zindex or 100,
   })
   buffer:option('wrap', true, { win = self.window.id })
   buffer:option('linebreak', true, { win = self.window.id })

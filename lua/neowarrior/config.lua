@@ -215,7 +215,7 @@ return {
     toggle_tree = '<Tab>', --- Toggle tree node
     enter = 'l', --- Enter task/Activate line action
     back = 'h', --- Go back
-    close_help = 'q', --- Close help
+    close = 'q', --- Close taskwarrior/close help
     modify = 'MM', --- Modify task
     modify_select_project = 'Mp', --- Modify project
     modify_select_priority = 'MP', --- Modify priority

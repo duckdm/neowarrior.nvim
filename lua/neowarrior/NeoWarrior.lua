@@ -1,6 +1,7 @@
 local Tram = require('trambampolin.init')
 local Buffer = require('trambampolin.Buffer')
 local Window = require('trambampolin.Window')
+local Float = require('trambampolin.Float')
 
 local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
@@ -106,7 +107,7 @@ function NeoWarrior:new()
         name = nil,
         keys = {
           { key = 'help', sort = 0, desc = 'Help' },
-          { key = 'close_help', sort = 1, desc = 'Close help' },
+          { key = 'close', sort = 2, desc = 'Close NeoWarrior/Close help' },
         }
       },
 
@@ -337,6 +338,7 @@ function NeoWarrior:open_task_float()
         row = row,
         enter = false,
         anchor = anchor,
+        zindex = 101,
       })
       table.insert(self.task_floats, self.task_float)
 
@@ -407,6 +409,7 @@ function NeoWarrior:refresh()
 end
 
 --- Focus on neowarrior window
+---@return boolean Returns false if no neowarrior window was found
 function NeoWarrior:focus()
 
   local windows = vim.api.nvim_list_wins()
@@ -415,9 +418,11 @@ function NeoWarrior:focus()
     local buf_name = vim.api.nvim_buf_get_name(buf_handle)
     if string.find(buf_name, "neowarrior") then
       vim.api.nvim_set_current_win(handle)
-      return
+      return true
     end
   end
+
+  return false
 end
 
 --- Generate project collection from tasks
@@ -648,7 +653,7 @@ end
 function NeoWarrior:create_user_commands()
 
   vim.api.nvim_create_user_command("NeoWarriorOpen", function(opt)
-    local valid_args = { 'current', 'above', 'below', 'left', 'right' }
+    local valid_args = { 'current', 'above', 'below', 'left', 'right', 'float' }
     local split = opt and opt.fargs and opt.fargs[1] or 'below'
     if not vim.tbl_contains(valid_args, split) then
       split = 'below'
@@ -713,6 +718,17 @@ function NeoWarrior:set_keymaps()
   if self.config.keys.help then
     vim.keymap.set("n", self.config.keys.help, function()
       self:open_help()
+    end, default_keymap_opts)
+  end
+
+  -- Close help float
+  if self.config.keys.close then
+    vim.keymap.set("n", self.config.keys.close, function()
+      if self.help_float then
+        self:close_help()
+      else
+        self:close()
+      end
     end, default_keymap_opts)
   end
 
@@ -1242,6 +1258,10 @@ function NeoWarrior:open(opts)
   self:set_keymaps()
   self:setup_autocmds()
 
+  if self:focus() then
+    return self
+  end
+
   if split == 'current' then
 
     vim.api.nvim_set_current_buf(self.buffer.id)
@@ -1258,13 +1278,42 @@ function NeoWarrior:open(opts)
       win = 0
     end
 
+    local opts = {
+      split = split,
+    }
+
+    if split == "float" then
+
+      local win_width = vim.api.nvim_win_get_width(0)
+      local win_height = vim.api.nvim_win_get_height(0)
+      local width = 60
+      local height = 40
+      if win_width < width then
+        width = win_width
+      end
+      if win_height < height then
+        height = win_height
+      end
+      local row = 10
+      local col = math.floor(win_width / 2) - (width / 2)
+
+      opts = {
+        relative = "win",
+        width = width,
+        height = height,
+        row = row,
+        col = col,
+        anchor = "NW",
+        border = "rounded",
+        style = "minimal",
+      }
+    end
+
     self.window = Window:new({
       buffer = self.buffer,
       win = win,
       enter = true,
-    }, {
-      split = split,
-    })
+    }, opts)
 
   end
 
@@ -1288,6 +1337,14 @@ function NeoWarrior:open(opts)
   self:list()
 
   return self
+end
+
+--- Close neowarrior
+function NeoWarrior:close()
+
+  self:close_floats()
+  self.window:close()
+
 end
 
 --- List tasks

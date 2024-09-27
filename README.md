@@ -88,7 +88,12 @@ return {
 | Command | Description |
 | ------- | ----------- |
 | `:NeoWarriorOpen` | Open NeoWarrior (default to below current buffer) |
-| `:NeoWarriorOpen left,right,above,below,current` | Open NeoWarrior on the left, right, above, below current buffer or in current buffer |
+| `:NeoWarriorOpen float` | Open NeoWarrior in a floating window |
+| `:NeoWarriorOpen current` | Open NeoWarrior in current buffer |
+| `:NeoWarriorOpen left` | Open NeoWarrior to the left of current window |
+| `:NeoWarriorOpen right` | Open NeoWarrior to the right of current window |
+| `:NeoWarriorOpen above` | Open NeoWarrior above current window |
+| `:NeoWarriorOpen below` | Open NeoWarrior below current window |
 | `:NeoWarriorAdd` | Add new task |
 | `:NeoWarriorFilter` | Filter |
 | `:NeoWarriorFilterSelect` | Select filter |
@@ -99,6 +104,7 @@ return {
 ```lua
 -- Open NeoWarrior
 require('neowarrior').open() --- Default, opens below buffer
+require('neowarrior').open_float() --- Open in a floating window
 require('neowarrior').open_left() --- Open on the left side
 require('neowarrior').open_right() --- Open on the right side
 require('neowarrior').open_above() --- Open above current buffer
@@ -225,12 +231,14 @@ require('neowarrior').focus()
 
   ---@type table Task float
   float = {
-    ---@type boolean Enable floating window for tasks
+    ---@type boolean|string Set to true to enable task float on hover. Alternatively
+    ---you can set it to a key (string) to enable it on key press.
     enabled = true,
+    ---@type number Time in milliseconds before detail float is shown. Only used if
+    ---enabled is set to true.
+    delay = 200,
     ---@type number Max width of float in columns
     max_width = 60,
-    ---@type number Time in milliseconds before detail float is shown
-    delay = 200,
   },
 
   ---@type number Timezone offset in hours
@@ -344,7 +352,7 @@ require('neowarrior').focus()
     help = '?', --- Show help
     add = 'a', --- Add task
     done = 'd', --- Mark task as done
-    start = 's', --- Start task
+    start = 'S', --- Start task
     select_dependency = 'D', --- Select dependency
     filter = 'F', --- Input filter
     select_filter = 'f', --- Select filter
@@ -358,7 +366,7 @@ require('neowarrior').focus()
     toggle_tree = '<Tab>', --- Toggle tree node
     enter = 'l', --- Enter task/Activate line action
     back = 'h', --- Go back
-    close_help = 'q', --- Close help
+    close = 'q', --- Close taskwarrior/close help
     modify = 'MM', --- Modify task
     modify_select_project = 'Mp', --- Modify project
     modify_select_priority = 'MP', --- Modify priority
