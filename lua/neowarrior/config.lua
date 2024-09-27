@@ -199,7 +199,7 @@ return {
     help = '?', --- Show help
     add = 'a', --- Add task
     done = 'd', --- Mark task as done
-    start = 's', --- Start task
+    start = 'S', --- Start task
     select_dependency = 'D', --- Select dependency
     filter = 'F', --- Input filter
     select_filter = 'f', --- Select filter
