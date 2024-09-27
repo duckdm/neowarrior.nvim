@@ -1043,6 +1043,7 @@ function NeoWarrior:start_stop()
   if task and task.start then
 
     self.tw:stop(task)
+    self:refresh()
 
     if self.current_task then
       self:task(self.current_task.uuid)
@@ -1055,6 +1056,7 @@ function NeoWarrior:start_stop()
   elseif task then
 
     self.tw:start(task)
+    self:refresh()
     self:task(task.uuid)
 
   end
