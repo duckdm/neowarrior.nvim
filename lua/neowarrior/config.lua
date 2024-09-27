@@ -79,7 +79,7 @@ return {
   no_project_name = "no-project",
 
   ---@type table Task float
-  float = {
+  task_float = {
     ---@type boolean|string Set to true to enable task float on hover. Alternatively
     ---you can set it to a key (string) to enable it on key press.
     enabled = true,

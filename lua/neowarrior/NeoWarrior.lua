@@ -243,10 +243,10 @@ function NeoWarrior:setup_autocmds()
     end,
   })
 
-  if self.config.float.enabled == true then
+  if self.config.task_float.enabled == true then
 
     --- Delay before task float is shown
-    vim.o.updatetime = self.config.float.delay
+    vim.o.updatetime = self.config.task_float.delay
     vim.api.nvim_create_autocmd('CursorHold', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-hold', { clear = true }),
       callback = function()
@@ -282,7 +282,7 @@ function NeoWarrior:open_project_float()
 
   if project_id then
 
-    local max_width = self.config.float.max_width
+    local max_width = self.config.task_float.max_width
     local win_width = self.window:get_width()
     local width = max_width
     local anchor = 'SW'
@@ -367,7 +367,7 @@ function NeoWarrior:open_task_float()
   if description then
 
     local uuid = self.buffer:get_meta_data('uuid')
-    local max_width = self.config.float.max_width
+    local max_width = self.config.task_float.max_width
     local win_width = self.window:get_width()
     local width = max_width
     local anchor = 'SW'
@@ -1129,8 +1129,8 @@ function NeoWarrior:set_keymaps()
       end
     end, default_keymap_opts)
 
-    if self.config.float.enabled and type(self.config.float.enabled) == "string" then
-      vim.keymap.set("n", self.config.float.enabled, function()
+    if self.config.task_float.enabled and type(self.config.task_float.enabled) == "string" then
+      vim.keymap.set("n", self.config.task_float.enabled, function()
         self:close_floats()
         if not self.task_float then
           self:open_task_float()
