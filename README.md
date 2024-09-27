@@ -126,8 +126,8 @@ require('neowarrior').focus()
 | Key | Description |
 | --- | ----------- |
 | ? | Help |
-| q | Close help |
-| | |
+| q | Close NeoWarrior/Close help |
+| - | - |
 | a | Add task |
 | l | Show task/Activate line action |
 | h | Back |
@@ -138,18 +138,18 @@ require('neowarrior').focus()
 | MP | Modify priority |
 | Md | Modify due date |
 | D | Select dependency |
-| | |
+| - | - |
 | F | Filter tasks |
 | f | Select filter |
 | r | Select report |
 | X | Reset filters |
-| | |
+| - | - |
 | tg | Toggle grouped view |
 | tt | Toggle tree view |
 | W | Collapse all trees |
 | E | Expand all trees |
 | Tab | Toggle tree |
-| | |
+| - | - |
 | R | Refresh tasks |
 
 # Default config values
