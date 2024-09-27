@@ -132,7 +132,7 @@ require('neowarrior').focus()
 | l | Show task/Activate line action |
 | h | Back |
 | d | Mark task done |
-| s | Start task |
+| S | Start task |
 | MM | Modify task |
 | Mp | Modify project |
 | MP | Modify priority |
