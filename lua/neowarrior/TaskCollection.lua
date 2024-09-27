@@ -74,7 +74,7 @@ end
 function TaskCollection:find_max(key)
   local max = 0
   for _, task in ipairs(self.task_collection) do
-    if task[key] > max then
+    if task[key] and task[key] > max then
       max = task[key]
     end
   end
@@ -87,7 +87,7 @@ end
 function TaskCollection:find_min(key)
   local min = 0
   for _, task in ipairs(self.task_collection) do
-    if task[key] < min then
+    if task[key] and task[key] < min then
       min = task[key]
     end
   end

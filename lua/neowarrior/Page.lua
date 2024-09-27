@@ -1,3 +1,5 @@
+--- FIX: this class should not be used anymore and should be removed
+local Tram = require('trambampolin.init')
 local Component = require('neowarrior.Component')
 local Line = require('neowarrior.Line')
 local util = require('neowarrior.util')
@@ -28,6 +30,8 @@ function Page:new(buffer)
   page.line_count = 0
   page.component_count = 0
   page.buffer = buffer
+  page.tram = Tram:new()
+  page.tram:set_buffer(buffer)
 
   return page
 end
@@ -44,6 +48,7 @@ function Page:add(component)
   return self
 end
 
+--- FIX: change to use trambampolin
 --- Add line to page
 ---@param line Line
 function Page:add_line(line)
@@ -54,6 +59,7 @@ function Page:add_line(line)
   return self
 end
 
+--- FIX: change to use trambampolin
 --- Add line to page
 ---@param lines Line[]
 function Page:add_lines(lines)
@@ -65,6 +71,7 @@ function Page:add_lines(lines)
   return self
 end
 
+--- FIX: change to use trambampolin
 --- Add raw string to page
 ---@param string string
 ---@param color string
@@ -85,7 +92,6 @@ end
 function Page:print()
 
   self.buffer:unlock()
-  vim.api.nvim_buf_set_lines(self.buffer.id, 0, -1, false, {})
   local start_at = 0
 
   for _, component in ipairs(self.components) do

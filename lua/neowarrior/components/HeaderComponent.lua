@@ -1,91 +1,149 @@
-local Line = require('neowarrior.Line')
-local Component = require('neowarrior.Component')
-
 ---@class HeaderComponent
----@field neowarrior NeoWarrior
 local HeaderComponent = {}
 
 --- Create a new HeaderComponent
----@param neowarrior NeoWarrior
----@return Component
-function HeaderComponent:new(neowarrior)
+---@return HeaderComponent
+function HeaderComponent:new(tram)
     local header_component = {}
     setmetatable(header_component, self)
     self.__index = self
 
-    self.neowarrior = neowarrior
+    self.tram = tram
+    self.meta_enabled = true
+    self.report_enabled = true
+    self.filter_enabled = true
+    self.help_items = {
+      help = true,
+      add = true,
+      done = true,
+      modify = false,
+      filter = true,
+    }
 
-    local component = Component:new()
-    component.type = 'HeaderComponent'
-    component:add(self:get())
-
-    return component
+    return self
 end
 
---- Get header line data
----@return Line[]
-function HeaderComponent:get()
+function HeaderComponent:set_help_item(key, value)
+  self.help_items[key] = value
+  return self
+end
 
-  local nw = self.neowarrior
+function HeaderComponent:disable_meta()
+  self.meta_enabled = false
+  return self
+end
+
+function HeaderComponent:disable_report()
+  self.report_enabled = false
+  return self
+end
+
+function HeaderComponent:disable_filter()
+  self.filter_enabled = false
+  return self
+end
+
+--- Print header
+function HeaderComponent:set()
+
+  local nw = _Neowarrior
   local keys = nw.config.keys
-  local lines = {}
-  local line_no = 0
 
   if nw.config.header.text then
-    local header = Line:new(line_no)
+
+    local dev = _Neowarrior.config.dev or false
+    local header_text_color = _Neowarrior.config.colors.neowarrior.group
+    local header_text_has_version = string.match(nw.config.header.text, "{version}")
+
+    if header_text_has_version then
+
+      if string.match(nw.version, "dev") then
+        header_text_color = _Neowarrior.config.colors.danger.group
+      elseif string.match(nw.version, "pre") or string.match(nw.version, "alpha") or string.match(nw.version, "beta") then
+        header_text_color = _Neowarrior.config.colors.warning.group
+      end
+
+    end
+
     local header_text = nw.config.header.text:gsub("{version}", nw.version)
-    header:add({ text = header_text, color = "NeoWarriorTextHeader" })
-    table.insert(lines, header)
-    line_no = line_no + 1
+
+    if dev then
+      self.tram:col(" LOCAL DEV ", _Neowarrior.config.colors.danger_bg.group)
+    end
+
+    self.tram:col(" " .. header_text .. " ", header_text_color)
+    self.tram:into_line({})
+
   end
 
   if nw.config.header.enable_help_line then
-    local help = Line:new(line_no)
-    help:add({ text = "(" .. keys.help .. ")help | " })
-    help:add({ text = "(" .. keys.add .. ")add | " })
-    help:add({ text = "(" .. keys.done .. ")done | " })
-    help:add({ text = "(" .. keys.filter .. ")filter" })
-    help:add({ meta = { action = 'help' }})
-    table.insert(lines, help)
-    line_no = line_no + 1
+
+    if self.help_items.help then
+      self.tram:col("(" .. keys.help .. ")help | ", "")
+    end
+    if self.help_items.add then
+      self.tram:col("(" .. keys.add .. ")add | ", "")
+    end
+    if self.help_items.done then
+      self.tram:col("(" .. keys.done .. ")done | ", "")
+    end
+    if self.help_items.modify then
+      self.tram:col("(" .. keys.modify .. ")modify | ", "")
+    end
+    if self.help_items.filter then
+      self.tram:col("(" .. keys.filter .. ")filter | ", "")
+    end
+
+    if self.meta_enabled then
+      self.tram:into_line({
+        meta = { action = 'help' }
+      })
+    else
+      self.tram:into_line({})
+    end
+
   end
 
-  if nw.config.header.enable_current_report then
-    local report = Line:new(line_no)
-    report:add({ text = "(" .. keys.select_report .. ")report: " })
-    report:add({
-      text = "Report: " .. nw.current_report,
-      color = "NeoWarriorTextInfo"
-    })
-    report:add({ meta = { action = 'report' }})
+  if nw.config.header.enable_current_report and self.report_enabled then
+
+    self.tram:col("(" .. keys.select_report .. ")report: ", "")
+    self.tram:col("Report: " .. nw.current_report, _Neowarrior.config.colors.info.group)
 
     if nw.config.header.enable_current_view then
       if nw.current_mode == 'grouped' then
-        report:add({ text = " (Grouped by project)" })
+        self.tram:col(" (Grouped by project)", "")
       elseif nw.current_mode == 'tree' then
-        report:add({ text = " (Tree view)" })
+        self.tram:col(" (Tree view)", "")
       end
     end
-    table.insert(lines, report)
-    line_no = line_no + 1
+
+    if not self.disable_meta then
+      self.tram:into_line({
+        meta = { action = 'report' }
+      })
+    else
+      self.tram:into_line({})
+    end
+
   end
 
-  if nw.config.header.enable_current_filter then
-    local filter = Line:new(line_no)
-    filter:add({ text = "(" .. keys.select_filter .. ")filter: " })
-    filter:add({
-      text = nw.current_filter,
-      color = "NeoWarriorTextWarning"
-    })
-    filter:add({ meta = { action = 'filter' }})
-    table.insert(lines, filter)
-    line_no = line_no + 1
+  if nw.config.header.enable_current_filter and self.filter_enabled then
+
+    self.tram:col("(" .. keys.select_filter .. ")filter: ", "")
+    self.tram:col(nw.current_filter, _Neowarrior.config.colors.warning.group)
+    if not self.disable_meta then
+      self.tram:into_line({
+        meta = { action = 'filter' }
+      })
+    else
+      self.tram:into_line({})
+    end
+
   end
 
-  --- Add new line
-  table.insert(lines, Line:new(line_no + 3):add({ text = "" }))
+  self.tram:nl()
 
-  return lines
+  return self
 end
 
 return HeaderComponent

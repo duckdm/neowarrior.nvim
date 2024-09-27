@@ -1,99 +1,102 @@
 local colors = require "neowarrior.colors"
-local Line = require "neowarrior.Line"
-local TaskUtil = require "neowarrior.TaskUtil"
+local TagsComponent = require "neowarrior.components.TagsComponent"
 
 ---@class TaskLine
 ---@field neowarrior NeoWarrior
----@field line_no number
 ---@field task Task
----@field arg table
 local TaskLine = {}
 
 --- Create a new TaskLine
----@param neowarrior NeoWarrior
----@param line_no number
+---@param tram Trambampolin
 ---@param task Task
----@param arg table
----@return Line
-function TaskLine:new(neowarrior, line_no, task, arg)
+---@return TaskLine
+function TaskLine:new(tram, task)
     local task_component = {}
     setmetatable(task_component, self)
     self.__index = self
 
-    self.neowarrior = neowarrior
-    self.line_no = line_no
+    self.tram = tram
     self.task = task
 
-    return self:get_task_line(arg)
+    return self
 end
 
 --- Get task line data
 ---@param arg table
----@return Line[]
-function TaskLine:get_task_line(arg)
+---@return TaskLine
+function TaskLine:into_line(arg)
 
-  local conf = self.neowarrior.config.task_line
-  local line = Line:new(self.line_no)
+  local conf = _Neowarrior.config
+  local line_conf = conf.task_line
   local indent = arg.indent or ""
   local disable_meta = arg.disable_meta or false
   local disable_priority = arg.disable_priority or false
-  if conf.enable_priority == false then
+  if line_conf.enable_priority == false then
     disable_priority = true
   end
   local disable_warning = arg.disable_warning or false
-  if conf.enable_warning_icon == false then
+  if line_conf.enable_warning_icon == false then
     disable_warning = true
   end
   local disable_due = arg.disable_due or false
-  if conf.enable_due_date == false then
+  if line_conf.enable_due_date == false then
     disable_due = true
   end
   local disable_description = arg.disable_description or false
   local disable_recur = arg.disable_recur or false
-  if conf.enable_recur_icon == false then
+  if line_conf.enable_recur_icon == false then
     disable_recur = true
   end
   local disable_task_icon = arg.disable_task_icon or false
+  local disable_tags = arg.disable_tags or false
+  if line_conf.enable_tags == false then
+    disable_tags = true
+  end
   local disable_estimate = arg.disable_estimate or false
-  if conf.enable_estimate == false then
+  if line_conf.enable_estimate == false then
     disable_estimate = true
   end
   local disable_annotations = arg.disable_annotations or false
   local disable_start = arg.disable_start or false
+  local disable_has_blocking = arg.disable_has_blocking or false
   local project = self.task.project or 'No project'
   local meta = arg.meta or nil
+  local description_color = nil
   local description = ""
   if self.task.description then
     description = tostring(string.gsub(self.task.description, "\n", ""))
   end
   local estimate_string = self.task.estimate_string
   local urgency_val = self.task.urgency or 0.0
-  if self.neowarrior.current_mode == 'grouped' then
+  if _Neowarrior.current_mode == 'grouped' then
     project = ""
   end
   local priority = self.task.priority or "-"
-  local due = self.task.due or nil
-  if due then
-    due = due:relative()
+  local due = nil
+  local due_no = 0
+  if self.task.due then
+    due = self.task.due:relative()
+    due_no = self.task.due:relative_hours()
   end
-  local task_icon = self.neowarrior.config.icons.task
-  local task_icon_color = "NeoWarriorTextDim"
+  local task_icon = conf.icons.task
+  local task_icon_color = _Neowarrior.config.colors.dim.group
   if self.task.start then
-    task_icon_color = "NeoWarriorTextDanger"
+    task_icon_color = _Neowarrior.config.colors.danger.group
+    description_color = _Neowarrior.config.colors.warning.group
   end
   if self.task.status and self.task.status == "completed" then
-    task_icon = self.neowarrior.config.icons.task_completed
-    task_icon_color = "NeoWarriorTextSuccess"
+    task_icon = conf.icons.task_completed
+    task_icon_color = _Neowarrior.config.colors.success.group
   end
   if self.task.status and self.task.status == "deleted" then
-    task_icon = self.neowarrior.config.icons.deleted
-    task_icon_color = "NeoWarriorTextWarning"
+    task_icon = conf.icons.deleted
+    task_icon_color = _Neowarrior.config.colors.warning.group
   end
-  local has_blocking = false
 
+  local has_blocking = false
   if self.task.depends then
-    task_icon = self.neowarrior.config.icons.depends
-    task_icon_color = "NeoWarriorTextDanger"
+    task_icon = conf.icons.depends
+    task_icon_color = _Neowarrior.config.colors.danger.group
     has_blocking = true
   end
 
@@ -115,94 +118,97 @@ function TaskLine:get_task_line(arg)
     end
   end
 
-  line:add({
-    text = indent
-  })
+  self.tram:col(indent, "")
 
   if not disable_task_icon then
-    line:add({
-      text = task_icon .. " ",
-      color = task_icon_color,
-    })
+    self.tram:col(task_icon .. " ", task_icon_color)
   end
 
   if self.task.start and (not disable_start) then
-    line:add({
-      text = self.neowarrior.config.icons.start .. " ",
-      color = "NeoWarriorTextDanger",
-    })
+    self.tram:col(conf.icons.start .. " ", _Neowarrior.config.colors.danger.group)
   end
 
-  if urgency_val > 5 and (not disable_warning) then
-    line:add({
-      text = self.neowarrior.config.icons.warning .. " ",
-      color = colors.get_urgency_color(urgency_val),
-      disable = (urgency_val < 5 or disable_warning),
-    })
+  if urgency_val > 5 and (not disable_warning) and line_conf.enable_warning_icon == "left" then
+    self.tram:col(
+      conf.icons.warning .. " ",
+      colors.get_urgency_color(urgency_val)
+    )
   end
 
-  if not disable_priority then
-    line:add({
-      text = priority .. " ",
-      color = colors.get_priority_color(priority),
-    })
+  if not disable_priority and line_conf.enable_priority == "left" then
+    self.tram:col(priority .. " ", colors.get_priority_color(priority))
   end
 
-  if not disable_recur and self.task.recur then
-    line:add({
-      text = self.neowarrior.config.icons.recur .. " ",
-      color = "NeoWarriorTextInfo",
-    })
+  if not disable_recur and self.task.recur and line_conf.enable_recur_icon == "left" then
+    self.tram:col(conf.icons.recur .. " ", _Neowarrior.config.colors.info.group)
   end
 
-  if due and (due ~= '') and (not disable_due) then
-    line:add({
-      text = self.neowarrior.config.icons.due .. "" .. due .. " ",
-      color = colors.get_due_color(due),
-    })
+  if due and (due ~= '') and (not disable_due) and line_conf.enable_due_date == "left" then
+    self.tram:col(due, colors.get_due_color(due_no))
+    self.tram:col(" ", "")
   end
 
-  if not disable_estimate and self.task.estimate and self.task.estimate > 0 then
-    line:add({
-      text = self.neowarrior.config.icons.est .. "" .. estimate_string .. " ",
-      color = colors.get_estimate_color(self.task.estimate),
-    })
+  if (not disable_estimate) and line_conf.enable_estimate == "left" and self.task.estimate and self.task.estimate > 0 then
+    self.tram:col(
+      conf.icons.est .. "" .. estimate_string .. " ",
+      colors.get_estimate_color(self.task.estimate)
+    )
   end
 
-  if (not disable_annotations) and self.task.annotations then
-    line:add({
-      text = self.neowarrior.config.icons.annotated .. " ",
-      color = "NeoWarriorTextInfo",
-    })
+  if (not disable_annotations) and self.task.annotations and line_conf.enable_annotations_icon == "left" then
+    self.tram:col(conf.icons.annotated .. " ", _Neowarrior.config.colors.annotation.group)
+  end
+
+  if self.task.tags and (not disable_tags) then
+    TagsComponent:new(self.tram, self.task.tags):cols()
+    self.tram:col(" ", "")
   end
 
   if not disable_description then
-    line:add({
-      text = description,
-      color = has_blocking and "NeoWarriorTextDanger" or nil,
-    })
-    if has_blocking then
-      line:add({
-        text = " [has blocking tasks]",
-        color = "NeoWarriorTextDanger",
-      })
+    self.tram:col(description, description_color)
+    if has_blocking and (not disable_has_blocking) then
+      self.tram:col(" [has blocking tasks]", _Neowarrior.config.colors.danger.group)
     end
   end
 
-  if not disable_urgency and self.neowarrior.config.task_line.enable_urgency then
-    line:add({
-      text = " " .. string.format("%.1f", urgency_val) .. " ",
-      color = colors.get_urgency_color(urgency_val),
-    })
+  if (not arg.disable_urgency) and line_conf.enable_urgency == "eol" then
+    self.tram:col(
+      " " .. string.format("%.1f", urgency_val) .. " ",
+      colors.get_urgency_color(urgency_val)
+    )
   end
 
-  if meta_table and not (disable_meta) then
-    line:add({
-      meta = meta_table,
-    })
+  if disable_meta then
+    meta_table = nil
   end
 
-  return line
+  self.tram:into_line({
+    meta = meta_table
+  })
+
+  local has_right_aligned_items = false
+
+  if urgency_val > 5 and (not disable_warning) and line_conf.enable_warning_icon == "right" then
+    self.tram:col(
+      " " .. conf.icons.warning,
+      colors.get_urgency_color(urgency_val)
+    )
+    has_right_aligned_items = true
+  end
+
+  if (not arg.disable_urgency) and line_conf.enable_urgency == "right" then
+    self.tram:col(
+      " " .. string.format("%.1f", urgency_val),
+      colors.get_urgency_color(urgency_val)
+    )
+    has_right_aligned_items = true
+  end
+
+  if has_right_aligned_items then
+    self.tram:into_virt_line({ pos = "right_align" })
+  end
+
+  return self
 end
 
 return TaskLine

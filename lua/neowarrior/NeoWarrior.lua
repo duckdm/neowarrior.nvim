@@ -1,12 +1,12 @@
+local Tram = require('trambampolin.init')
+local Buffer = require('trambampolin.Buffer')
+local Window = require('trambampolin.Window')
+
 local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
-local Buffer = require('neowarrior.Buffer')
-local Window = require('neowarrior.Window')
-local Float = require('neowarrior.Float')
-local Page = require('neowarrior.Page')
 local Taskwarrior = require('neowarrior.Taskwarrior')
 local TaskPage = require('neowarrior.pages.TaskPage')
 local colors   = require('neowarrior.colors')
@@ -14,12 +14,12 @@ local default_config = require('neowarrior.config')
 local TaskCollection = require('neowarrior.TaskCollection')
 local HeaderComponent = require('neowarrior.components.HeaderComponent')
 local ListComponent = require('neowarrior.components.ListComponent')
+local TagsComponent = require('neowarrior.components.TagsComponent')
 local TaskLine = require('neowarrior.lines.TaskLine')
 local Project = require('neowarrior.Project')
 local ProjectCollection = require('neowarrior.ProjectCollection')
 local ProjectLine = require('neowarrior.lines.ProjectLine')
 local util = require('neowarrior.util')
-local Line = require('neowarrior.Line')
 
 ---@class NeoWarrior
 ---@field public version string
@@ -35,6 +35,7 @@ local Line = require('neowarrior.Line')
 ---@field public all_tasks TaskCollection
 ---@field public all_pending_tasks TaskCollection
 ---@field public projects ProjectCollection
+---@field public grouped_projects ProjectCollection
 ---@field public project_names table
 ---@field public all_projects ProjectCollection
 ---@field public all_project_names table
@@ -77,7 +78,7 @@ function NeoWarrior:new()
     setmetatable(neowarrior, self)
     self.__index = self
 
-    neowarrior.version = "v0.1.3"
+    neowarrior.version = "v0.2.0"
     neowarrior.config = nil
     neowarrior.user_config = nil
     neowarrior.buffer = nil
@@ -85,11 +86,12 @@ function NeoWarrior:new()
     neowarrior.help_float = nil
     neowarrior.task_float = nil
     neowarrior.task_floats = {}
-    neowarrior.tw = Taskwarrior:new(neowarrior or self)
+    neowarrior.tw = Taskwarrior:new()
     neowarrior.tasks = TaskCollection:new()
     neowarrior.all_tasks = TaskCollection:new()
     neowarrior.all_pending_tasks = TaskCollection:new()
     neowarrior.projects = ProjectCollection:new()
+    neowarrior.grouped_projects = ProjectCollection:new()
     neowarrior.all_projects = ProjectCollection:new()
     neowarrior.project_names = {}
     neowarrior.all_project_names = {}
@@ -180,20 +182,24 @@ function NeoWarrior:setup(config)
   self.config.default_filter = self.config.filter or ""
   self.config.default_report = self.config.report or "next"
 
-  colors.set()
+  colors.set(self.config.colors)
 
   self:create_user_commands()
 
   return self
 end
 
+--- Close all floats
 function NeoWarrior:close_floats()
+
   if self.task_float then
     self.task_float:close()
   end
+
   if self.help_float then
     self.help_float:close()
   end
+
   if util.table_size(self.task_floats) > 0 then
     for _, float in ipairs(self.task_floats) do
       if float then
@@ -202,90 +208,137 @@ function NeoWarrior:close_floats()
     end
     self.task_floats = {}
   end
+
 end
 
+--- Setup auto commands
 function NeoWarrior:setup_autocmds()
 
   if self.config.float.enabled then
+
     vim.api.nvim_create_autocmd('CursorMoved', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
       callback = function()
+
         self:close_floats()
+
       end,
     })
+
+    --- Delay before task float is shown
     vim.o.updatetime = self.config.float.delay
     vim.api.nvim_create_autocmd('CursorHold', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-hold', { clear = true }),
       callback = function()
-        local description = self.buffer:get_meta_data('description')
-        if description then
-          local uuid = self.buffer:get_meta_data('uuid')
-          local max_width = self.config.float.max_width
-          local win_width = vim.api.nvim_win_get_width(0)
-          local width = max_width
-          local anchor = 'SW'
-          local cursor = self.buffer:get_cursor()
-          local row = 0
-          local col = 0 - cursor[2]
-          if cursor[1] <= 10 then
-            anchor = 'NW'
-            row = 1
-          end
-          if win_width < max_width then
-            width = win_width
-          end
 
-          if uuid then
+          self:open_task_float()
 
-            local task = self.tw:task(uuid)
-            local project = self.all_projects:find(task.project)
-
-            local float_buffer = Buffer:new({
-              listed = false,
-              scratch = true,
-            })
-            local page = Page:new(float_buffer)
-            page:add_line(ProjectLine:new(self, 0, project, {
-              disable_meta = true,
-            }))
-            page:add_line(TaskLine:new(self, 0, task, {
-              disable_meta = true,
-              disable_due = true,
-              disable_estimate = true,
-            }))
-            page:add_raw(' ', '')
-            page:add_raw('Urgency: ' .. task.urgency, colors.get_urgency_color(task.urgency))
-            if task.priority then
-              local priority_color = colors.get_priority_color(task.priority)
-              page:add_raw('Priority: ' .. task.priority, priority_color)
-            end
-            if task.due then
-              local due_relative = task.due:relative()
-              local due_formatted = task.due:default_format()
-              page:add_raw('Due: ' .. due_relative .. " (" .. due_formatted .. ")", colors.get_due_color(due_relative))
-            end
-            if task.estimate then
-              page:add_raw('Estimate: ' .. task.estimate_string, colors.get_urgency_color(task.estimate))
-            end
-            self.task_float = Float:new(self, page, {
-              relative = 'cursor',
-              width = width,
-              col = col,
-              row = row,
-              enter = false,
-              anchor = anchor,
-            })
-            self.task_float:open()
-            table.insert(self.task_floats, self.task_float)
-
-          end
-        end
       end,
     })
+
   end
 
 end
 
+--- Show task float
+function NeoWarrior:open_task_float()
+
+  local description = self.buffer:get_meta_data('description')
+
+  if description then
+
+    local uuid = self.buffer:get_meta_data('uuid')
+    local max_width = self.config.float.max_width
+    local win_width = self.window:get_width()
+    local width = max_width
+    local anchor = 'SW'
+    local cursor = self.buffer:get_cursor()
+    local row = 0
+    local col = 0 - cursor[2]
+    if cursor[1] <= 10 then
+      anchor = 'NW'
+      row = 1
+    end
+    if win_width < max_width then
+      width = win_width
+    end
+
+    if uuid then
+
+      local task = self.tw:task(uuid)
+      local project = self.all_projects:find(task.project)
+
+      local tram = Tram:new()
+      ProjectLine:new(tram, project):into_line({
+        disable_meta = true,
+      })
+      tram:into_line({})
+
+      TaskLine:new(tram, task):into_line({
+        disable_meta = true,
+        disable_due = true,
+        disable_estimate = true,
+        disable_has_blocking = true,
+        disable_tags = true,
+      })
+
+      if task.tags then
+        tram:nl()
+        TagsComponent:new(tram, task.tags):line()
+      end
+
+      if task.depends and task.depends:count() > 0 then
+
+        tram:nl()
+        tram:line('Blocked by ' .. task.depends:count() .. ' task(s)', { color = _Neowarrior.config.colors.danger.group })
+
+      end
+
+      local task_parents = task:create_parent_collection()
+      if task_parents then
+
+        tram:nl()
+        tram:line(
+          'Blocking ' .. task_parents:count() .. ' task(s)',
+          { color = _Neowarrior.config.colors.danger.group }
+        )
+
+      end
+
+      tram:nl()
+
+      tram:line('Urgency: ' .. task.urgency, { color = colors.get_urgency_color(task.urgency) })
+
+      if task.priority then
+        local priority_color = colors.get_priority_color(task.priority)
+        tram:line('Priority: ' .. task.priority, { color = priority_color })
+      end
+
+      if task.due then
+        local due_relative = task.due:relative()
+        local due_hours = task.due:relative_hours()
+        local due_formatted = task.due:default_format()
+        tram:line('Due: ' .. due_relative .. " (" .. due_formatted .. ")", { color = colors.get_due_color(due_hours) })
+      end
+
+      if task.estimate then
+        tram:line('Estimate: ' .. task.estimate_string, { color = colors.get_urgency_color(task.estimate) })
+      end
+
+      self.task_float = tram:open_float({
+        relative = 'cursor',
+        width = width,
+        col = col,
+        row = row,
+        enter = false,
+        anchor = anchor,
+      })
+      table.insert(self.task_floats, self.task_float)
+
+    end
+  end
+
+end
 --- Init neowarrior
 ---@return NeoWarrior
 function NeoWarrior:init()
@@ -312,24 +365,25 @@ end
 ---@return NeoWarrior
 function NeoWarrior:refresh()
 
+  self.all_pending_tasks = self.tw:tasks('all', 'status:pending')
+  self.all_pending_tasks:sort('urgency')
+
   self.all_tasks = self.tw:tasks('all', 'description.not:')
   self.all_tasks:sort('urgency')
   self.all_project_names = util.extract('project', self.all_tasks:get())
-  self.all_pending_tasks = TaskCollection:new()
-
-  for _, task in ipairs(self.all_tasks:get()) do
-    if task.status == 'pending' then
-      self.all_pending_tasks:add(task)
-    end
-  end
 
   self.tasks = self.tw:tasks(self.current_report, self.current_filter)
   self.tasks:sort('urgency')
+
   self.project_names = util.extract('project', self.tasks:get())
+
+  self.grouped_projects = self:generate_project_collection_from_tasks(self.tasks)
+  self.grouped_projects:refresh()
+  self.grouped_projects:sort('urgency.average')
 
   self.projects = self:generate_project_collection_from_tasks(self.tasks)
   self.projects:refresh()
-  self.projects:sort('estimate.total')
+  self.projects:sort('urgency.average')
 
   self.all_projects = self:generate_project_collection_from_tasks(self.all_tasks)
   self.all_projects:refresh()
@@ -338,8 +392,11 @@ function NeoWarrior:refresh()
   self.project_tree = self:fill_project_tree(
     self:generate_tree(self.project_names),
     Project:new({ name = 'root' }),
-    self.projects
+    util.copy(self.projects)
   )
+
+  self.project_tree:refresh_recursive()
+  self:sort_tree(self.project_tree)
 
   return self
 end
@@ -368,36 +425,56 @@ function NeoWarrior:generate_project_collection_from_tasks(tasks)
   for _, task in ipairs(tasks:get()) do
 
     local project_name = self.config.no_project_name
-    local project_id = ""
+    local project_names = {}
 
     if task.project and task.project ~= "" then
 
       project_name = task.project
-      project_id = task.project
 
     end
 
-    if project_name then
+    local name_parts = {}
+    local last_part = nil
 
-      local project = project_collection:find(project_name)
+    if string.find(project_name, "%.") then
+      name_parts = vim.split(project_name, "%.")
+    else
+      name_parts = { project_name }
+    end
 
-      if not project then
+    for _, part in ipairs(name_parts) do
+      local part_name = last_part and last_part .. "." .. part or part
+      table.insert(project_names, part_name)
+      last_part = part_name
+    end
 
-        project = Project:new({
-          id = project_id,
-          name = project_name
-        })
+    for _, project_name in ipairs(project_names) do
+
+      if project_name then
+
+        local project_id = project_name
+        local project = project_collection:find(project_name)
+
+        if not project then
+
+          project = Project:new({
+            id = project_id,
+            name = project_name
+          })
+
+        end
+
+        local task_in_project = project.tasks:find(task.uuid)
+
+        if not task_in_project and task.project == project_id then
+          project.tasks:add(task)
+        end
+        project_collection:add(project)
 
       end
-
-      local task_in_project = project.tasks:find(task.uuid)
-
-      if not task_in_project then
-        project.tasks:add(task)
-      end
-      project_collection:add(project)
 
     end
+
   end
 
   return project_collection
@@ -434,6 +511,7 @@ function NeoWarrior:show()
   elseif project then
 
     self.current_filter = "project:" .. project
+    self:refresh()
     self:list()
 
   elseif action then
@@ -451,30 +529,39 @@ end
 
 --- Show add input
 function NeoWarrior:add()
+
   self:close_floats()
   self.buffer:save_cursor()
+
   local default_add_input = ""
   local prompt = "Task (ex: task name due:tomorrow etc): "
+  local project_id = self.buffer:get_meta_data('project')
   local task_uuid = self.buffer:get_meta_data('uuid')
   local task = nil
+
   if task_uuid then
     task = self.all_tasks:find_task_by_uuid(task_uuid)
     if (not task) or (not task.project) then
       task = nil
     end
   end
+
   if task then
     default_add_input = "project:" .. task.project .. " "
+  elseif project_id then
+    default_add_input = "project:" .. project_id .. " "
   elseif self.current_filter and string.find(self.current_filter, "project:") then
     for k, _ in string.gmatch(self.current_filter, "project:%w+[%.%w]*") do
       default_add_input = k
       break
     end
   end
+
   if self.current_task then
     default_add_input = ""
     prompt = "Annotate task"
   end
+
   vim.ui.input({
     prompt = prompt,
     default = default_add_input,
@@ -483,6 +570,7 @@ function NeoWarrior:add()
     if input then
       if self.current_task then
         self.tw:annotate(self.current_task, input)
+        self:refresh()
         self:task(self.current_task.uuid)
       else
         self.tw:add(input)
@@ -492,6 +580,7 @@ function NeoWarrior:add()
       end
     end
   end)
+
 end
 
 --- Mark task as done
@@ -520,14 +609,25 @@ function NeoWarrior:mark_done()
 
     elseif uuid then
 
-      local choice = vim.fn.confirm("Are you sure you want to mark this task done?\n[" .. task.description .. "]\n", "Yes\nNo", 1, "question")
+      local choice = nil
+
+      if task.status == 'completed' then
+        choice = vim.fn.confirm("Are you sure you want to mark this task un-done?\n[" .. task.description .. "]\n", "Yes\nNo", 1, "question")
+      else
+        choice = vim.fn.confirm("Are you sure you want to mark this task done?\n[" .. task.description .. "]\n", "Yes\nNo", 1, "question")
+      end
 
       if choice == 1 then
-        self.tw:done(task)
+        if task.status == 'completed' then
+          self.tw:undone(task)
+        else
+          self.tw:done(task)
+        end
       end
     end
 
     if self.current_task then
+      self:refresh()
       self:task(self.current_task.uuid)
     else
       self:refresh()
@@ -667,49 +767,7 @@ function NeoWarrior:set_keymaps()
   -- Select task dependency
   if self.config.keys.select_dependency then
     vim.keymap.set("n", self.config.keys.select_dependency, function()
-      self.buffer:save_cursor()
-      self:close_floats()
-      self:refresh()
-      local uuid = nil
-      local task = nil
-      if self.current_task then
-        uuid = self.current_task.uuid
-      else
-        uuid = self.buffer:get_meta_data('uuid')
-      end
-      if not uuid then
-        return
-      end
-      task = self.tw:task(uuid)
-      local telescope_opts = require("telescope.themes").get_dropdown({})
-      pickers.new(telescope_opts, {
-        prompt_title = "Select dependency",
-        finder = finders.new_table({
-          results = self.all_pending_tasks:get(),
-          entry_maker = function(entry)
-            local task_line = TaskLine:new(self, 0, entry, {})
-            return {
-              value = entry,
-              display = task_line.text,
-              ordinal = task_line.text,
-            }
-          end,
-        }),
-        sorter = conf.generic_sorter(telescope_opts),
-        attach_mappings = function(prompt_bufnr)
-          actions.select_default:replace(function()
-            actions.close(prompt_bufnr)
-            local selection = action_state.get_selected_entry()
-            if task then
-              self.tw:add_dependency(task, selection.value.uuid)
-              self:refresh()
-              self:list()
-            end
-          end)
-          return true
-        end,
-      })
-      :find()
+      self:dependency_select()
     end, default_keymap_opts)
   end
 
@@ -766,6 +824,7 @@ function NeoWarrior:set_keymaps()
   if self.config.keys.modify_select_project then
     vim.keymap.set("n", self.config.keys.modify_select_project, function()
       self:close_floats()
+      self.buffer:save_cursor()
       local uuid = nil
       if self.current_task then
         uuid = self.current_task.uuid
@@ -781,11 +840,10 @@ function NeoWarrior:set_keymaps()
           finder = finders.new_table({
             results = self.all_projects:get(),
             entry_maker = function(entry)
-              local project_line = ProjectLine:new(self, 0, entry, {})
               return {
                 value = entry.id,
-                display = project_line.text,
-                ordinal = project_line.text,
+                display = entry.id,
+                ordinal = entry.id,
               }
             end,
           }),
@@ -986,6 +1044,7 @@ function NeoWarrior:start_stop()
   if task and task.start then
 
     self.tw:stop(task)
+    self:refresh()
 
     if self.current_task then
       self:task(self.current_task.uuid)
@@ -998,6 +1057,7 @@ function NeoWarrior:start_stop()
   elseif task then
 
     self.tw:start(task)
+    self:refresh()
     self:task(task.uuid)
 
   end
@@ -1011,11 +1071,7 @@ function NeoWarrior:open_help()
 
   self:close_floats()
 
-  local page = Page:new(Buffer:new({
-    listed = false,
-    scratch = true,
-  }))
-
+  local tram = Tram:new()
   local width = 0
   local win_width = self.window:get_width()
   local pad = 0
@@ -1033,39 +1089,39 @@ function NeoWarrior:open_help()
 
   pad = pad + 2
 
-  page:add_raw(' ', '')
+  tram:line(' ', '')
 
   for _, group in ipairs(self.keys) do
 
     if group.name then
-      page:add_raw(string.format("%" .. pad + 4 .. "s", " ") .. group.name, 'NeoWarriorTextInfo')
+      tram:line(string.format("%" .. pad + 4 .. "s", " ") .. group.name, _Neowarrior.config.colors.info.group)
     end
 
     for _, key in ipairs(group.keys) do
+
       local conf_key = self.config.keys[key.key]
-      local key_line = Line:new(0)
-      key_line:add({ text = string.format("%" .. pad .. "s", conf_key), color = 'NeoWarriorTextInfo' })
-      key_line:add({ text = " -> " .. key.desc, color = '' })
-      page:add_line(key_line)
+      local desc = key.desc
+
+      tram:col(string.format("%" .. pad .. "s", conf_key), _Neowarrior.config.colors.info.group)
+      tram:col(" -> " .. desc, '')
+      tram:into_line({})
 
       if string.len(key.desc) > desc_length then
         desc_length = string.len(key.desc)
       end
     end
 
-    page:add_raw(' ', '')
+    tram:line(' ', '')
 
   end
 
   width = key_length + sep_length + desc_length + 4
-  self.help_float = Float:new(self, page, {
+  self.help_float = tram:open_float({
     title = 'NeoWarrior help',
     width = width,
     col = math.floor((win_width - width) / 2),
     row = 5,
-    enter = false,
   })
-  self.help_float:open()
 
   return self.help_float
 end
@@ -1125,9 +1181,6 @@ function NeoWarrior:fill_project_tree(tree, project, project_pool)
     self:fill_project_tree(ids, p, project_pool)
   end
 
-  project:refresh_recursive()
-  self:sort_tree(project)
-
   return project
 end
 
@@ -1169,22 +1222,25 @@ function NeoWarrior:open(opts)
   local split = opts.split or 'below'
 
   self.buffer = Buffer:new({})
-  self:init()
   self:set_keymaps()
   self:setup_autocmds()
 
   if split == 'current' then
+
     vim.api.nvim_set_current_buf(self.buffer.id)
     self.window = Window:new({
       id = vim.api.nvim_get_current_win(),
       buffer = self.buffer,
       enter = true,
     }, {})
+
   else
+
     local win = -1
     if split == 'below' or split == 'above' then
       win = 0
     end
+
     self.window = Window:new({
       buffer = self.buffer,
       win = win,
@@ -1192,6 +1248,7 @@ function NeoWarrior:open(opts)
     }, {
       split = split,
     })
+
   end
 
   self.buffer:set_name('neowarrior')
@@ -1203,6 +1260,7 @@ function NeoWarrior:open(opts)
   self.buffer:option('concealcursor', 'nc', { win = self.window.id })
   self.buffer:option('wrap', false, { win = self.window.id })
   self.buffer:option('filetype', 'neowarrior', { buf = self.buffer.id })
+
   vim.cmd([[
   syntax match Metadata /{{{.*}}}/ conceal
   syntax match MetadataConceal /{{{[^}]*}}}/ contained conceal
@@ -1227,10 +1285,11 @@ function NeoWarrior:list()
     self.current_filter = self.current_filter:gsub("project:" .. self.config.no_project_name, "project:")
   end
 
-  Page:new(self.buffer)
-    :add(HeaderComponent:new(self))
-    :add(ListComponent:new(self, self.tasks))
-    :print()
+  local tram = Tram:new():set_buffer(self.buffer)
+  HeaderComponent:new(tram):set()
+  ListComponent:new(tram, self.tasks):set()
+
+  tram:print()
 
   self.buffer:restore_cursor()
 
@@ -1244,7 +1303,7 @@ function NeoWarrior:task(uuid)
   self.buffer:save_cursor()
 
   local task = self.tw:task(uuid)
-  local task_page = TaskPage:new(self, task)
+  local task_page = TaskPage:new(self.buffer, task)
   task_page:print(self.buffer)
   self.current_task = task
 
@@ -1330,7 +1389,7 @@ function NeoWarrior:report_select()
 end
 
 --- Set filter, refresh and show list
----@param filter 
+---@param filter string
 ---@return NeoWarrior
 function NeoWarrior:set_filter(filter)
   self.current_filter = filter
@@ -1347,6 +1406,59 @@ function NeoWarrior:set_report(report)
   self.current_report = report
   self:refresh()
   self:list()
+
+  return self
+end
+
+--- Show depepndency select dropdown
+---@return NeoWarrior
+function NeoWarrior:dependency_select()
+
+  self.buffer:save_cursor()
+  self:close_floats()
+  self:refresh()
+
+  local uuid = nil
+  local task = nil
+
+  if self.current_task then
+    uuid = self.current_task.uuid
+  else
+    uuid = self.buffer:get_meta_data('uuid')
+  end
+  if not uuid then
+    return self
+  end
+
+  task = self.tw:task(uuid)
+  local telescope_opts = require("telescope.themes").get_dropdown({})
+  pickers.new(telescope_opts, {
+    prompt_title = "Select dependency",
+    finder = finders.new_table({
+      results = self.all_pending_tasks:get(),
+      entry_maker = function(entry)
+        return {
+          value = entry,
+          display = entry.description .. " - " .. entry.urgency,
+          ordinal = entry.description,
+        }
+      end,
+    }),
+    sorter = conf.generic_sorter(telescope_opts),
+    attach_mappings = function(prompt_bufnr)
+      actions.select_default:replace(function()
+        actions.close(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        if task then
+          self.tw:add_dependency(task, selection.value.uuid)
+          self:refresh()
+          self:list()
+        end
+      end)
+      return true
+    end,
+  })
+  :find()
 
   return self
 end

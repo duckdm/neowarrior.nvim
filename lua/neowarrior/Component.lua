@@ -1,5 +1,3 @@
-local Line = require('neowarrior.Line')
-
 --- Component class. A collection of lines.
 ---@class Component
 ---
@@ -8,19 +6,19 @@ local Line = require('neowarrior.Line')
 ---@field text string[]
 ---@field colors table[]
 ---@field type string
+---@field start_at number
 ---@field new fun(self: Component): Component
+---@field from fun(self: Component, line_no: number): Component
 ---@field reset fun(self: Component): Component
 ---@field add fun(self: Component, lines: Line[]): Component
----@field add_raw fun(self: Component, string: string): Line
+---@field add_raw fun(self: Component, string: string|number): Component
+---@field nl fun(self: Component): Component
+---@field print fun(self: Component, buffer: Buffer): Component
+---@field get_line_count fun(self: Component): number
 ---@field pop fun(self: Component): Line
 ---@field get fun(self: Component): Line[]
----@field get_line_count fun(self: Component): number
----@field from fun(self: Component, line_no: number): Component
----@field nl fun(self: Component): Component
 ---@field get_text fun(self: Component): string[]
 ---@field get_colors fun(self: Component): table[]
----@field print fun(self: Component, buffer: Buffer): Component
----@field debug fun(self: Component, arg: { level: number, prefix: string|nil }): Component
 local Component = {}
 
 --- Create new component
@@ -107,16 +105,15 @@ function Component:nl()
 end
 
 --- Print component
----@param buffer Buffer
+---@param buffer TramBuffer
 ---@return Component
 function Component:print(buffer)
 
-  buffer:print(
-    self.text,
-    self.colors,
-    self.start_at,
-    self.start_at + self.line_count
-  )
+  -- buffer:print(
+  --   self.text,
+  --   self.colors,
+  --   self.start_at,
+  -- )
 
   return self
 end
@@ -149,38 +146,6 @@ end
 ---@return table[]
 function Component:get_colors()
   return self.colors
-end
-
---- Debug component and print to console
----@return Component
----@param arg { level: number, prefix: string|nil }
-function Component:debug(arg)
-
-  local level = arg.level or 1
-  local type = self.type or 'unknown component type'
-  local prefix = arg.prefix or nil
-
-  if prefix then
-    print(prefix)
-  end
-  print('Component [' .. type .. ']:')
-  print('line_count: ' .. self.line_count)
-
-  if level >= 2 then
-    print('text:')
-    for _, line in ipairs(self.text) do
-      print('    ' .. line)
-    end
-    if level >= 3 then
-      print('colors:')
-      for _, color in ipairs(self.colors) do
-        print('    ' .. vim.inspect(color))
-      end
-    end
-  end
-  print('-------------------')
-
-  return self
 end
 
 return Component

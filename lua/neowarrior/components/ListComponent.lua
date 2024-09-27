@@ -1,66 +1,59 @@
 local TaskLine = require('neowarrior.lines.TaskLine')
-local Component = require('neowarrior.Component')
 local TreeComponent = require('neowarrior.components.TreeComponent')
 local GroupedComponent = require('neowarrior.components.GroupedComponent')
 
 ---@class ListComponent
----@field neowarrior NeoWarrior
+---@field task_collection TaskCollection
+---@field line_no number
 local ListComponent = {}
 
 --- Create a new ListComponent
----@param neowarrior NeoWarrior
+---@param tram Trambampolin
 ---@param task_collection TaskCollection
----@return Component
-function ListComponent:new(neowarrior, task_collection)
+---@return ListComponent
+function ListComponent:new(tram, task_collection)
     local header_component = {}
     setmetatable(header_component, self)
     self.__index = self
 
-    self.neowarrior = neowarrior
     self.task_collection = task_collection
-    self.line_no = 0
+    self.tram = tram
 
-    local component = Component:new()
-    component.type = 'ListComponent'
-    component:add(self:get_lines())
-
-    return component
+    return self
 end
 
 --- Get header line data
----@return Line[]
-function ListComponent:get_lines()
+---@return ListComponent
+function ListComponent:set()
 
-  local nw = self.neowarrior
-  nw:refresh()
+  if _Neowarrior.current_mode == 'tree' then
 
-  if nw.current_mode == 'tree' then
+    TreeComponent:new(self.tram, _Neowarrior.project_tree):set()
+    return self
 
-    local tree = TreeComponent:new(nw, nw.project_tree)
-    return tree:get_lines()
+  elseif _Neowarrior.current_mode == 'grouped' then
 
-  elseif nw.current_mode == 'grouped' then
-
-    local grouped = GroupedComponent:new(nw, nw.projects)
-    return grouped:get_lines()
+    GroupedComponent:new(self.tram, _Neowarrior.grouped_projects):set()
+    return self
 
   end
 
-  return self:get_task_lines(self.task_collection, {})
+  self:build_task_lines(self.task_collection)
+
+  return self
 end
 
 --- Get task lines
----@return Line[]
-function ListComponent:get_task_lines(task_collection, lines)
+--- @return self
+function ListComponent:build_task_lines(task_collection)
 
   for _, task in ipairs(task_collection:get()) do
 
-    table.insert(lines, TaskLine:new(self.neowarrior, self.line_no, task, {}))
-    self.line_no = self.line_no + 1
+    TaskLine:new(self.tram, task):into_line({})
 
   end
 
-  return lines
+  return self
 end
 
 return ListComponent

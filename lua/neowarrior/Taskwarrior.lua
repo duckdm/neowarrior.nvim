@@ -2,19 +2,15 @@ local Task = require("neowarrior.Task")
 local TaskCollection = require("neowarrior.TaskCollection")
 
 ---@class Taskwarrior
----@field neowarrior NeoWarrior
 ---@field syscall fun(self: Taskwarrior, cmd: string[]): string
 local Taskwarrior = {}
 
 --- Create new taskwarrior instance
----@param neowarrior NeoWarrior
 ---@return Taskwarrior
-function Taskwarrior:new(neowarrior)
+function Taskwarrior:new()
   local taskwarrior = {}
   setmetatable(taskwarrior, self)
   self.__index = self
-
-  taskwarrior.neowarrior = neowarrior
 
   return taskwarrior
 end
@@ -35,7 +31,7 @@ function Taskwarrior:task(uuid)
   local json_data = self:syscall({ "task", uuid, "export" })
   local task = vim.json.decode(json_data)
 
-  return Task:new(self.neowarrior, task[1])
+  return Task:new(task[1])
 end
 
 --- Get tasks
@@ -66,7 +62,7 @@ function Taskwarrior:tasks(report, filter)
   --- of the data, like dates etc.
   --- TODO: Make set method that can handle all that jazz too
   for _, task in ipairs(data) do
-    task_collection:add(Task:new(self.neowarrior, task))
+    task_collection:add(Task:new(task))
   end
 
   return task_collection
@@ -115,11 +111,17 @@ end
 function Taskwarrior:annotate(task, annotation)
   self:syscall({ "task", "annotate", task.uuid, annotation })
 end
----
+
 --- Complete task / mark done
 ---@param task Task
 function Taskwarrior:done(task)
   self:syscall({ "task", "done", task.uuid })
+end
+
+--- Mark task as undone
+---@param task Task
+function Taskwarrior:undone(task)
+  self:modify(task, "status:pending")
 end
 
 --- Delete task

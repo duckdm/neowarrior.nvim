@@ -1,12 +1,12 @@
-local Util = require('neowarrior.util')
-
 ---@class Buffer
 ---@field public id number
 ---@field public listed boolean
 ---@field public scratch boolean
 ---@field public cursor integer[]|nil
+---@field public name string|nil
 ---@field public set_name fun(self: Buffer, name: string): Buffer
----@field public print fun(self: Buffer, lines: table, colors: table, from: number, to: number): Buffer
+---@field public process_lines fun(self: Buffer, up_lines: Line[], from: number): table
+---@field public print fun(self: Buffer, lines: Line[], from: number): Buffer
 ---@field public option fun(self: Buffer, key: string, value: any, opt: table): Buffer
 ---@field public lock fun(self: Buffer): Buffer
 ---@field public unlock fun(self: Buffer): Buffer
@@ -31,6 +31,7 @@ function Buffer:new(arg)
   buffer.scratch = arg.scratch or true
   buffer.id = vim.api.nvim_create_buf(buffer.listed, buffer.scratch)
   buffer.cursor = nil
+  buffer.name = nil
 
   return buffer
 end
@@ -39,22 +40,80 @@ end
 ---@param name string
 ---return Buffer
 function Buffer:set_name(name)
+  self.name = name
   vim.api.nvim_buf_set_name(self.id, name)
   return self
 end
 
+function Buffer:process_lines(up_lines, from)
+
+  local lines = {}
+  local virt_lines = {}
+  local colors = {}
+  local line_no = from
+  local last_line_len = 0
+
+  for _, line in ipairs(up_lines) do
+
+    if line.text and line.text ~= "" then
+
+      local text = line.text
+      if text == "__NL__" then text = "" end
+
+      table.insert(lines, text .. line.meta_text)
+      last_line_len = string.len(text)
+
+      if line.colors then
+        for _, c in ipairs(line.colors) do
+          table.insert(colors, vim.tbl_extend('force', c, { line = line.line_no or line_no }))
+        end
+      end
+
+      line_no = line_no + 1
+
+    elseif line.virt_text and line.virt_text ~= "" then
+
+      if line.virt_text then
+        local virt_line_no = line.line_no or line_no
+        if virt_line_no <= 0 then
+          virt_line_no = 1
+        end
+        virt_line_no = virt_line_no - 1
+        local col_num = line.col_num or 0
+        if col_num > last_line_len then
+          col_num = last_line_len
+        end
+        table.insert(virt_lines, {
+          text = line.virt_text,
+          hl_group = line.colors[1].group,
+          ns_name = line.ns_name or "trambampolin",
+          line_no = virt_line_no,
+          virt_text_pos = line.pos or "overlay",
+          col_num = col_num,
+          strict_col_num = line.strict_col_num or nil,
+        })
+      end
+
+    end
+
+  end
+
+  return { lines, virt_lines, colors }
+end
+
 --- Print buffer
----@param lines table
----@param colors table
+---@param up_lines Line[] Unprocess lines
 ---@param from number
----@param to number
 ---@return Buffer
-function Buffer:print(lines, colors, from, to)
+function Buffer:print(up_lines, from)
+
+  local lines, virt_lines, colors = table.unpack(self:process_lines(up_lines, from))
 
   self:unlock()
 
   vim.api.nvim_buf_set_lines(self.id, from, -1, false, {})
   vim.api.nvim_buf_set_lines(self.id, from, -1, false, lines)
+
   for _, color in ipairs(colors) do
     if color and color.line and color.group and color.from and color.to then
       vim.api.nvim_buf_add_highlight(
@@ -64,6 +123,24 @@ function Buffer:print(lines, colors, from, to)
         color.line + from,
         color.from,
         color.to
+      )
+    end
+  end
+
+  if #virt_lines > 0 then
+    for _, virt_line in ipairs(virt_lines) do
+      self:virt_text(
+        virt_line.text,
+        virt_line.hl_group,
+        "trambampolin",
+        {
+          line_no = virt_line.line_no,
+          end_line = virt_line.line_no + 1,
+          virt_text_pos = virt_line.virt_text_pos,
+          ns_name = virt_line.ns_name,
+          col_num = virt_line.col_num or 0,
+          strict_col_num = virt_line.strict_col_num or nil,
+        }
       )
     end
   end
@@ -101,12 +178,15 @@ end
 ---@param key string
 ---@return string|nil
 function Buffer:get_meta_data(key)
+
   local line = vim.api.nvim_get_current_line()
   local pattern = "{{{" .. key .. ".-}}}"
   local value = nil
+
   for id in string.gmatch(line, pattern) do
     value = string.gsub(string.gsub(id, "{{{" .. key, ""), "}}}", "")
   end
+
   return value
 end
 
@@ -155,70 +235,21 @@ end
 ---@return number
 function Buffer:virt_text(text, hl_group, ns_name, o)
 
-  local line_no = o.line_no or self:get_cursor()[1]
-  if o.line_no then
-    o.line_no = nil
-  end
+  local line_no = o.line_no or 0
   local col_num = o.col_num or 0
-  local api = vim.api
-  local ns_id = api.nvim_create_namespace(ns_name)
-  local opts = vim.tbl_deep_extend('force', {
-    end_line = line_no + 1,
-    id = 1,
-    virt_text_pos = 'overlay',
+  local ns_id = vim.api.nvim_create_namespace(ns_name)
+  local default_text_post = o.strict_col_num and "inline" or "overlay"
+  local opts = {
+    end_line = o.end_line or (line_no + 1),
+    virt_text_pos = o.virt_text_pos or default_text_post,
     virt_text = { { text, hl_group } },
-  }, o)
+  }
 
-  return api.nvim_buf_set_extmark(self.id, ns_id, line_no, col_num, opts)
-end
-
---- Create line
----@param ln number Current line count
----@param blocks table
----@return table { string, table }
-Buffer.create_line = function(ln, blocks)
-  local b = 0
-  local bf = 0
-  local str = ""
-  local meta_str = ""
-  local colors = {}
-
-  for _, block in ipairs(blocks) do
-    if not block.disable then
-      if block.text then
-        if block.seperator then
-          str = str .. block.seperator .. block.text
-        else
-          str = str .. block.text
-        end
-      end
-
-      if block.meta then
-        meta_str = meta_str .. " "
-        for key, value in pairs(block.meta) do
-          meta_str = meta_str .. "{{{" .. key .. value .. "}}}"
-        end
-      end
-
-      if b > 0 then
-        bf = b - 1
-      else
-        bf = 0
-      end
-      b = string.len(str)
-
-      if block.color then
-        table.insert(colors, {
-          group = block.color,
-          from = bf,
-          to = b,
-          line = ln,
-        })
-      end
-    end
+  if o.strict_col_num > 0 then
+    opts.virt_text_win_col = o.strict_col_num
   end
 
-  return { str .. meta_str, colors }
+  return vim.api.nvim_buf_set_extmark(self.id, ns_id, line_no, col_num, opts)
 end
 
 Buffer.apply_colors = function(colors, cta)
@@ -228,3 +259,4 @@ Buffer.apply_colors = function(colors, cta)
 end
 
 return Buffer
+

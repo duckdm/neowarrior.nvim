@@ -1,46 +1,52 @@
-local Page = require('neowarrior.Page')
+local Tram = require('trambampolin.init')
 local colors = require('neowarrior.colors')
-local Line = require('neowarrior.Line')
 local DateTime = require('neowarrior.DateTime')
 local TaskLine = require('neowarrior.lines.TaskLine')
 local Project = require('neowarrior.Project')
 local ProjectLine = require('neowarrior.lines.ProjectLine')
+local HeaderComponent = require('neowarrior.components.HeaderComponent')
+local TagsComponent = require('neowarrior.components.TagsComponent')
 
 ---@class TaskPage
----@field neowarrior NeoWarrior
 ---@field task Task
 ---@field private used_keys table
 ---@field private page Page
 ---@field private prefix_format string
 ---@field private time_fields table
----@field public new fun(self: TaskPage, neowarrior: NeoWarrior, task: Task): TaskPage
+---@field public new fun(self: TaskPage, buffer: Buffer, task: Task): TaskPage
 ---@field public print fun(self: TaskPage, buffer: Buffer): TaskPage
 ---@field private row fun(self: TaskPage, key: string, lines: table): TaskPage
 local TaskPage = {}
 
 --- Create a new TaskPage
----@param neowarrior NeoWarrior
+---@param buffer Buffer
 ---@param task Task
 ---@return TaskPage
-function TaskPage:new(neowarrior, task)
+function TaskPage:new(buffer, task)
   local task_page = {}
   setmetatable(task_page, self)
   self.__index = self
 
-  task_page.neowarrior = neowarrior
-  task_page.task = task
-  task_page.used_keys = {}
-  task_page.page = Page:new(neowarrior.buffer)
-  task_page.prefix_format = "%-13s | "
-  task_page.time_fields = {
+  self.task = task
+  self.used_keys = { "tags" }
+  self.prefix_format = "%-13s | "
+  self.time_fields = {
     "modified",
     "entry",
     "due",
     "scheduled",
   }
-  task_page.line_no = 0
+  self.buffer = buffer
+  self.tram = Tram:new()
+  self.tram:set_buffer(buffer)
+  self.win_width = vim.api.nvim_win_get_width(_Neowarrior.window.id)
 
-  return task_page
+  return self
+end
+
+function TaskPage:from(from)
+  self.tram:from(from)
+  return self
 end
 
 --- Print the TaskPage
@@ -49,19 +55,31 @@ end
 ---@return TaskPage
 function TaskPage:print(buffer)
 
-  buffer:unlock()
-  buffer:option("wrap", true, { win = self.neowarrior.window.id })
+  buffer:option("wrap", true, { win = _Neowarrior.window.id })
+  self.tram:set_buffer(buffer)
+
+  HeaderComponent:new(self.tram)
+    :disable_meta()
+    :disable_report()
+    :disable_filter()
+    :set_help_item("modify", true)
+    :set_help_item("filter", false)
+    :set()
 
   self:completed()
   self:project()
   self:started()
+  -- self:task_line({
+  --   disable_meta = true,
+  --   disable_description = true,
+  --   disable_task_icon = true,
+  --   disable_has_blocking = true,
+  --   disable_urgency = true,
+  --   disable_priority = true,
+  -- })
   self:task_line({
     disable_meta = true,
-    disable_description = true,
-    disable_task_icon = true,
-  })
-  self:task_line({
-    disable_meta = true,
+    disable_has_blocking = true,
     disable_priority = true,
     disable_warning = true,
     disable_due = true,
@@ -69,9 +87,16 @@ function TaskPage:print(buffer)
     disable_estimate = true,
     disable_annotations = true,
     disable_start = true,
+    disable_urgency = true,
+    disable_tags = true,
   })
 
-  self.page:nl()
+  if self.task.tags then
+    self.tram:nl()
+    TagsComponent:new(self.tram, self.task.tags):line()
+  end
+
+  self.tram:nl()
 
   self:annotations()
   self:dependencies()
@@ -83,6 +108,7 @@ function TaskPage:print(buffer)
   self:scheduled()
   self:due()
 
+  self.tram:nl()
 
   for k, v in pairs(self.task:get_attributes()) do
 
@@ -96,7 +122,7 @@ function TaskPage:print(buffer)
     end
 
     if not used then
-      local prefix = string.format(self.prefix_format, k)
+
       local is_time_field = false
       for _, field in ipairs(self.time_fields) do
         if field == k then
@@ -104,28 +130,19 @@ function TaskPage:print(buffer)
           break
         end
       end
-      -- TODO:Show tags
-      if k == "tags" and v then
-        local tags = table.unpack(v)
-        self.page:add_raw(string.format("%s%s", prefix, tags), '')
-      elseif is_time_field then
-        local time_color = nil
+
+      if is_time_field then
+
+        local time_color = ''
         local time_string = v:relative()
         if k == "due" or k == "scheduled" then
           time_color = colors.get_due_color(time_string)
         end
-        local time_ln = Line:new(0)
-        time_ln:add({
-          text = prefix,
+        self:row(k, {
+          { text = k },
+          { text = time_string .. " " .. v:default_format(), color = time_color }
         })
-        time_ln:add({
-          text = time_string,
-          color = time_color,
-        })
-        time_ln:add({
-          text = " (" .. v:default_format() .. ")",
-        })
-        self.page:add_line(time_ln)
+
       elseif not (k == "description") and not (k == "parent") and not (k == "imask") and v then
         if type(k) == "table" then
           k = table.concat(k, ", ")
@@ -135,14 +152,14 @@ function TaskPage:print(buffer)
           value = table.concat(value, ", ")
         end
         self:row(k, {
-          { text = string.format(self.prefix_format, k) },
+          { text = k },
           { text = value, color = '' }
         })
       end
     end
   end -- for
 
-  self.page:print()
+  self.tram:print()
 
   return self
 end
@@ -154,15 +171,22 @@ function TaskPage:row(key, cols)
 
   table.insert(self.used_keys, key)
 
-  local line = Line:new(self.line_no)
+  local len = 5
 
   for _, col in ipairs(cols) do
-    line:add({
-      text = col.text,
-      color = col.color or '',
+    len = len + string.len(tostring(col.text))
+  end
+
+  self.tram:col(cols[1].text, cols[1].color or '')
+  self.tram:col(self:get_row_border(len), _Neowarrior.config.colors.dim.group)
+  self.tram:into_line({})
+
+  if cols[2] and cols[2].text then
+    self.tram:virt_line(cols[2].text, {
+      color = cols[2].color or '',
+      pos = "right_align",
     })
   end
-  self.page:add_line(line)
 
   return self
 end
@@ -171,8 +195,9 @@ end
 function TaskPage:completed()
 
   if self.task.status and self.task.status == "completed" then
-    table.insert(self.used_keys, 'status')
-    self.page:add_raw("Task completed", "NeoWarriorTextSuccess")
+    -- table.insert(self.used_keys, 'status')
+    self.tram:col("Task completed", _Neowarrior.config.colors.success.group)
+    self.tram:into_line({})
   end
 
 end
@@ -183,8 +208,9 @@ function TaskPage:project()
   table.insert(self.used_keys, 'project')
   if self.task.project then
     local project = Project:new({ name = self.task.project })
-    local project_line = ProjectLine:new(self.neowarrior, self.line_no, project, {})
-    self.page:add_line(project_line)
+    ProjectLine:new(self.tram, project):into_line({
+      disable_meta = true,
+    })
   end
 
 end
@@ -193,8 +219,7 @@ end
 function TaskPage:task_line(arg)
 
   table.insert(self.used_keys, 'description')
-  local task_line = TaskLine:new(self.neowarrior, self.line_no, self.task, arg)
-  self.page:add_line(task_line)
+  TaskLine:new(self.tram, self.task):into_line(arg)
 
 end
 
@@ -206,7 +231,7 @@ function TaskPage:started()
       text = "Task started: ",
     }, {
       text = self.task.start:default_format(),
-      color = "NeoWarriorTextDangerBg",
+      color = _Neowarrior.config.colors.danger_bg.group,
     }})
   end
 
@@ -220,77 +245,78 @@ function TaskPage:annotations()
 
     self:row('annotations', {{
       text = "Annotations",
-      color = "NeoWarriorTextInfo",
+      color = _Neowarrior.config.colors.annotation.group,
     }})
 
     for _, annotation in ipairs(annotations) do
 
       local anno_entry = ''
-      local anno_ln = Line:new(0)
 
       if annotation.entry then
         local anno_entry_dt = DateTime:new(annotation.entry)
-        anno_entry = " " .. anno_entry_dt:default_format()
-        anno_ln:add({
-          text = self.neowarrior.config.icons.annotated .. anno_entry,
-          color = "NeoWarriorTextInfo",
-        })
+        anno_entry = "" .. anno_entry_dt:default_format()
+        self.tram:col(anno_entry, _Neowarrior.config.colors.annotation.group)
       end
 
-      anno_ln:add({
-        text = " " .. annotation.description,
-      })
+      self.tram:col(" " .. annotation.description, "")
+      self.tram:into_line({})
 
-      self.page:add_line(anno_ln)
     end
 
-    self.page:nl()
+    self.tram:nl()
   end
 
+end
+
+--- Get row border
+function TaskPage:get_row_border(offset)
+  return string.rep("_", self.win_width - offset - 1)
 end
 
 --- Urgency row
 function TaskPage:urgency()
 
-  local cols = {{ text = string.format(self.prefix_format, "Urgency") }}
-
-  if self.task.urgency > 5 then
-    table.insert(cols, {
-      text = self.neowarrior.config.icons.warning .. " ",
-      color = colors.get_urgency_color(self.task.urgency),
-    })
-  end
-
-  table.insert(cols, {
+  self:row('urgency', {{
+    text = "Urgency",
+  }, {
     text = self.task.urgency,
-    color = colors.get_urgency_color(self.task.urgency)
-  })
-  self:row('urgency', cols)
+    color = colors.get_urgency_color(self.task.urgency),
+  }})
 
 end
 
 --- Estimate row
 function TaskPage:estimate()
 
+  if not self.task.estimate then
+    return self
+  end
+
   self:row('estimate', {{
-    text = string.format(self.prefix_format, "Estimate"),
+    text = "Estimate",
   }, {
     text = self.task.estimate_string,
     color = colors.get_estimate_color(self.task.estimate),
   }})
 
+  return self
 end
 
 --- Priority row
 function TaskPage:priority()
 
+  if not self.task.priority then
+    return self
+  end
+
   self:row('priority', {{
-    text = string.format(self.prefix_format, "Priority"),
+    text = "Priority",
   }, {
     text = self.task.priority,
     color = colors.get_priority_color(self.task.priority),
   }})
 
+  return self
 end
 
 --- Scheduled row
@@ -298,7 +324,7 @@ function TaskPage:scheduled()
 
   if self.task.scheduled then
     self:row('scheduled', {{
-      text = string.format(self.prefix_format, "Scheduled"),
+      text = "Scheduled",
     }, {
       text = self.task.scheduled:relative() .. " (" .. self.task.scheduled:default_format() .. ")",
       color = colors.get_due_color(self.task.scheduled:relative()),
@@ -311,11 +337,12 @@ end
 function TaskPage:due()
 
   if self.task.due then
+
     self:row('due', {{
-      text = string.format(self.prefix_format, "Due"),
+      text = "Due",
     }, {
-      text = self.neowarrior.config.icons.due .. " " .. self.task.due:relative() .. " (" .. self.task.due:default_format() .. ")",
-      color = colors.get_due_color(self.task.due:relative()),
+      text = _Neowarrior.config.icons.due .. " " .. self.task.due:relative() .. " (" .. self.task.due:default_format() .. ")",
+      color = colors.get_due_color(self.task.due:relative_hours()),
     }})
   end
 
@@ -329,17 +356,16 @@ function TaskPage:dependencies()
 
     self:row('depends', {{
       text = "Dependencies",
-      color = "NeoWarriorTextDanger",
+      color = _Neowarrior.config.colors.danger.group,
     }})
 
     for _, task in ipairs(self.task.depends:get()) do
-      local task_line = TaskLine:new(self.neowarrior, 0, task, {
+      TaskLine:new(self.tram, task):into_line({
         disable_meta = true,
       })
-      self.page:add_line(task_line)
     end
 
-    self.page:nl()
+    self.tram:nl()
 
   end
 
@@ -355,17 +381,17 @@ function TaskPage:parents()
 
     self:row('parents', {{
       text = "Blocking these tasks",
-      color = "NeoWarriorTextWarning",
+      color = _Neowarrior.config.colors.warning.group,
     }})
 
     for _, task in ipairs(parents:get()) do
-      local task_line = TaskLine:new(self.neowarrior, 0, task, {
+      TaskLine:new(self.tram, task):into_line({
         disable_meta = true,
+        disable_has_blocking = true,
       })
-      self.page:add_line(task_line)
     end
 
-    self.page:nl()
+    self.tram:nl()
 
   end
 
