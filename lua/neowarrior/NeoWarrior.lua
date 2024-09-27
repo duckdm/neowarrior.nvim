@@ -824,6 +824,7 @@ function NeoWarrior:set_keymaps()
   if self.config.keys.modify_select_project then
     vim.keymap.set("n", self.config.keys.modify_select_project, function()
       self:close_floats()
+      self.buffer:save_cursor()
       local uuid = nil
       if self.current_task then
         uuid = self.current_task.uuid
