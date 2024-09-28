@@ -52,7 +52,6 @@ return {
   ---@type boolean|table Add custom colors to specific projects or disable with false.
   project_colors = {
     neowarrior = { match = "neowarrior.*", color = "neowarrior" },
-    default = { match = ".*", color = "project" },
   },
 
   ---@type table Header config
