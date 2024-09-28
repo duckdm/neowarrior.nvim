@@ -49,6 +49,12 @@ return {
     enable_total_estimate = "eol",
   },
 
+  ---@type boolean|table Add custom colors to specific projects or disable with false.
+  project_colors = {
+    neowarrior = { match = "neowarrior.*", color = "neowarrior" },
+    default = { match = ".*", color = "project" },
+  },
+
   ---@type table Header config
   header = {
     ---@type string|nil Custom header text (disable with nil)
