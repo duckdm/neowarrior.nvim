@@ -45,6 +45,16 @@ function Buffer:set_name(name)
   return self
 end
 
+--- Get buffer lines
+---@return string[]
+function Buffer:get_lines()
+  return vim.api.nvim_buf_get_lines(self.id, 0, -1, false)
+end
+
+--- Process lines
+---@param up_lines Line[]
+---@param from number
+---@return string[][]
 function Buffer:process_lines(up_lines, from)
 
   local lines = {}
@@ -202,6 +212,11 @@ end
 function Buffer:save_cursor()
   self.cursor = self:get_cursor()
   return self.cursor
+end
+
+function Buffer:set_cursor(line, col)
+  local win = vim.api.nvim_get_current_win()
+  vim.api.nvim_win_set_cursor(win, { line, col })
 end
 
 --- Restore saved cursor
