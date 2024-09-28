@@ -1,7 +1,6 @@
 local Tram = require('trambampolin.init')
 local Buffer = require('trambampolin.Buffer')
 local Window = require('trambampolin.Window')
-local Float = require('trambampolin.Float')
 
 local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
@@ -28,6 +27,7 @@ local util = require('neowarrior.util')
 ---@field public user_config NeoWarrior.Config
 ---@field public buffer Buffer
 ---@field public window Window|nil
+---@field public about_float Float|nil
 ---@field public help_float Float|nil
 ---@field public task_float Float|nil
 ---@field public task_floats Float[]
@@ -86,6 +86,7 @@ function NeoWarrior:new()
     neowarrior.user_config = nil
     neowarrior.buffer = nil
     neowarrior.window = nil
+    neowarrior.about_float = nil
     neowarrior.help_float = nil
     neowarrior.task_float = nil
     neowarrior.task_floats = {}
@@ -646,12 +647,136 @@ function NeoWarrior:show()
       self:report_select()
     elseif action == 'filter' then
       self:filter_select()
+    elseif action == 'about' then
+      self:open_about()
     end
 
   end
 end
 
---- Show add input
+function NeoWarrior:open_about()
+
+  local tram = Tram:new()
+  tram:line("NeoWarrior by duckdm", { color = _Neowarrior.config.colors.neowarrior.group })
+  tram:nl()
+  tram:line("Version: " .. self.version, { color = _Neowarrior.config.colors.info.group })
+  tram:line("License: " .. "GNU GPLv3", { color = _Neowarrior.config.colors.info.group })
+  tram:nl()
+  tram:line("https://github.com/duckdm/neowarrior.nvim", {})
+
+  self.about_float = self:open_float(tram:get_buffer(), {
+    width = 50,
+    height = 7,
+    title = "About NeoWarrior",
+    relative = "editor",
+    enter = false,
+    style = "minimal",
+  })
+
+  tram:print()
+
+end
+
+function NeoWarrior:get_editor_height()
+
+  local windows = vim.api.nvim_list_wins()
+  local max_height = 0
+
+  for _, handle in ipairs(windows) do
+
+    local window_height = vim.api.nvim_win_get_height(handle)
+
+    if window_height > max_height then
+      max_height = window_height
+    end
+
+  end
+
+  return max_height
+end
+
+function NeoWarrior:get_editor_width()
+
+  local windows = vim.api.nvim_list_wins()
+  local max_height = self:get_editor_height()
+  local total_width = 0
+  local first_smaller = true
+
+  for _, handle in ipairs(windows) do
+
+    local window_height = vim.api.nvim_win_get_height(handle)
+    local window_width = vim.api.nvim_win_get_width(handle)
+
+    if window_height == max_height then
+      total_width = total_width + window_width
+      first_smaller = true
+    elseif first_smaller then
+      total_width = total_width + window_width
+      first_smaller = false
+    end
+
+  end
+
+  return total_width
+end
+
+--- Open a float
+---@param buffer Buffer
+---@param opts table
+---@return Window
+function NeoWarrior:open_float(buffer, opts)
+
+  local win_width = self:get_editor_width()
+  local win_height = self:get_editor_height()
+  local width = opts.width or 30
+  local height = opts.height or 20
+
+  if width <= 1 then
+    width = math.floor(win_width * width)
+  end
+
+  if height <= 1 then
+    height = math.floor(win_height * height)
+  end
+
+  if win_width < width then
+    width = win_width
+  end
+  if win_height < height then
+    height = win_height
+  end
+
+  local row = math.floor(win_height / 2) - (height / 2)
+  local col = math.floor(win_width / 2) - (width / 2)
+  local enter = true
+
+  if opts.enter == false or opts.enter == true then
+    enter = opts.enter
+    opts.enter = nil
+  end
+
+  opts = {
+    title = opts.title or nil,
+    title_pos = opts.title_pos or "center",
+    relative = opts.relative or "editor",
+    width = width,
+    height = height,
+    row = opts.row or row,
+    col = opts.col or col,
+    anchor = opts.anchor or "NW",
+    border = opts.border or "rounded",
+    zindex = opts.zindex or 101,
+    style = opts.style or nil,
+  }
+
+  return Window:new({
+    buffer = buffer,
+    enter = enter,
+    win = -1,
+  }, opts)
+
+end
+
 function NeoWarrior:add()
 
   self:close_floats()
@@ -840,6 +965,9 @@ function NeoWarrior:set_keymaps()
     vim.keymap.set("n", self.config.keys.close, function()
       if self.help_float then
         self:close_help()
+      elseif self.about_float then
+        self.about_float:close()
+        self.about_float = nil
       else
         self:close()
       end

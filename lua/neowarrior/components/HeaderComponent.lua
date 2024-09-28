@@ -72,7 +72,9 @@ function HeaderComponent:set()
     end
 
     self.tram:col(" " .. header_text .. " ", header_text_color)
-    self.tram:into_line({})
+    self.tram:into_line({
+      meta = { action = 'about' }
+    })
 
   end
 
