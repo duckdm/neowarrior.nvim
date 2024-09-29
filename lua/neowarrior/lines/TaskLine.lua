@@ -82,6 +82,7 @@ function TaskLine:into_line(arg)
   local task_icon_color = _Neowarrior.config.colors.dim.group
   if self.task.start then
     task_icon_color = _Neowarrior.config.colors.danger.group
+    task_icon = _Neowarrior.config.icons.start
     description_color = _Neowarrior.config.colors.warning.group
   end
   if self.task.status and self.task.status == "completed" then
@@ -122,10 +123,6 @@ function TaskLine:into_line(arg)
 
   if not disable_task_icon then
     self.tram:col(task_icon .. " ", task_icon_color)
-  end
-
-  if self.task.start and (not disable_start) then
-    self.tram:col(conf.icons.start .. " ", _Neowarrior.config.colors.danger.group)
   end
 
   if urgency_val > 5 and (not disable_warning) and line_conf.enable_warning_icon == "left" then

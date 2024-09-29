@@ -69,14 +69,6 @@ function TaskPage:print(buffer)
   self:completed()
   self:project()
   self:started()
-  -- self:task_line({
-  --   disable_meta = true,
-  --   disable_description = true,
-  --   disable_task_icon = true,
-  --   disable_has_blocking = true,
-  --   disable_urgency = true,
-  --   disable_priority = true,
-  -- })
   self:task_line({
     disable_meta = true,
     disable_has_blocking = true,
