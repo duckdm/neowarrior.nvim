@@ -57,7 +57,6 @@ function TaskLine:into_line(arg)
     disable_estimate = true
   end
   local disable_annotations = arg.disable_annotations or false
-  local disable_start = arg.disable_start or false
   local disable_has_blocking = arg.disable_has_blocking or false
   local project = self.task.project or 'No project'
   local meta = arg.meta or nil
