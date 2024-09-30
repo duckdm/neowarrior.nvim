@@ -924,6 +924,14 @@ function NeoWarrior:create_user_commands()
     self:add()
   end, {})
 
+  vim.api.nvim_create_user_command("NeoWarriorDone", function()
+    self:mark_done()
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoWarriorStartStop", function()
+    self:start_stop()
+  end, {})
+
   vim.api.nvim_create_user_command("NeoWarriorFilter", function()
     self.buffer:save_cursor()
     self:filter()
