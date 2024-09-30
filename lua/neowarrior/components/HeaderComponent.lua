@@ -1,3 +1,6 @@
+local Taskwarrior = require("neowarrior.Taskwarrior")
+local TaskCollection = require("neowarrior.TaskCollection")
+
 ---@class HeaderComponent
 local HeaderComponent = {}
 
@@ -12,6 +15,7 @@ function HeaderComponent:new(tram)
     self.meta_enabled = true
     self.report_enabled = true
     self.filter_enabled = true
+    self.task_info_enabled = true
     self.help_items = {
       help = true,
       add = true,
@@ -40,6 +44,11 @@ end
 
 function HeaderComponent:disable_filter()
   self.filter_enabled = false
+  return self
+end
+
+function HeaderComponent:disable_task_info()
+  self.task_info_enabled = false
   return self
 end
 
@@ -140,6 +149,54 @@ function HeaderComponent:set()
     else
       self.tram:into_line({})
     end
+
+  end
+
+  if nw.config.header.task_info and self.task_info_enabled then
+
+    local tw = Taskwarrior:new()
+    local filters = {}
+
+    for _, task_info in ipairs(nw.config.header.task_info) do
+
+      local active = true
+      local count = 0
+      local color = task_info.color or ""
+      local tasks = TaskCollection:new()
+      local hl_group = ""
+
+      if task_info.tasks then
+
+        local filter_key = task_info.tasks[1] .. "_" .. task_info.tasks[2]
+        if filters[filter_key] then
+          tasks = filters[filter_key]
+        else
+          tasks = tw:tasks(task_info.tasks[1], task_info.tasks[2])
+          filters[filter_key] = tasks
+        end
+        count = tasks:count()
+
+      end
+
+      if type(color) == "function" then
+        color = color(tasks)
+      end
+
+      if _Neowarrior.config.colors[color] then
+        hl_group = _Neowarrior.config.colors[color].group
+      end
+
+      if task_info.active and type(task_info.active) == "function" then
+        active = task_info.active(tasks)
+      end
+
+      if active then
+        self.tram:col(task_info.text:gsub("{count}", count), hl_group)
+      end
+
+    end
+
+    self.tram:into_line({})
 
   end
 

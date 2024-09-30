@@ -66,6 +66,35 @@ return {
     enable_current_view = true,
     ---@type boolean Whether to show the current filter at the top
     enable_current_filter = true,
+    ---@type boolean|table Show task info. Disable with false.
+    task_info = {
+      {
+        text = "Due soon: ",
+        tasks = {
+          "next",
+          "due.before:2d and due.after:today"
+        },
+        active = function(tasks)
+          return tasks:count() > 0
+        end
+      },
+      {
+        text = " {count} ",
+        tasks = {
+          "all",
+          "due.before:tomorrow and due.after:yesterday"
+        },
+        color = function(tasks)
+          if tasks:count() > 3 then
+            return "danger_bg"
+          end
+          return "warning"
+        end,
+        active = function(tasks)
+          return tasks:count() > 0
+        end
+      },
+    }
   },
 
   ---@type string Default taskwarrior filter
