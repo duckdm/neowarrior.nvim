@@ -65,7 +65,8 @@ function ProjectLine:into_line(arg)
     name = self.project.id
   end
   name = string.gsub(name, "%.", " " .. icon_alt .. " ")
-  self.tram:col(indent .. icon .. " " .. name, color)
+  self.tram:col(indent, "")
+  self.tram:col(icon .. " " .. name, color)
 
   local task_count = self.project.task_count
   if arg.enable_task_count == "eol" and task_count > 0 then
