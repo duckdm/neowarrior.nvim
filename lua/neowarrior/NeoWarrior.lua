@@ -181,12 +181,22 @@ function NeoWarrior:setup(config)
     self.user_config
   )
   if self.config.dir_setup and util.table_size(self.config.dir_setup) > 0 then
+
     local cwd = vim.uv.cwd()
+
     for _, dir_setup in ipairs(self.config.dir_setup) do
-      if dir_setup.dir == cwd then
+
+      local path = dir_setup.dir or nil
+      local match = dir_setup.match or nil
+
+      if cwd and match and cwd:find(match) then
+        self.config = vim.tbl_deep_extend('force', self.config, dir_setup)
+      elseif cwd and path and path == cwd then
         self.config = vim.tbl_deep_extend('force', self.config, dir_setup)
       end
+
     end
+
   end
 
   --- For reset purposes

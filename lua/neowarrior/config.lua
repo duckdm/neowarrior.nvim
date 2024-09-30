@@ -208,6 +208,19 @@ return {
 
   ---@type table|nil Set config values for specific directories. Most
   --- config values from this file should work per dir basis too.
+  --- Example:
+  -- dir_setup = {
+  --   {
+  --     dir = HOME .. "/dev/neowarrior",
+  --     mode = "tree",
+  --     --- ... other config values
+  --   },
+  --   {
+  --     match = "neowarrior", --- matches paths with "neowarrior" in the name
+  --     mode = "tree",
+  --     --- ... other config values
+  --   }
+  -- },
   dir_setup = nil,
 
   ---@type table Default reports available (valid taskwarrior reports). Used
