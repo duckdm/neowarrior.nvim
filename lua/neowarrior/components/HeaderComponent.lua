@@ -66,9 +66,13 @@ function HeaderComponent:set()
     end
 
     Template:new(self.tram):cols(nw.config.header.text)
-    self.tram:into_line({
-      meta = { action = 'about' }
-    })
+    if self.meta_enabled then
+      self.tram:into_line({
+        meta = { action = 'about' }
+      })
+    else
+      self.tram:into_line({})
+    end
 
   end
 
