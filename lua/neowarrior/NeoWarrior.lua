@@ -83,7 +83,7 @@ function NeoWarrior:new()
     setmetatable(neowarrior, self)
     self.__index = self
 
-    neowarrior.version = "v0.3.0"
+    neowarrior.version = "v0.3.0-alpha"
     neowarrior.config = nil
     neowarrior.user_config = nil
     neowarrior.buffer = nil
@@ -551,7 +551,7 @@ function NeoWarrior:focus()
   for _, handle in ipairs(windows) do
     local buf_handle = vim.api.nvim_win_get_buf(handle)
     local buf_name = vim.api.nvim_buf_get_name(buf_handle)
-    if string.find(buf_name, "neowarrior") then
+    if buf_name == "neowarrior" then
       vim.api.nvim_set_current_win(handle)
       return true
     end
