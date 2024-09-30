@@ -551,6 +551,8 @@ function NeoWarrior:focus()
   for _, handle in ipairs(windows) do
     local buf_handle = vim.api.nvim_win_get_buf(handle)
     local buf_name = vim.api.nvim_buf_get_name(buf_handle)
+    local buf_name_parts = util.split_string(buf_name, '/')
+    local buf_name = buf_name_parts[util.table_size(buf_name_parts)]
     if buf_name == "neowarrior" then
       vim.api.nvim_set_current_win(handle)
       return true
