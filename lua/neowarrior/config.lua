@@ -77,6 +77,12 @@ return {
   ---@type "normal"|"grouped"|"tree" Default view mode
   mode = "normal",
 
+  ---@type string Default sort option
+  sort = "urgency",
+
+  ---@type string Sort direction, ascending (asc) or descending (desc)
+  sort_direction = "desc",
+
   ---@type boolean Whether to expand all trees at start
   expanded = false,
 
@@ -222,6 +228,17 @@ return {
     "project.not:",
   },
 
+  ---@type table Task sort options for selects.
+  task_sort_options = {
+    { name = "Urgency", key = "urgency", direction = "desc" },
+    { name = "Due (asc)", key = "due", direction = "asc" },
+    { name = "Due (desc)", key = "due", direction = "desc" },
+    { name = "Scheduled (asc)", key = "scheduled", direction = "asc" },
+    { name = "Sceduled (desc)", key = "schedlued", direction = "desc" },
+    { name = "Estimate (asc)", key = "estimate", direction = "asc" },
+    { name = "Estimate (desc)", key = "estimate", direction = "desc" },
+  },
+
   ---@type table Default key mappings. Disable all by setting keys to nil or false.
   keys = {
     help = '?', --- Show help
@@ -231,6 +248,7 @@ return {
     select_dependency = 'D', --- Select dependency
     filter = 'F', --- Input filter
     select_filter = 'f', --- Select filter
+    select_sort = 'o', --- Select sort
     toggle_group_view = 'tg', --- Toggle grouped view
     toggle_tree_view = 'tt', --- Toggle tree view
     select_report = 'r', --- Select report

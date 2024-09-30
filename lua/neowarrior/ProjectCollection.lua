@@ -54,7 +54,7 @@ function ProjectCollection:sort(key)
   self.projects = projects_array
 
   for _, project in ipairs(self.projects) do
-    project.tasks:sort('urgency')
+    project.tasks:sort(_Neowarrior.current_sort, _Neowarrior.current_sort_direction)
   end
 
   return self

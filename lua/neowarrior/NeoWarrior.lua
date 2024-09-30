@@ -45,6 +45,8 @@ local util = require('neowarrior.util')
 ---@field public project_tree table
 ---@field public toggled_trees table
 ---@field public current_filter string
+---@field public current_sort string
+---@field public current_sort_direction string
 ---@field public current_report string
 ---@field public current_mode string
 ---@field public key_descriptions table
@@ -104,6 +106,8 @@ function NeoWarrior:new()
     neowarrior.project_tree = {}
     neowarrior.toggled_trees = {}
     neowarrior.current_filter = nil
+    neowarrior.current_sort = 'urgency'
+    neowarrior.current_sort_direction = 'desc'
     neowarrior.current_report = nil
     neowarrior.current_mode = nil
     neowarrior.current_task = nil
@@ -135,6 +139,7 @@ function NeoWarrior:new()
       {
         name = 'Reports and filters',
         keys = {
+          { key = 'select_sort', sort = 29, desc = 'Select task sorting' },
           { key = 'select_report', sort = 30, desc = 'Select report' },
           { key = 'select_filter', sort = 31, desc = 'Select filter' },
           { key = 'filter', sort = 32, desc = 'Filter input' },
@@ -185,6 +190,8 @@ function NeoWarrior:setup(config)
   end
 
   --- For reset purposes
+  self.config.default_sort = self.config.sort or "urgency"
+  self.config.default_sort_direction = self.config.sort_direction or "desc"
   self.config.default_filter = self.config.filter or ""
   self.config.default_report = self.config.report or "next"
 
@@ -434,10 +441,10 @@ function NeoWarrior:open_task_float()
         tram:line('Priority: ' .. task.priority, { color = priority_color })
       end
 
-      if task.due then
-        local due_relative = task.due:relative()
-        local due_hours = task.due:relative_hours()
-        local due_formatted = task.due:default_format()
+      if task.due_dt then
+        local due_relative = task.due_dt:relative()
+        local due_hours = task.due_dt:relative_hours()
+        local due_formatted = task.due_dt:default_format()
         tram:line('Due: ' .. due_relative .. " (" .. due_formatted .. ")", { color = colors.get_due_color(due_hours) })
       end
 
@@ -465,6 +472,8 @@ end
 ---@return NeoWarrior
 function NeoWarrior:init()
 
+  self.current_sort = self.config.sort
+  self.current_sort_direction = self.config.sort_direction
   self.current_mode = self.config.mode
   self.current_report = self.config.report
   self.current_filter = self.config.filter
@@ -488,14 +497,14 @@ end
 function NeoWarrior:refresh()
 
   self.all_pending_tasks = self.tw:tasks('all', 'status:pending')
-  self.all_pending_tasks:sort('urgency')
+  self.all_pending_tasks:sort(self.current_sort, self.current_sort_direction)
 
   self.all_tasks = self.tw:tasks('all', 'description.not:')
-  self.all_tasks:sort('urgency')
+  self.all_tasks:sort(self.current_sort, self.current_sort_direction)
   self.all_project_names = util.extract('project', self.all_tasks:get())
 
   self.tasks = self.tw:tasks(self.current_report, self.current_filter)
-  self.tasks:sort('urgency')
+  self.tasks:sort(self.current_sort, self.current_sort_direction)
 
   self.project_names = util.extract('project', self.tasks:get())
 
@@ -935,11 +944,8 @@ end
 --- TODO: keymap callbacks should call seperate functions in appropriate classes
 function NeoWarrior:set_keymaps()
 
-  if not self.config.keys then
-    return
-  end
+  if not self.config.keys then return end
 
-  -- local opts = { noremap = true, silent = true }
   local default_keymap_opts = {
     buffer = self.buffer.id,
     noremap = true,
@@ -998,6 +1004,8 @@ function NeoWarrior:set_keymaps()
   -- Reset filtera and report
   if self.config.keys.reset then
     vim.keymap.set("n", self.config.keys.reset, function()
+      self.current_sort = self.config.default_sort
+      self.current_sort_direction = self.config.default_sort_direction
       self.current_filter = self.config.default_filter
       self.current_report = self.config.default_report
       self:refresh()
@@ -1310,6 +1318,50 @@ function NeoWarrior:set_keymaps()
     vim.keymap.set("n", self.config.keys.refresh, '<Cmd>NeoWarriorRefresh<CR>', default_keymap_opts)
   end
 
+  -- Select task sorting
+  if self.config.keys.select_sort then
+    vim.keymap.set("n", self.config.keys.select_sort, function()
+      self:sort_select()
+    end, default_keymap_opts)
+  end
+
+end
+
+function NeoWarrior:sort_select()
+
+  self.buffer:save_cursor()
+  self:close_floats()
+
+  local sort_options = self.config.task_sort_options or {}
+  local telescope_opts = require("telescope.themes").get_dropdown({})
+
+  pickers.new(telescope_opts, {
+    prompt_title = "Select task sort order",
+    finder = finders.new_table({
+      results = sort_options,
+      entry_maker = function(entry)
+        return {
+          value = entry,
+          display = entry.name,
+          ordinal = entry.name,
+        }
+      end,
+    }),
+    sorter = conf.generic_sorter(telescope_opts),
+    attach_mappings = function(prompt_bufnr)
+      actions.select_default:replace(function()
+        actions.close(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        self.current_sort = selection.value.key
+        self.current_sort_direction = selection.value.direction or "desc"
+        self:refresh()
+        self:list()
+        self.buffer:restore_cursor()
+      end)
+      return true
+    end,
+  })
+  :find()
 end
 
 --- Start/stop task
@@ -1330,7 +1382,7 @@ function NeoWarrior:start_stop()
     task = self.tw:task(uuid)
   end
 
-  if task and task.start then
+  if task and task.start_dt then
 
     self.tw:stop(task)
     self:refresh()
@@ -1378,7 +1430,7 @@ function NeoWarrior:open_help()
 
   pad = pad + 2
 
-  tram:line(' ', '')
+  tram:line(' ', {})
 
   for _, group in ipairs(self.keys) do
 
@@ -1400,7 +1452,7 @@ function NeoWarrior:open_help()
       end
     end
 
-    tram:line(' ', '')
+    tram:line(' ', {})
 
   end
 
@@ -1479,7 +1531,7 @@ end
 function NeoWarrior:sort_tree(project)
 
     project.projects:sort('urgency.average')
-    project.tasks:sort('urgency')
+    project.tasks:sort(self.current_sort, self.current_sort_direction)
 
     for _, p in ipairs(project.projects:get()) do
         self:sort_tree(p)

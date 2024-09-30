@@ -74,13 +74,13 @@ function TaskLine:into_line(arg)
   local priority = self.task.priority or "-"
   local due = nil
   local due_no = 0
-  if self.task.due then
-    due = self.task.due:relative()
-    due_no = self.task.due:relative_hours()
+  if self.task.due_dt then
+    due = self.task.due_dt:relative()
+    due_no = self.task.due_dt:relative_hours()
   end
   local task_icon = conf.icons.task
   local task_icon_color = _Neowarrior.config.colors.dim.group
-  if self.task.start then
+  if self.task.start_dt then
     task_icon_color = _Neowarrior.config.colors.danger.group
     task_icon = _Neowarrior.config.icons.start
     description_color = _Neowarrior.config.colors.warning.group

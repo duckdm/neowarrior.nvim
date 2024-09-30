@@ -30,12 +30,6 @@ function TaskPage:new(buffer, task)
   self.task = task
   self.used_keys = { "tags" }
   self.prefix_format = "%-13s | "
-  self.time_fields = {
-    "modified",
-    "entry",
-    "due",
-    "scheduled",
-  }
   self.buffer = buffer
   self.tram = Tram:new()
   self.tram:set_buffer(buffer)
@@ -98,9 +92,23 @@ function TaskPage:print(buffer)
   self:estimate()
   self:priority()
   self:scheduled()
+  self:wait()
   self:due()
+  self:ended()
 
   self.tram:nl()
+
+  self:row('modified', {{
+    text = "Modified",
+  }, {
+    text = self.task.modified_dt:relative() .. " (" .. self.task.modified_dt:default_format() .. ")",
+    color = '',
+  }})
+
+  self:row('entry', {{ text = "Entry", }, {
+    text = self.task.entry_dt:relative() .. " (" .. self.task.entry_dt:default_format() .. ")",
+    color = '',
+  }})
 
   for k, v in pairs(self.task:get_attributes()) do
 
@@ -115,27 +123,8 @@ function TaskPage:print(buffer)
 
     if not used then
 
-      local is_time_field = false
-      for _, field in ipairs(self.time_fields) do
-        if field == k then
-          is_time_field = true
-          break
-        end
-      end
+      if not (k == "description") and not (k == "parent") and not (k == "imask") and v then
 
-      if is_time_field then
-
-        local time_color = ''
-        local time_string = v:relative()
-        if k == "due" or k == "scheduled" then
-          time_color = colors.get_due_color(time_string)
-        end
-        self:row(k, {
-          { text = k },
-          { text = time_string .. " " .. v:default_format(), color = time_color }
-        })
-
-      elseif not (k == "description") and not (k == "parent") and not (k == "imask") and v then
         if type(k) == "table" then
           k = table.concat(k, ", ")
         end
@@ -148,6 +137,7 @@ function TaskPage:print(buffer)
           { text = value, color = '' }
         })
       end
+
     end
   end -- for
 
@@ -162,6 +152,10 @@ end
 function TaskPage:row(key, cols)
 
   table.insert(self.used_keys, key)
+
+  if not self.task[key] then
+    return self
+  end
 
   local len = 5
 
@@ -218,13 +212,32 @@ end
 --- Started row
 function TaskPage:started()
 
-  if self.task.start then
+  table.insert(self.used_keys, 'start')
+
+  if self.task.start_dt then
     self:row('start', {{
       text = "Task started: ",
       color = _Neowarrior.config.colors.danger.group,
     }, {
-      text = self.task.start:default_format(),
+      text = self.task.start_dt:default_format(),
       color = _Neowarrior.config.colors.danger_bg.group,
+    }})
+  end
+
+end
+
+--- Ended row
+function TaskPage:ended()
+
+  table.insert(self.used_keys, 'end')
+
+  if self.task.end_dt then
+    self:row('end', {{
+      text = "Task ended: ",
+      color = _Neowarrior.config.colors.success.group,
+    }, {
+      text = self.task.end_dt:default_format(),
+      color = _Neowarrior.config.colors.success.group,
     }})
   end
 
@@ -315,12 +328,30 @@ end
 --- Scheduled row
 function TaskPage:scheduled()
 
-  if self.task.scheduled then
+  table.insert(self.used_keys, 'scheduled')
+
+  if self.task.scheduled_dt then
     self:row('scheduled', {{
       text = "Scheduled",
     }, {
-      text = self.task.scheduled:relative() .. " (" .. self.task.scheduled:default_format() .. ")",
-      color = colors.get_due_color(self.task.scheduled:relative()),
+      text = self.task.scheduled_dt:relative() .. " (" .. self.task.scheduled_dt:default_format() .. ")",
+      color = colors.get_due_color(self.task.scheduled_dt:relative_hours()),
+    }})
+  end
+
+end
+
+--- Wait row
+function TaskPage:wait()
+
+  table.insert(self.used_keys, 'wait')
+
+  if self.task.wait_dt then
+    self:row('wait', {{
+      text = "wait",
+    }, {
+      text = self.task.wait_dt:relative() .. " (" .. self.task.wait_dt:default_format() .. ")",
+      color = colors.get_due_color(self.task.wait_dt:relative_hours()),
     }})
   end
 
@@ -329,13 +360,13 @@ end
 --- Due row
 function TaskPage:due()
 
-  if self.task.due then
+  if self.task.due_dt then
 
     self:row('due', {{
       text = "Due",
     }, {
-      text = _Neowarrior.config.icons.due .. " " .. self.task.due:relative() .. " (" .. self.task.due:default_format() .. ")",
-      color = colors.get_due_color(self.task.due:relative_hours()),
+      text = _Neowarrior.config.icons.due .. " " .. self.task.due_dt:relative() .. " (" .. self.task.due_dt:default_format() .. ")",
+      color = colors.get_due_color(self.task.due_dt:relative_hours()),
     }})
   end
 
