@@ -176,6 +176,11 @@ function HeaderComponent:set()
         end
         count = tasks:count()
 
+      else
+
+        tasks = _Neowarrior.tasks
+        count = tasks:count()
+
       end
 
       if type(color) == "function" then
@@ -186,8 +191,10 @@ function HeaderComponent:set()
         hl_group = _Neowarrior.config.colors[color].group
       end
 
-      if task_info.active and type(task_info.active) == "function" then
+      if type(task_info.active) == "function" then
         active = task_info.active(tasks)
+      elseif type(task_info.active) == "boolean" then
+        active = task_info.active
       end
 
       if active then
