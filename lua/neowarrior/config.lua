@@ -288,6 +288,7 @@ return {
     done = 'd', --- Mark task as done
     start = 'S', --- Start task
     select_dependency = 'D', --- Select dependency
+    search = 's', --- Search all tasks
     filter = 'F', --- Input filter
     select_filter = 'f', --- Select filter
     select_sort = 'o', --- Select sort

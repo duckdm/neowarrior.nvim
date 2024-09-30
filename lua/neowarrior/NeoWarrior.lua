@@ -139,6 +139,7 @@ function NeoWarrior:new()
       {
         name = 'Reports and filters',
         keys = {
+          { key = 'search', sort = 28, desc = 'Search all tasks' },
           { key = 'select_sort', sort = 29, desc = 'Select task sorting' },
           { key = 'select_report', sort = 30, desc = 'Select report' },
           { key = 'select_filter', sort = 31, desc = 'Select filter' },
@@ -1098,6 +1099,63 @@ function NeoWarrior:set_keymaps()
     end, default_keymap_opts)
     vim.keymap.set("n", self.config.keys.enter, function()
       self:show()
+    end, default_keymap_opts)
+  end
+
+  if self.config.keys.search then
+    vim.keymap.set("n", self.config.keys.search, function()
+      self:close_floats()
+      self.buffer:save_cursor()
+      local telescope_opts = require("telescope.themes").get_dropdown({})
+      local icons = _Neowarrior.config.icons
+      pickers.new(telescope_opts, {
+        prompt_title = "Search tasks",
+        finder = finders.new_table({
+          results = self.all_tasks:get(),
+          entry_maker = function(entry)
+
+            local task_line = ""
+            local status_ordinal = 0
+
+            if entry.status ~= 'pending' then
+              local status_icon = ""
+              if entry.status == "completed" then
+                status_icon = icons.task_completed .. " "
+              end
+              if entry.status == "deleted" then
+                status_icon = icons.deleted .. " "
+              end
+              task_line = task_line .. "[" .. status_icon .. entry.status .. "] "
+            end
+
+            task_line = task_line .. entry.description
+
+            if entry.status == 'completed' then status_ordinal = 100 end
+            if entry.status == 'deleted' then status_ordinal = 1000 end
+
+            task_line = task_line .. " (" .. icons.project .. " " .. entry.project .. ")"
+
+            return {
+              value = entry.uuid,
+              display = task_line,
+              ordinal = status_ordinal .. entry.description .. entry.project,
+            }
+
+          end,
+        }),
+        sorter = conf.generic_sorter(telescope_opts),
+        attach_mappings = function(prompt_bufnr)
+          actions.select_default:replace(function()
+            actions.close(prompt_bufnr)
+            local selection = action_state.get_selected_entry()
+            if selection and selection.value then
+              self:task(selection.value)
+            end
+          end)
+          return true
+        end,
+      })
+      :find()
     end, default_keymap_opts)
   end
 
