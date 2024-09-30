@@ -155,7 +155,6 @@ function HeaderComponent:set()
   if nw.config.header.task_info and self.task_info_enabled then
 
     local tw = Taskwarrior:new()
-    local filters = {}
 
     for _, task_info in ipairs(nw.config.header.task_info) do
 
@@ -168,11 +167,15 @@ function HeaderComponent:set()
       if task_info.tasks then
 
         local filter_key = task_info.tasks[1] .. "_" .. task_info.tasks[2]
-        if filters[filter_key] then
-          tasks = filters[filter_key]
+        if _Neowarrior.task_cache[filter_key] then
+          tasks = _Neowarrior.task_cache[filter_key].tasks
         else
           tasks = tw:tasks(task_info.tasks[1], task_info.tasks[2])
-          filters[filter_key] = tasks
+          _Neowarrior.task_cache[filter_key] = {
+            tasks = tasks,
+            report = task_info.tasks[1],
+            filter = task_info.tasks[2]
+          }
         end
         count = tasks:count()
 

@@ -52,6 +52,7 @@ local util = require('neowarrior.util')
 ---@field public key_descriptions table
 ---@field public current_task Task
 ---@field public keys table
+---@field public task_cache table
 ---@field public new fun(self: NeoWarrior): NeoWarrior
 ---@field public setup fun(self: NeoWarrior, config: NeoWarrior.Config): NeoWarrior
 ---@field public init fun(self: NeoWarrior): NeoWarrior
@@ -83,7 +84,7 @@ function NeoWarrior:new()
     setmetatable(neowarrior, self)
     self.__index = self
 
-    neowarrior.version = "v0.3.0-alpha"
+    neowarrior.version = "v0.3.0"
     neowarrior.config = nil
     neowarrior.user_config = nil
     neowarrior.buffer = nil
@@ -111,6 +112,7 @@ function NeoWarrior:new()
     neowarrior.current_report = nil
     neowarrior.current_mode = nil
     neowarrior.current_task = nil
+    neowarrior.task_cache = {}
     neowarrior.keys = {
       {
         name = nil,
@@ -506,6 +508,8 @@ end
 --- Refresh all data (tasks and projects)
 ---@return NeoWarrior
 function NeoWarrior:refresh()
+
+  self.task_cache = {}
 
   self.all_pending_tasks = self.tw:tasks('all', 'status:pending')
   self.all_pending_tasks:sort(self.current_sort, self.current_sort_direction)
