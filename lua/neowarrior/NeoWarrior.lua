@@ -683,7 +683,10 @@ end
 function NeoWarrior:open_about()
 
   local tram = Tram:new()
-  tram:line("NeoWarrior by duckdm", { color = _Neowarrior.config.colors.neowarrior.group })
+  tram:col(" NeoWarrior " .. _Neowarrior.version .. " ", _Neowarrior.config.colors.neowarrior.group)
+  tram:col(" by ", "")
+  tram:col(" duckdm ", _Neowarrior.config.colors.neowarrior_inverted.group)
+  tram:into_line({})
   tram:nl()
   tram:line("Version: " .. self.version, { color = _Neowarrior.config.colors.info.group })
   tram:line("License: " .. "GNU GPLv3", { color = _Neowarrior.config.colors.info.group })
