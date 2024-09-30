@@ -220,31 +220,23 @@ require('neowarrior').focus()
     enable_current_filter = true,
     ---@type boolean|table Show task info. Disable with false.
     task_info = {
+      { text = "Tasks: " },
+      { text = "{count}", color = "info" },
       {
-        text = "Due soon: ",
-        tasks = {
-          "next",
-          "due.before:2d and due.after:today"
-        },
-        active = function(tasks)
-          return tasks:count() > 0
-        end
+        text = " Due soon: ",
+        tasks = { "next", "due.before:2d and due.after:today" },
+        active = function(tasks) return tasks:count() > 0 end
       },
       {
         text = " {count} ",
-        tasks = {
-          "all",
-          "due.before:tomorrow and due.after:yesterday"
-        },
+        tasks = { "next", "due.before:2d and due.after:today" },
+        active = function(tasks) return tasks:count() > 0 end,
         color = function(tasks)
           if tasks:count() > 3 then
             return "danger_bg"
           end
           return "warning"
         end,
-        active = function(tasks)
-          return tasks:count() > 0
-        end
       },
     }
   },
