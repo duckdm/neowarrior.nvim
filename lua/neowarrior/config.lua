@@ -56,8 +56,11 @@ return {
 
   ---@type table Header config
   header = {
-    ---@type string|nil Custom header text (disable with nil)
-    text = "NeoWarrior {version}",
+    ---@type string|table|nil Custom header text (disable with nil)
+    text = {
+      { text = " NeoWarrior ", color = "neowarrior" },
+      { text = " {version} ", color = "neowarrior_inverted" },
+    },
     ---@type boolean Whether to show help line
     enable_help_line = true,
     ---@type boolean Whether to show the current report at the top
@@ -152,6 +155,7 @@ return {
   ---disabled/transparent.
   colors = {
     neowarrior = { group = "NeoWarrior", fg = "#3eeafa", bg = "black" },
+    neowarrior_inverted = { group = "NeoWarriorInverted", fg = "black", bg = "#3cc8d7" },
     default = { group = "", fg = nil, bg = nil },
     dim = { group = "NeoWarriorTextDim", fg = "#333333", bg = nil },
     danger = { group = "NeoWarriorTextDanger", fg = "#cc0000", bg = nil },

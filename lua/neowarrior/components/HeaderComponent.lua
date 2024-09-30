@@ -1,5 +1,4 @@
-local Taskwarrior = require("neowarrior.Taskwarrior")
-local TaskCollection = require("neowarrior.TaskCollection")
+local Template = require('neowarrior.Template')
 
 ---@class HeaderComponent
 local HeaderComponent = {}
@@ -61,26 +60,12 @@ function HeaderComponent:set()
   if nw.config.header.text then
 
     local dev = _Neowarrior.config.dev or false
-    local header_text_color = _Neowarrior.config.colors.neowarrior.group
-    local header_text_has_version = string.match(nw.config.header.text, "{version}")
-
-    if header_text_has_version then
-
-      if string.match(nw.version, "dev") then
-        header_text_color = _Neowarrior.config.colors.danger.group
-      elseif string.match(nw.version, "pre") or string.match(nw.version, "alpha") or string.match(nw.version, "beta") then
-        header_text_color = _Neowarrior.config.colors.warning.group
-      end
-
-    end
-
-    local header_text = nw.config.header.text:gsub("{version}", nw.version)
 
     if dev then
       self.tram:col(" LOCAL DEV ", _Neowarrior.config.colors.danger_bg.group)
     end
 
-    self.tram:col(" " .. header_text .. " ", header_text_color)
+    Template:new(self.tram):cols(nw.config.header.text)
     self.tram:into_line({
       meta = { action = 'about' }
     })
@@ -154,59 +139,7 @@ function HeaderComponent:set()
 
   if nw.config.header.task_info and self.task_info_enabled then
 
-    local tw = Taskwarrior:new()
-
-    for _, task_info in ipairs(nw.config.header.task_info) do
-
-      local active = true
-      local count = 0
-      local color = task_info.color or ""
-      local tasks = TaskCollection:new()
-      local hl_group = ""
-
-      if task_info.tasks then
-
-        local filter_key = task_info.tasks[1] .. "_" .. task_info.tasks[2]
-        if _Neowarrior.task_cache[filter_key] then
-          tasks = _Neowarrior.task_cache[filter_key].tasks
-        else
-          tasks = tw:tasks(task_info.tasks[1], task_info.tasks[2])
-          _Neowarrior.task_cache[filter_key] = {
-            tasks = tasks,
-            report = task_info.tasks[1],
-            filter = task_info.tasks[2]
-          }
-        end
-        count = tasks:count()
-
-      else
-
-        tasks = _Neowarrior.tasks
-        count = tasks:count()
-
-      end
-
-      if type(color) == "function" then
-        color = color(tasks)
-      end
-
-      if _Neowarrior.config.colors[color] then
-        hl_group = _Neowarrior.config.colors[color].group
-      end
-
-      if type(task_info.active) == "function" then
-        active = task_info.active(tasks)
-      elseif type(task_info.active) == "boolean" then
-        active = task_info.active
-      end
-
-      if active then
-        self.tram:col(task_info.text:gsub("{count}", count), hl_group)
-      end
-
-    end
-
-    self.tram:into_line({})
+    Template:new(self.tram):line(nw.config.header.task_info)
 
   end
 
