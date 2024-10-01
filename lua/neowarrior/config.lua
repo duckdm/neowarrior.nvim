@@ -256,14 +256,21 @@ return {
     "ready", "recurring", "summary", "tags", "unblocked", "waiting",
   },
 
-  ---@type table Default filters available (valid taskwarrior filters). Used
+  ---@type string[]|table[] Default filters available (valid taskwarrior filters). Used
   ---in selects.
   filters = {
-    "due:", "due.not:", "\\(due.before:2d and due.not: \\)",
-    "scheduled:", "scheduled.not:", "priority:H",
-    "priority.not:H", "priority:M", "priority.not:M", "priority:L",
-    "priority.not:L", "priority:", "priority.not:", "project:",
-    "project.not:",
+    { name = "Has due date", filter = "due.not:" },
+    { name = "Has no due date", filter = "due:" },
+    { name = "Due today", filter = "\\(due.before:2d and due.not: \\)" },
+    { name = "Is not scheduled", filter = "scheduled:" },
+    { name = "Is scheduled", filter = "scheduled.not:" },
+    { name = "High priority", filter = "priority:H" },
+    { name = "Medium priority", filter = "priority:M" },
+    { name = "Low priority", filter = "priority:L" },
+    { name = "No priority", filter = "priority:" },
+    { name = "Has priority", filter = "priority.not:" },
+    { name = "Has no project", filter = "project:" },
+    { name = "Has project", filter = "project.not:" },
   },
 
   ---@type table Task sort options for selects.

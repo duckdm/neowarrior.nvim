@@ -1803,19 +1803,45 @@ end
 
 --- Open telescope filter selection
 function NeoWarrior:filter_select()
+
   self.buffer:save_cursor()
   self:close_floats()
+
   local opts = require("telescope.themes").get_dropdown({})
   local filters = self.config.filters
+  local icons = _Neowarrior.config.icons
+
   for _, project in ipairs(self.all_projects:get()) do
-    table.insert(filters, "project:" .. project.name)
-    table.insert(filters, "project.not:" .. project.name)
+    table.insert(filters, {
+      name = icons.project .. " In " .. project.name,
+      filter = "project:" .. project.name
+    })
+    table.insert(filters, {
+      name = icons.project .. " Not in " .. project.name,
+      filter = "project.not:" .. project.name
+    })
   end
-  pickers
-  .new(opts, {
+
+  pickers.new(opts, {
     prompt_title = "Filter",
     finder = finders.new_table({
       results = filters,
+      entry_maker = function(entry)
+
+        if type(entry) ~= "table" then
+          entry = {
+            name = entry,
+            filter = entry,
+          }
+        end
+
+        return {
+          value = entry.filter,
+          display = entry.name .. " (" .. entry.filter .. ")",
+          ordinal = entry.name .. " " .. entry.filter,
+        }
+
+      end,
     }),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
@@ -1824,8 +1850,8 @@ function NeoWarrior:filter_select()
         actions.close(prompt_bufnr)
         local selection = action_state.get_selected_entry()
         local new_filter = prompt
-        if selection and selection[1] then
-          new_filter = selection[1]
+        if selection and selection.value then
+          new_filter = selection.value
         end
         self.current_filter = new_filter
         self:refresh()
