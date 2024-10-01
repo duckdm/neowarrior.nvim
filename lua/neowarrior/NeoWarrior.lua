@@ -920,51 +920,13 @@ end
 --- Create user commands
 function NeoWarrior:create_user_commands()
 
-  vim.api.nvim_create_user_command("NeoWarriorOpen", function(opt)
-    local valid_args = { 'current', 'above', 'below', 'left', 'right', 'float' }
-    local split = opt and opt.fargs and opt.fargs[1] or 'below'
-    if not vim.tbl_contains(valid_args, split) then
-      split = 'below'
-    end
-    self:open({ split = split })
-  end, { nargs = '*' })
+  local cmds = require('neowarrior.user_commands')
 
-  vim.api.nvim_create_user_command("NeoWarriorAdd", function()
-    self:add()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorDone", function()
-    self:mark_done()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorStartStop", function()
-    self:start_stop()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorFilter", function()
-    self.buffer:save_cursor()
-    self:filter()
-    self.buffer:restore_cursor()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorFilterSelect", function()
-    self:filter_select()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorReportSelect", function()
-    self:report_select()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorRefresh", function()
-    self.buffer:save_cursor()
-    self:refresh()
-    if self.current_task then
-      self:task(self.current_task.uuid)
-    else
-      self:list()
-    end
-    self.buffer:restore_cursor()
-  end, {})
+  for _, cmd in ipairs(cmds) do
+    vim.api.nvim_create_user_command(cmd.cmd, function(opt)
+      cmd.callback(self, opt)
+    end, cmd.opts or {})
+  end
 
 end
 
