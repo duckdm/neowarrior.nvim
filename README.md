@@ -208,8 +208,11 @@ require('neowarrior').focus()
 
   ---@type table Header config
   header = {
-    ---@type string|nil Custom header text (disable with nil)
-    text = "NeoWarrior {version}",
+    ---@type string|table|nil Custom header text (disable with nil)
+    text = {
+      { text = " NeoWarrior ", color = "neowarrior" },
+      { text = " {version} ", color = "neowarrior_inverted" },
+    },
     ---@type boolean Whether to show help line
     enable_help_line = true,
     ---@type boolean Whether to show the current report at the top
@@ -304,6 +307,7 @@ require('neowarrior').focus()
   ---disabled/transparent.
   colors = {
     neowarrior = { group = "NeoWarrior", fg = "#3eeafa", bg = "black" },
+    neowarrior_inverted = { group = "NeoWarriorInverted", fg = "black", bg = "#3cc8d7" },
     default = { group = "", fg = nil, bg = nil },
     dim = { group = "NeoWarriorTextDim", fg = "#333333", bg = nil },
     danger = { group = "NeoWarriorTextDanger", fg = "#cc0000", bg = nil },
@@ -379,9 +383,9 @@ require('neowarrior').focus()
   ---@type nil|string Pad end of tags with this string. Use nil to disable.
   tag_padding_end = nil,
 
-  ---@type table|nil Set config values for specific directories. Most
-  --- config values from this file should work per dir basis too.
-  --- Example:
+  ---@type table|nil Set config values for specific directories.
+  --- Most config values from this file should work per dir
+  --- basis too. Example:
   -- dir_setup = {
   --   {
   --     dir = HOME .. "/dev/neowarrior",
@@ -404,14 +408,21 @@ require('neowarrior').focus()
     "ready", "recurring", "summary", "tags", "unblocked", "waiting",
   },
 
-  ---@type table Default filters available (valid taskwarrior filters). Used
+  ---@type string[]|table[] Default filters available (valid taskwarrior filters). Used
   ---in selects.
   filters = {
-    "due:", "due.not:", "\\(due.before:2d and due.not: \\)",
-    "scheduled:", "scheduled.not:", "priority:H",
-    "priority.not:H", "priority:M", "priority.not:M", "priority:L",
-    "priority.not:L", "priority:", "priority.not:", "project:",
-    "project.not:",
+    { name = "Has due date", filter = "due.not:" },
+    { name = "Has no due date", filter = "due:" },
+    { name = "Due today", filter = "\\(due.before:2d and due.not: \\)" },
+    { name = "Is not scheduled", filter = "scheduled:" },
+    { name = "Is scheduled", filter = "scheduled.not:" },
+    { name = "High priority", filter = "priority:H" },
+    { name = "Medium priority", filter = "priority:M" },
+    { name = "Low priority", filter = "priority:L" },
+    { name = "No priority", filter = "priority:" },
+    { name = "Has priority", filter = "priority.not:" },
+    { name = "Has no project", filter = "project:" },
+    { name = "Has project", filter = "project.not:" },
   },
 
   ---@type table Task sort options for selects.
