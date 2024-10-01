@@ -427,7 +427,8 @@ require('neowarrior').focus()
 
   ---@type table Task sort options for selects.
   task_sort_options = {
-    { name = "Urgency", key = "urgency", direction = "desc" },
+    { name = "Urgency (desc)", key = "urgency", direction = "desc" },
+    { name = "Urgency (asc)", key = "urgency", direction = "asc" },
     { name = "Due (asc)", key = "due", direction = "asc" },
     { name = "Due (desc)", key = "due", direction = "desc" },
     { name = "Scheduled (asc)", key = "scheduled", direction = "asc" },
