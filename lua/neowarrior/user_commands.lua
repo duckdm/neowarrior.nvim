@@ -1,8 +1,7 @@
 return {
   {
-    cmd = "NeoWarriorOpen",
+    cmd = "Open",
     callback = function(nw, opt)
-      print("NeoWarriorOpen")
       local valid_args = { 'current', 'above', 'below', 'left', 'right', 'float' }
       local split = opt and opt.fargs and opt.fargs[1] or 'below'
       if not vim.tbl_contains(valid_args, split) then
@@ -14,22 +13,29 @@ return {
   },
 
   {
-    cmd = "NeoWarriorAdd",
+    cmd = "Help",
+    callback = function(nw)
+      nw:open_help()
+    end,
+  },
+
+  {
+    cmd = "Add",
     callback = function(nw) nw:add() end,
   },
 
   {
-    cmd = "NeoWarriorDone",
+    cmd = "Done",
     callback = function(nw) nw:mark_done() end,
   },
 
   {
-    cmd = "NeoWarriorStartStop",
+    cmd = "StartStop",
     callback = function(nw) nw:start_stop() end,
   },
 
   {
-    cmd = "NeoWarriorFilter",
+    cmd = "Filter",
     callback = function(nw)
       nw.buffer:save_cursor()
       nw:filter()
@@ -38,21 +44,21 @@ return {
   },
 
   {
-    cmd = "NeoWarriorFilterSelect",
+    cmd = "FilterSelect",
     callback = function(nw)
       nw:filter_select()
     end,
   },
 
   {
-    cmd = "NeoWarriorReportSelect",
+    cmd = "ReportSelect",
     callback = function(nw)
       nw:report_select()
     end,
   },
 
   {
-    cmd = "NeoWarriorRefresh",
+    cmd = "Refresh",
     callback = function(nw)
       nw.buffer:save_cursor()
       nw:refresh()

@@ -420,6 +420,10 @@ function NeoWarrior:open_task_float()
         disable_estimate = true,
         disable_has_blocking = true,
         disable_tags = true,
+        line_conf = {
+          enable_warning_icon = "left",
+          enable_urgency = "eol",
+        },
       })
 
       if task.tags then
@@ -923,7 +927,7 @@ function NeoWarrior:create_user_commands()
   local cmds = require('neowarrior.user_commands')
 
   for _, cmd in ipairs(cmds) do
-    vim.api.nvim_create_user_command(cmd.cmd, function(opt)
+    vim.api.nvim_create_user_command("NeoWarrior" .. cmd.cmd, function(opt)
       cmd.callback(self, opt)
     end, cmd.opts or {})
   end
