@@ -78,7 +78,7 @@ function NeoWarrior:new()
     setmetatable(neowarrior, self)
     self.__index = self
 
-    neowarrior.version = "v0.2.0"
+    neowarrior.version = "v0.2.1"
     neowarrior.config = nil
     neowarrior.user_config = nil
     neowarrior.buffer = nil
@@ -214,7 +214,7 @@ end
 --- Setup auto commands
 function NeoWarrior:setup_autocmds()
 
-  if self.config.float.enabled then
+  if self.config.float.enabled and self.config.float.enabled == true then
 
     vim.api.nvim_create_autocmd('CursorMoved', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
@@ -991,6 +991,44 @@ function NeoWarrior:set_keymaps()
           end
         end)
         self.buffer:restore_cursor()
+      end
+    end, default_keymap_opts)
+  end
+
+  local task_float_key = self.config.float.enabled or nil
+  local project_float_key = self.config.project_float and self.config.project_float.enabled or nil
+
+  --- Show task float
+  if type(task_float_key) == "string" then
+    vim.keymap.set("n", self.config.task_float.enabled, function()
+      local uuid = self.buffer:get_meta_data('uuid')
+      self:close_floats()
+      if not self.task_float then
+        self:open_task_float()
+      else
+        self.task_float = nil
+      end
+      if project_float_key == task_float_key and (not uuid) then
+        if not self.project_float then
+          self:open_project_float()
+        else
+          self.project_float = nil
+        end
+      end
+    end, default_keymap_opts)
+  end
+
+  --- Show project float
+  if task_float_key ~= project_float_key and type(project_float_key) == "string" then
+    vim.keymap.set("n", self.config.project_float.enabled, function()
+      local uuid = self.buffer:get_meta_data('uuid')
+      self:close_floats()
+      if not uuid then
+        if not self.project_float then
+          self:open_project_float()
+        else
+          self.project_float = nil
+        end
       end
     end, default_keymap_opts)
   end
