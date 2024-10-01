@@ -4,6 +4,7 @@ local util = require 'neowarrior.util'
 ---@field line_no number
 ---@field text string
 ---@field meta_text string
+---@field meta_data table
 ---@field colors table[]
 ---@field current_col number
 ---@field last_col number
@@ -21,6 +22,7 @@ function Line:new(line_no)
   line.line_no = line_no
   line.text = ''
   line.meta_text = ''
+  line.meta_data = nil
   line.colors = {}
   line.current_col = 0
   line.last_col = 0
@@ -42,10 +44,11 @@ function Line:add(block)
   end
 
   if block.meta then
-    self.meta_text = self.meta_text .. " "
-    for key, value in pairs(block.meta) do
-      self.meta_text = self.meta_text .. "{{{" .. key .. value .. "}}}"
-    end
+    self.meta_data = block.meta
+    -- self.meta_text = self.meta_text .. " "
+    -- for key, value in pairs(block.meta) do
+    --   self.meta_text = self.meta_text .. "{{{" .. key .. value .. "}}}"
+    -- end
   end
 
   if self.current_col > 0 then

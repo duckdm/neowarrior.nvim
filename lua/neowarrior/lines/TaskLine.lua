@@ -32,7 +32,6 @@ function TaskLine:into_line(arg)
     line_conf = vim.tbl_extend("force", line_conf, arg.line_conf)
   end
   local indent = arg.indent or ""
-  local disable_meta = arg.disable_meta or false
   local disable_priority = arg.disable_priority or false
   if line_conf.enable_priority == false then
     disable_priority = true
@@ -113,6 +112,7 @@ function TaskLine:into_line(arg)
     due = due,
     estimate = self.task.estimate,
     status = self.task.status or "pending",
+    back = arg.back or nil,
   }
 
   if meta then
@@ -173,9 +173,6 @@ function TaskLine:into_line(arg)
 
   if not disable_description then
     self.tram:col(description, description_color)
-    -- if has_blocking and (not disable_has_blocking) then
-    --   self.tram:col(" [has blocking tasks]", _Neowarrior.config.colors.danger.group)
-    -- end
   end
 
   if (not arg.disable_urgency) and line_conf.enable_urgency == "eol" then
@@ -183,10 +180,6 @@ function TaskLine:into_line(arg)
       " " .. string.format("%.1f", urgency_val) .. " ",
       colors.get_urgency_color(urgency_val)
     )
-  end
-
-  if disable_meta then
-    meta_table = nil
   end
 
   self.tram:into_line({

@@ -49,7 +49,7 @@ end
 ---@return TaskPage
 function TaskPage:print(buffer)
 
-  buffer:option("wrap", true, { win = _Neowarrior.window.id })
+  buffer:option("wrap", false, { win = _Neowarrior.window.id })
   self.tram:set_buffer(buffer)
 
   HeaderComponent:new(self.tram)
@@ -63,18 +63,8 @@ function TaskPage:print(buffer)
   self:completed()
   self:project()
   self:started()
-  self:task_line({
-    disable_meta = true,
-    disable_has_blocking = true,
-    disable_priority = true,
-    disable_warning = true,
-    disable_due = true,
-    disable_recur = true,
-    disable_estimate = true,
-    disable_annotations = true,
-    disable_start = true,
-    disable_urgency = true,
-    disable_tags = true,
+  self.tram:line(self.task.description, {
+    wrapped = vim.api.nvim_win_get_width(_Neowarrior.window.id) - 2,
   })
 
   if self.task.tags then
@@ -84,9 +74,10 @@ function TaskPage:print(buffer)
 
   self.tram:nl()
 
-  self:annotations()
   self:dependencies()
   self:parents()
+
+  self:annotations()
 
   self:urgency()
   self:estimate()
@@ -153,10 +144,6 @@ function TaskPage:row(key, cols)
 
   table.insert(self.used_keys, key)
 
-  if not self.task[key] then
-    return self
-  end
-
   local len = 5
 
   for _, col in ipairs(cols) do
@@ -201,14 +188,6 @@ function TaskPage:project()
 
 end
 
---- Task line
-function TaskPage:task_line(arg)
-
-  table.insert(self.used_keys, 'description')
-  TaskLine:new(self.tram, self.task):into_line(arg)
-
-end
-
 --- Started row
 function TaskPage:started()
 
@@ -250,7 +229,7 @@ function TaskPage:annotations()
   if annotations then
 
     self:row('annotations', {{
-      text = "Annotations",
+      text = _Neowarrior.config.icons.annotated .. " Annotations",
       color = _Neowarrior.config.colors.annotation.group,
     }})
 
@@ -262,10 +241,12 @@ function TaskPage:annotations()
         local anno_entry_dt = DateTime:new(annotation.entry)
         anno_entry = "" .. anno_entry_dt:default_format()
         self.tram:col(anno_entry, _Neowarrior.config.colors.annotation.group)
+        self.tram:into_line({})
       end
 
-      self.tram:col(" " .. annotation.description, "")
-      self.tram:into_line({})
+      self.tram:line(annotation.description, {
+        wrapped = vim.api.nvim_win_get_width(_Neowarrior.window.id) - 2,
+      })
 
     end
 
@@ -386,6 +367,7 @@ function TaskPage:dependencies()
     for _, task in ipairs(self.task.depends:get()) do
       TaskLine:new(self.tram, task):into_line({
         disable_meta = true,
+        back = { type = "task", uuid = self.task.uuid },
       })
     end
 
@@ -412,6 +394,7 @@ function TaskPage:parents()
       TaskLine:new(self.tram, task):into_line({
         disable_meta = true,
         disable_has_blocking = true,
+        back = { type = "task", uuid = self.task.uuid },
       })
     end
 

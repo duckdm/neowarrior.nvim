@@ -53,6 +53,8 @@ local util = require('neowarrior.util')
 ---@field public current_task Task
 ---@field public keys table
 ---@field public task_cache table
+---@field public current_page table|nil
+---@field public back nil|table
 ---@field public new fun(self: NeoWarrior): NeoWarrior
 ---@field public setup fun(self: NeoWarrior, config: NeoWarrior.Config): NeoWarrior
 ---@field public init fun(self: NeoWarrior): NeoWarrior
@@ -113,6 +115,8 @@ function NeoWarrior:new()
     neowarrior.current_mode = nil
     neowarrior.current_task = nil
     neowarrior.task_cache = {}
+    neowarrior.current_page = nil
+    neowarrior.back = nil
     neowarrior.keys = {
       {
         name = nil,
@@ -658,6 +662,7 @@ function NeoWarrior:show()
   local uuid = self.buffer:get_meta_data('uuid')
   local project = self.buffer:get_meta_data('project')
   local action = self.buffer:get_meta_data('action')
+  self.back = self.buffer:get_meta_data('back')
 
   if uuid then
 
@@ -1357,8 +1362,17 @@ function NeoWarrior:set_keymaps()
 
   -- Back to list/refresh
   if self.config.keys.back then
-    vim.keymap.set("n", '<Esc>', function() self:list() end, default_keymap_opts)
-    vim.keymap.set("n", self.config.keys.back, function() self:list() end, default_keymap_opts)
+    vim.keymap.set("n", '<Esc>', function()
+      self:list()
+    end, default_keymap_opts)
+    vim.keymap.set("n", self.config.keys.back, function()
+      if self.back and self.back.type == "task" and self.back.uuid then
+        self:task(self.back.uuid)
+        self.back = nil
+      else
+        self:list()
+      end
+    end, default_keymap_opts)
   end
 
   -- Filter tasks
@@ -1707,10 +1721,10 @@ function NeoWarrior:open(opts)
   self.buffer:option('wrap', false, { win = self.window.id })
   self.buffer:option('filetype', 'neowarrior', { buf = self.buffer.id })
 
-  vim.cmd([[
-  syntax match Metadata /{{{.*}}}/ conceal
-  syntax match MetadataConceal /{{{[^}]*}}}/ contained conceal
-]])
+--   vim.cmd([[
+--   syntax match Metadata /{{{.*}}}/ conceal
+--   syntax match MetadataConceal /{{{[^}]*}}}/ contained conceal
+-- ]])
 
   self:refresh()
   self:after_initial_refresh()
@@ -1746,6 +1760,7 @@ function NeoWarrior:list()
   tram:print()
 
   self.buffer:restore_cursor()
+  self.current_page = { tram = tram, name = 'list' }
 
   return self
 end
@@ -1760,6 +1775,7 @@ function NeoWarrior:task(uuid)
   local task_page = TaskPage:new(self.buffer, task)
   task_page:print(self.buffer)
   self.current_task = task
+  self.current_page = { tram = task_page.tram, name = 'task' }
 
 end
 
