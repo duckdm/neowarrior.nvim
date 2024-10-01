@@ -366,7 +366,6 @@ function TaskPage:dependencies()
 
     for _, task in ipairs(self.task.depends:get()) do
       TaskLine:new(self.tram, task):into_line({
-        disable_meta = true,
         back = { type = "task", uuid = self.task.uuid },
       })
     end
