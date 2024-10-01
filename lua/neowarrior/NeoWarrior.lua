@@ -420,6 +420,10 @@ function NeoWarrior:open_task_float()
         disable_estimate = true,
         disable_has_blocking = true,
         disable_tags = true,
+        line_conf = {
+          enable_warning_icon = "left",
+          enable_urgency = "eol",
+        },
       })
 
       if task.tags then

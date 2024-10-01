@@ -28,6 +28,9 @@ function TaskLine:into_line(arg)
 
   local conf = _Neowarrior.config
   local line_conf = conf.task_line
+  if arg.line_conf then
+    line_conf = vim.tbl_extend("force", line_conf, arg.line_conf)
+  end
   local indent = arg.indent or ""
   local disable_meta = arg.disable_meta or false
   local disable_priority = arg.disable_priority or false
