@@ -214,7 +214,7 @@ end
 --- Setup auto commands
 function NeoWarrior:setup_autocmds()
 
-  if self.config.float.enabled then
+  if self.config.float.enabled and self.config.float.enabled == true then
 
     vim.api.nvim_create_autocmd('CursorMoved', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
@@ -995,8 +995,8 @@ function NeoWarrior:set_keymaps()
     end, default_keymap_opts)
   end
 
-  local task_float_key = self.config.task_float.enabled or nil
-  local project_float_key = self.config.project_float.enabled or nil
+  local task_float_key = self.config.float.enabled or nil
+  local project_float_key = self.config.project_float and self.config.project_float.enabled or nil
 
   --- Show task float
   if type(task_float_key) == "string" then
