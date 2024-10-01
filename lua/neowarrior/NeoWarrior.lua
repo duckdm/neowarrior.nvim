@@ -1477,7 +1477,7 @@ function NeoWarrior:open_help()
 
   local tram = Tram:new()
   local width = 0
-  local win_width = self.window:get_width()
+  local win_width = self:get_editor_width()
   local pad = 0
   local key_length = 0
   local sep_length = 4
@@ -1523,7 +1523,7 @@ function NeoWarrior:open_help()
   self.help_float = tram:open_float({
     title = 'NeoWarrior help',
     width = width,
-    col = math.floor((win_width - width) / 2),
+    col = math.floor(win_width / 2) - (width),
     row = 5,
   })
 
