@@ -143,7 +143,7 @@ function TaskLine:into_line(arg)
   end
 
   if due and (due ~= '') and (not disable_due) and line_conf.enable_due_date == "left" then
-    self.tram:col(due, colors.get_due_color(due_no))
+    self.tram:col(conf.icons.due .. " " .. due, colors.get_due_color(due_no))
     self.tram:col(" ", "")
   end
 
