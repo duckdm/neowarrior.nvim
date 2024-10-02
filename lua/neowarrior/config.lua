@@ -291,7 +291,7 @@ return {
     add = 'a', --- Add task
     done = 'd', --- Mark task as done
     start = 'S', --- Start task
-    select_dependency = 'D', --- Select dependency
+    select_dependency = 'Md', --- Select dependency
     search = 's', --- Search all tasks
     filter = 'F', --- Input filter
     select_filter = 'f', --- Select filter
@@ -310,7 +310,7 @@ return {
     modify = 'MM', --- Modify task
     modify_select_project = 'Mp', --- Modify project
     modify_select_priority = 'MP', --- Modify priority
-    modify_due = 'Md', --- Modify due date
+    modify_due = 'MD', --- Modify due date
   },
 
   ---@type table Default icons
