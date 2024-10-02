@@ -59,6 +59,10 @@ function Buffer:set_name(name)
   return self
 end
 
+function Buffer:get_line()
+  return vim.api.nvim_get_current_line()
+end
+
 --- Get buffer lines
 ---@return string[]
 function Buffer:get_lines()

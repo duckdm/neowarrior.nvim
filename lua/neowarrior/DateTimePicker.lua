@@ -3,14 +3,20 @@ local DateTime = require("neowarrior.DateTime")
 
 ---@class DateTimePicker
 ---@field tram Trambampolin
+---@field time_tram Trambampolin
 ---@field float Float
 ---@field select_date boolean
 ---@field select_time boolean
 ---@field on_select_callback nil|function
 ---@field mark table
 ---@field title string
+---@field time_title string
 ---@field row number
 ---@field col number
+---@field start_row number
+---@field start_col number
+---@field width number
+---@field time_options string[]
 ---@field on_select fun(self: DateTimePicker, callback: function): self
 ---@field open fun(self: DateTimePicker, date: string?): self
 ---@field close fun(self: DateTimePicker, ): self
@@ -27,13 +33,23 @@ function DateTimePicker:new(opts)
 
   date_time_picker.float = nil
   date_time_picker.tram = Trambampolin:new()
+  date_time_picker.time_tram = Trambampolin:new()
   date_time_picker.on_select_callback = opts and opts.on_select or nil
   date_time_picker.select_date = opts and opts.select_date or true
   date_time_picker.select_time = opts and opts.select_time or false
   date_time_picker.mark = opts and opts.mark or {}
   date_time_picker.title = opts and opts.title or nil
+  date_time_picker.time_title = opts and opts.time_title or nil
   date_time_picker.row = opts and opts.row or 0
   date_time_picker.col = opts and opts.col or 0
+  date_time_picker.start_row = vim.api.nvim_win_get_cursor(0)[1]
+  date_time_picker.start_col = vim.api.nvim_win_get_cursor(0)[2]
+  date_time_picker.width = 30
+  date_time_picker.time_options = _Neowarrior.config.time_options or {
+    "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00",
+    "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
+    "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00",
+  }
 
   return date_time_picker
 end
@@ -87,7 +103,7 @@ function DateTimePicker:open(date)
   if not self.float then
     self.float = self.tram:open_float({
       title = self.title,
-      width = 30,
+      width = self.width,
       height = 7,
       relative = "cursor",
       row = self.row,
@@ -99,7 +115,6 @@ function DateTimePicker:open(date)
   end
 
   self.tram:get_buffer():keymap("n", "q", ":q<CR>", { silent = true })
-
   self.tram:get_buffer():keymap("n", "<CR>", function()
 
     local meta_data = self.tram:get_line_meta_data("dates")
@@ -126,18 +141,32 @@ function DateTimePicker:open(date)
       end
 
       if date_result and self.select_time then
-        vim.ui.input({
-          prompt = "Time: ",
-          cancelreturn = nil,
-        }, function(input)
 
-          if input and input:find(":") == nil then
-            input = input:sub(0,2) .. ":00"
+        for _, time_option in ipairs(self.time_options) do
+          self.time_tram:line("    " .. time_option, {})
+        end
+
+        self.time_float = self.time_tram:open_float({
+          title = self.time_title or "Select time",
+          width = 13,
+          height = 7,
+          relative = "editor",
+          row = self.start_row,
+          col = self.start_col + self.width + 10,
+          enter = true,
+        })
+
+        self.time_tram:get_buffer():keymap("n", "q", ":q<CR>", { silent = true })
+        self.time_tram:get_buffer():keymap("n", "<CR>", function()
+
+          local time = self.time_tram:get_buffer():get_line():gsub("%s+", "")
+          if time and time:find(":") == nil then
+            time = time:sub(0,2) .. ":00"
           end
 
-          if input then
+          if time then
 
-            local time_parts = vim.split(input, ":")
+            local time_parts = vim.split(time, ":")
             local hour = tonumber(time_parts[1] or 0)
             local minute = tonumber(time_parts[2] or 0)
             local second = tonumber(time_parts[3] or 0)
@@ -148,14 +177,53 @@ function DateTimePicker:open(date)
               second = second,
             })
 
+            self.time_tram:close_float(self.time_float)
+
           end
 
-        end)
+          if type(self.on_select_callback) == "function" then
+            self.on_select_callback(date_result, self)
+          end
+
+        end, { silent = true })
+
+        -- if type(self.on_select_callback) == "function" then
+        --   self.on_select_callback(date_result, self)
+        -- end
+
+        -- vim.ui.input({
+        --   prompt = "Time: ",
+        --   cancelreturn = nil,
+        -- }, function(input)
+        --
+        --   if input and input:find(":") == nil then
+        --     input = input:sub(0,2) .. ":00"
+        --   end
+        --
+        --   if input then
+        --
+        --     local time_parts = vim.split(input, ":")
+        --     local hour = tonumber(time_parts[1] or 0)
+        --     local minute = tonumber(time_parts[2] or 0)
+        --     local second = tonumber(time_parts[3] or 0)
+        --
+        --     date_result:set({
+        --       hour = hour,
+        --       minute = minute,
+        --       second = second,
+        --     })
+        --
+        --   end
+
+        -- end)
+      else
+
+        if type(self.on_select_callback) == "function" then
+          self.on_select_callback(date_result, self)
+        end
+
       end
 
-      if type(self.on_select_callback) == "function" then
-        self.on_select_callback(date_result, self)
-      end
     end
 
   end, { silent = true })
