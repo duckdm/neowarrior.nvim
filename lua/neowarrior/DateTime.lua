@@ -32,6 +32,48 @@ function DateTime:new(input)
   return datetime
 end
 
+function DateTime:copy()
+  return DateTime:new(self.date)
+end
+
+--- Add time to date
+---@param unit "years"|"months"|"days"|"hours"|"minutes"|"seconds"
+---@param value 
+function DateTime:add(unit, value)
+
+  if unit == "years" then
+    self.date:addyears(value)
+  elseif unit == "months" then
+    self.date:addmonths(value)
+  elseif unit == "days" then
+    self.date:adddays(value)
+  elseif unit == "hours" then
+    self.date:addhours(value)
+  elseif unit == "minutes" then
+    self.date:addminutes(value)
+  elseif unit == "seconds" then
+    self.date:addseconds(value)
+  end
+
+  return self
+end
+
+function DateTime:set(values)
+
+    if values.year then self.date:setyear(values.year) end
+    if values.month then self.date:setmonth(values.month) end
+    if values.day then self.date:setday(values.day) end
+    if values.hour then self.date:sethours(values.hour) end
+    if values.minute then self.date:setminutes(values.minute) end
+    if values.second then self.date:setseconds(values.second) end
+
+    return self
+end
+
+function DateTime:weekday()
+  return self.date:getweekday()
+end
+
 --- Format date
 ---@param format string
 ---@return string|osdate
@@ -64,30 +106,30 @@ end
 function DateTime:relative()
 
   local diff = self:diff_object()
-  local years = math.ceil(diff:spandays()) and math.ceil(diff:spandays() / 365) or 0
-  local months = math.ceil(diff:spandays()) and math.ceil(diff:spandays() / 30) or 0
-  local days = math.ceil(diff:spandays()) and math.ceil(diff:spandays()) or 0
-  local hours = math.ceil(diff:spanhours()) and math.ceil(diff:spanhours()) or 0
-  local minutes = math.ceil(diff:spanminutes()) and math.ceil(diff:spanminutes()) or 0
+  local years = math.floor(diff:spandays()) and math.floor(diff:spandays() / 365) or 0
+  local months = math.floor(diff:spandays()) and math.floor(diff:spandays() / 30) or 0
+  local days = math.floor(diff:spandays()) and math.floor(diff:spandays()) or 0
+  local hours = math.floor(diff:spanhours()) and math.floor(diff:spanhours()) or 0
+  local minutes = math.floor(diff:spanminutes()) and math.floor(diff:spanminutes()) or 0
   local seconds = diff:spanseconds()
 
-  if years > 1 or years < 0 then
+  if years >= 1 or years < 0 then
     return years .. "y"
   end
 
-  if months > 1 or months < 0 then
+  if months >= 1 or months < 0 then
     return months .. "mon"
   end
 
-  if days > 1 or days < 0 then
+  if days >= 1 or days < 0 then
     return days .. "d"
   end
 
-  if hours > 1 or hours < 0 then
+  if hours >= 1 or hours < 0 then
     return hours .. "h"
   end
 
-  if minutes > 1 or minutes < 0 then
+  if minutes >= 1 or minutes < 0 then
     return minutes .. "m"
   end
 

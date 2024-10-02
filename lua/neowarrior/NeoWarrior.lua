@@ -20,6 +20,7 @@ local Project = require('neowarrior.Project')
 local ProjectCollection = require('neowarrior.ProjectCollection')
 local ProjectLine = require('neowarrior.lines.ProjectLine')
 local util = require('neowarrior.util')
+local DateTimePicker = require('neowarrior.DateTimePicker')
 
 ---@class NeoWarrior
 ---@field public version string
@@ -1254,35 +1255,7 @@ function NeoWarrior:set_keymaps()
   --- Modify task due date
   if self.config.keys.modify_due then
     vim.keymap.set("n", self.config.keys.modify_due, function()
-      self:close_floats()
-      self.buffer:save_cursor()
-      local uuid = nil
-      if self.current_task then
-        uuid = self.current_task.uuid
-      else
-        uuid = self.buffer:get_meta_data('uuid')
-      end
-      if uuid then
-        local task = self.tw:task(uuid)
-        self.buffer:save_cursor()
-        local prompt = "Task due date: "
-        vim.ui.input({
-          prompt = prompt,
-          cancelreturn = nil,
-        }, function(input)
-          if input then
-            self.tw:modify(task, "due:" .. input)
-            if self.current_task then
-              self:task(self.current_task.uuid)
-            else
-              self:refresh()
-              self:list()
-            end
-            self.buffer:restore_cursor()
-          end
-        end)
-        self.buffer:restore_cursor()
-      end
+      self:modify_due()
     end, default_keymap_opts)
   end
 
@@ -1731,6 +1704,47 @@ function NeoWarrior:open(opts)
   self:list()
 
   return self
+end
+
+function NeoWarrior:modify_due()
+
+  self:close_floats()
+  self.buffer:save_cursor()
+
+  local result = nil
+  local uuid = nil
+  if self.current_task then
+    uuid = self.current_task.uuid
+  else
+    uuid = self.buffer:get_meta_data('uuid')
+  end
+
+  local dtp = DateTimePicker:new({
+
+    select_time = true,
+    on_select = function(date, dtp)
+
+      if date and uuid then
+        local task = self.tw:task(uuid)
+        self.buffer:save_cursor()
+        self.tw:modify(task, "due:" .. date:format("%Y%m%dT%H%M%SZ"))
+        if self.current_task then
+          self:task(self.current_task.uuid)
+        else
+          self:refresh()
+          self:list()
+        end
+        self.buffer:restore_cursor()
+      end
+
+      dtp:close()
+
+    end,
+
+  })
+
+  dtp:open();
+
 end
 
 --- Close neowarrior
