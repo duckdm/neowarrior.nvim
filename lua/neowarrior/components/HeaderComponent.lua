@@ -129,8 +129,17 @@ function HeaderComponent:set()
 
   if nw.config.header.enable_current_filter and self.filter_enabled then
 
+    local filter_name = nw.current_filter or ""
+
+    for _, filter in ipairs(nw.config.filters) do
+      if filter.filter == filter_name then
+        filter_name = filter.name
+        break
+      end
+    end
+
     self.tram:col("(" .. keys.select_filter .. ")filter: ", "")
-    self.tram:col(nw.current_filter, _Neowarrior.config.colors.warning.group)
+    self.tram:col(filter_name, _Neowarrior.config.colors.warning.group)
 
     if nw.config.header.enable_current_sort then
       self.tram:col(" [" .. nw.current_sort .. ", " .. nw.current_sort_direction .. "]", nw.config.colors.info.group)
