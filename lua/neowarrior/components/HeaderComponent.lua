@@ -131,6 +131,11 @@ function HeaderComponent:set()
 
     self.tram:col("(" .. keys.select_filter .. ")filter: ", "")
     self.tram:col(nw.current_filter, _Neowarrior.config.colors.warning.group)
+
+    if nw.config.header.enable_current_sort then
+      self.tram:col(" [" .. nw.current_sort .. ", " .. nw.current_sort_direction .. "]", nw.config.colors.info.group)
+    end
+
     if not self.disable_meta then
       self.tram:into_line({
         meta = { action = 'filter' }

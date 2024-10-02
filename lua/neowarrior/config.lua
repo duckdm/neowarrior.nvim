@@ -69,6 +69,8 @@ return {
     enable_current_view = true,
     ---@type boolean Whether to show the current filter at the top
     enable_current_filter = true,
+    ---@type boolean Whether to show the current sort option on the filter line
+    enable_current_sort = false,
     ---@type boolean|table Show task info. Disable with false.
     task_info = {
       { text = "Tasks: " },
