@@ -85,6 +85,7 @@ function M:open_float(opts)
 
     local float = Float:new(self, vim.tbl_extend('force', {
         title = nil,
+        title_pos = "center",
         width = 10,
         col = 0,
         row = 1,

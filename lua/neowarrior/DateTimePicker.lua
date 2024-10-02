@@ -8,6 +8,9 @@ local DateTime = require("neowarrior.DateTime")
 ---@field select_time boolean
 ---@field on_select_callback nil|function
 ---@field mark table
+---@field title string
+---@field row number
+---@field col number
 ---@field on_select fun(self: DateTimePicker, callback: function): self
 ---@field open fun(self: DateTimePicker, date: string?): self
 ---@field close fun(self: DateTimePicker, ): self
@@ -28,6 +31,9 @@ function DateTimePicker:new(opts)
   date_time_picker.select_date = opts and opts.select_date or true
   date_time_picker.select_time = opts and opts.select_time or false
   date_time_picker.mark = opts and opts.mark or {}
+  date_time_picker.title = opts and opts.title or nil
+  date_time_picker.row = opts and opts.row or 0
+  date_time_picker.col = opts and opts.col or 0
 
   return date_time_picker
 end
@@ -80,11 +86,12 @@ function DateTimePicker:open(date)
 
   if not self.float then
     self.float = self.tram:open_float({
+      title = self.title,
       width = 30,
       height = 7,
-      relative = "editor",
-      row = 2,
-      col = 2,
+      relative = "cursor",
+      row = self.row,
+      col = self.col,
       enter = true,
     })
   else
@@ -124,20 +131,24 @@ function DateTimePicker:open(date)
           cancelreturn = nil,
         }, function(input)
 
-          if input:find(":") == nil then
+          if input and input:find(":") == nil then
             input = input:sub(0,2) .. ":00"
           end
 
-          local time_parts = vim.split(input, ":")
-          local hour = tonumber(time_parts[1] or 0)
-          local minute = tonumber(time_parts[2] or 0)
-          local second = tonumber(time_parts[3] or 0)
+          if input then
 
-          date_result:set({
-            hour = hour,
-            minute = minute,
-            second = second,
-          })
+            local time_parts = vim.split(input, ":")
+            local hour = tonumber(time_parts[1] or 0)
+            local minute = tonumber(time_parts[2] or 0)
+            local second = tonumber(time_parts[3] or 0)
+
+            date_result:set({
+              hour = hour,
+              minute = minute,
+              second = second,
+            })
+
+          end
 
         end)
       end

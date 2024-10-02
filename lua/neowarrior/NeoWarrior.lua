@@ -1728,6 +1728,9 @@ function NeoWarrior:modify_due()
 
   self.dtp = DateTimePicker:new({
 
+    row = 0,
+    col = 2,
+    title = "Select due date",
     select_time = true,
     mark = {
       { date = task and task.due_dt or nil, }
@@ -1746,7 +1749,7 @@ function NeoWarrior:modify_due()
         self.buffer:restore_cursor()
       end
 
-      self.dtp:close()
+      dtp:close()
 
     end,
 
