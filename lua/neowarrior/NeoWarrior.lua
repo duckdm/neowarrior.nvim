@@ -1737,6 +1737,8 @@ function NeoWarrior:modify_due()
     },
     on_select = function(date, dtp)
 
+      dtp:close()
+
       if date and task then
         self.buffer:save_cursor()
         self.tw:modify(task, "due:" .. date:format("%Y%m%dT%H%M%SZ"))
@@ -1746,10 +1748,9 @@ function NeoWarrior:modify_due()
           self:refresh()
           self:list()
         end
-        self.buffer:restore_cursor()
       end
 
-      dtp:close()
+      self.buffer:restore_cursor()
 
     end,
 
