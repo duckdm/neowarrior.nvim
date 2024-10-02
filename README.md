@@ -221,6 +221,8 @@ require('neowarrior').focus()
     enable_current_view = true,
     ---@type boolean Whether to show the current filter at the top
     enable_current_filter = true,
+    ---@type boolean Whether to show the current sort option on the filter line
+    enable_current_sort = false,
     ---@type boolean|table Show task info. Disable with false.
     task_info = {
       { text = "Tasks: " },
@@ -319,6 +321,8 @@ require('neowarrior').focus()
     project = { group = "NeoWarriorGroup", fg = "#00aaff", bg = nil },
     annotation = { group = "NeoWarriorAnnotation", fg = "#00aaff", bg = nil },
     tag = { group = "NeoWarriorTag", fg = "#ffffff", bg = "#333333" },
+    current_date = { group = "NeoWarriorCurrentDate", fg = "#000000", bg = "#00aaff" },
+    marked_date = { group = "NeoWarriorMarkedDate", fg = "#ffffff", bg = "#00aa66" },
   },
   --- Example using builtin highlight groups:
   -- colors = {
@@ -423,6 +427,12 @@ require('neowarrior').focus()
     { name = "Has priority", filter = "priority.not:" },
     { name = "Has no project", filter = "project:" },
     { name = "Has project", filter = "project.not:" },
+    {
+      name = "Est. under 1 hour, this week",
+      filter = "\\(est.before:1 and est.not: \\) and \\(due.before:7d or due: \\)",
+      sort = "estimate",
+      sort_order = "asc",
+    },
   },
 
   ---@type table Task sort options for selects.
@@ -463,6 +473,8 @@ require('neowarrior').focus()
     modify_select_project = 'Mp', --- Modify project
     modify_select_priority = 'MP', --- Modify priority
     modify_due = 'MD', --- Modify due date
+    next_tab = "L", --- Tab navigation, next tab
+    prev_tab = "H", --- Tab navigation, previous tab
   },
 
   ---@type table Default icons

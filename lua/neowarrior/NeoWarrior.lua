@@ -1882,7 +1882,7 @@ function NeoWarrior:filter_select()
         end
 
         return {
-          value = entry.filter,
+          value = entry,
           display = entry.name .. " (" .. entry.filter .. ")",
           ordinal = entry.name .. " " .. entry.filter,
         }
@@ -1896,8 +1896,24 @@ function NeoWarrior:filter_select()
         actions.close(prompt_bufnr)
         local selection = action_state.get_selected_entry()
         local new_filter = prompt
+        local current_sort = self.current_sort
+        local current_sort_direction = self.current_sort_direction
         if selection and selection.value then
-          new_filter = selection.value
+
+          new_filter = selection.value.filter
+
+          if selection.value.sort then
+            self.current_sort = selection.value.sort
+          else
+            self.current_sort = current_sort
+          end
+
+          if selection.value.sort_order then
+            self.current_sort_direction = selection.value.sort_order
+          else
+            self.current_sort_direction = current_sort_direction
+          end
+
         end
         self.current_filter = new_filter
         self:refresh()

@@ -275,6 +275,12 @@ return {
     { name = "Has priority", filter = "priority.not:" },
     { name = "Has no project", filter = "project:" },
     { name = "Has project", filter = "project.not:" },
+    {
+      name = "Est. under 1 hour, this week",
+      filter = "\\(est.before:1 and est.not: \\) and \\(due.before:7d or due: \\)",
+      sort = "estimate",
+      sort_order = "asc",
+    },
   },
 
   ---@type table Task sort options for selects.
