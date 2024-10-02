@@ -276,6 +276,12 @@ return {
     { name = "Has no project", filter = "project:" },
     { name = "Has project", filter = "project.not:" },
     {
+      name = "Overdue",
+      filter = "due.before:today and status:pending",
+      sort = "due",
+      sort_order = "asc",
+    },
+    {
       name = "Est. under 1 hour, this week",
       filter = "\\(est.before:1 and est.not: \\) and \\(due.before:7d or due: \\)",
       sort = "estimate",
