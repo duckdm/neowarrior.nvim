@@ -27,9 +27,12 @@ local util = require('neowarrior.util')
 ---@field public user_config NeoWarrior.Config
 ---@field public buffer Buffer
 ---@field public window Window|nil
+---@field public about_float Float|nil
 ---@field public help_float Float|nil
 ---@field public task_float Float|nil
 ---@field public task_floats Float[]
+---@field public project_float Float|nil
+---@field public project_floats Float[]
 ---@field public tw Taskwarrior
 ---@field public tasks TaskCollection
 ---@field public all_tasks TaskCollection
@@ -42,11 +45,14 @@ local util = require('neowarrior.util')
 ---@field public project_tree table
 ---@field public toggled_trees table
 ---@field public current_filter string
+---@field public current_sort string
+---@field public current_sort_direction string
 ---@field public current_report string
 ---@field public current_mode string
 ---@field public key_descriptions table
 ---@field public current_task Task
 ---@field public keys table
+---@field public task_cache table
 ---@field public new fun(self: NeoWarrior): NeoWarrior
 ---@field public setup fun(self: NeoWarrior, config: NeoWarrior.Config): NeoWarrior
 ---@field public init fun(self: NeoWarrior): NeoWarrior
@@ -78,14 +84,17 @@ function NeoWarrior:new()
     setmetatable(neowarrior, self)
     self.__index = self
 
-    neowarrior.version = "v0.2.1"
+    neowarrior.version = "v0.3.0"
     neowarrior.config = nil
     neowarrior.user_config = nil
     neowarrior.buffer = nil
     neowarrior.window = nil
+    neowarrior.about_float = nil
     neowarrior.help_float = nil
     neowarrior.task_float = nil
     neowarrior.task_floats = {}
+    neowarrior.project_float = nil
+    neowarrior.project_floats = {}
     neowarrior.tw = Taskwarrior:new()
     neowarrior.tasks = TaskCollection:new()
     neowarrior.all_tasks = TaskCollection:new()
@@ -98,15 +107,18 @@ function NeoWarrior:new()
     neowarrior.project_tree = {}
     neowarrior.toggled_trees = {}
     neowarrior.current_filter = nil
+    neowarrior.current_sort = 'urgency'
+    neowarrior.current_sort_direction = 'desc'
     neowarrior.current_report = nil
     neowarrior.current_mode = nil
     neowarrior.current_task = nil
+    neowarrior.task_cache = {}
     neowarrior.keys = {
       {
         name = nil,
         keys = {
           { key = 'help', sort = 0, desc = 'Help' },
-          { key = 'close_help', sort = 1, desc = 'Close help' },
+          { key = 'close', sort = 2, desc = 'Close NeoWarrior/Close help' },
         }
       },
 
@@ -129,6 +141,8 @@ function NeoWarrior:new()
       {
         name = 'Reports and filters',
         keys = {
+          { key = 'search', sort = 28, desc = 'Search all tasks' },
+          { key = 'select_sort', sort = 29, desc = 'Select task sorting' },
           { key = 'select_report', sort = 30, desc = 'Select report' },
           { key = 'select_filter', sort = 31, desc = 'Select filter' },
           { key = 'filter', sort = 32, desc = 'Filter input' },
@@ -170,15 +184,27 @@ function NeoWarrior:setup(config)
     self.user_config
   )
   if self.config.dir_setup and util.table_size(self.config.dir_setup) > 0 then
+
     local cwd = vim.uv.cwd()
+
     for _, dir_setup in ipairs(self.config.dir_setup) do
-      if dir_setup.dir == cwd then
+
+      local path = dir_setup.dir or nil
+      local match = dir_setup.match or nil
+
+      if cwd and match and cwd:find(match) then
+        self.config = vim.tbl_deep_extend('force', self.config, dir_setup)
+      elseif cwd and path and path == cwd then
         self.config = vim.tbl_deep_extend('force', self.config, dir_setup)
       end
+
     end
+
   end
 
   --- For reset purposes
+  self.config.default_sort = self.config.sort or "urgency"
+  self.config.default_sort_direction = self.config.sort_direction or "desc"
   self.config.default_filter = self.config.filter or ""
   self.config.default_report = self.config.report or "next"
 
@@ -196,6 +222,10 @@ function NeoWarrior:close_floats()
     self.task_float:close()
   end
 
+  if self.project_float then
+    self.project_float:close()
+  end
+
   if self.help_float then
     self.help_float:close()
   end
@@ -209,24 +239,35 @@ function NeoWarrior:close_floats()
     self.task_floats = {}
   end
 
+  if util.table_size(self.project_floats) > 0 then
+    for _, float in ipairs(self.project_floats) do
+      if float then
+        float:close()
+      end
+    end
+    self.project_floats = {}
+  end
+
 end
 
 --- Setup auto commands
 function NeoWarrior:setup_autocmds()
 
-  if self.config.float.enabled and self.config.float.enabled == true then
+  vim.api.nvim_create_autocmd('CursorMoved', {
+    group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
+    callback = function()
 
-    vim.api.nvim_create_autocmd('CursorMoved', {
-      group = vim.api.nvim_create_augroup('neowarrior-cursor-move', { clear = true }),
-      callback = function()
+      self:close_floats()
+      self.task_float = nil
+      self.project_float = nil
 
-        self:close_floats()
+    end,
+  })
 
-      end,
-    })
+  if self.config.task_float.enabled == true then
 
     --- Delay before task float is shown
-    vim.o.updatetime = self.config.float.delay
+    vim.o.updatetime = self.config.task_float.delay
     vim.api.nvim_create_autocmd('CursorHold', {
       group = vim.api.nvim_create_augroup('neowarrior-cursor-hold', { clear = true }),
       callback = function()
@@ -238,6 +279,105 @@ function NeoWarrior:setup_autocmds()
 
   end
 
+  if self.config.project_float.enabled == true then
+
+    --- Delay before task float is shown
+    vim.o.updatetime = self.config.project_float.delay
+    vim.api.nvim_create_autocmd('CursorHold', {
+      group = vim.api.nvim_create_augroup('neowarrior-cursor-hold', { clear = true }),
+      callback = function()
+
+          self:open_project_float()
+
+      end,
+    })
+
+  end
+
+end
+
+--- Show task float
+function NeoWarrior:open_project_float()
+
+  local project_id = self.buffer:get_meta_data('project')
+
+  if project_id then
+
+    local max_width = self.config.task_float.max_width
+    local win_width = self.window:get_width()
+    local width = max_width
+    local anchor = 'SW'
+    local cursor = self.buffer:get_cursor()
+    local row = 0
+    local col = 0 - cursor[2]
+    if cursor[1] <= 10 then
+      anchor = 'NW'
+      row = 1
+    end
+    if win_width < max_width then
+      width = win_width
+    end
+
+    local project = self.all_projects:find(project_id)
+
+    local tram = Tram:new()
+    ProjectLine:new(tram, project):into_line({
+      disable_meta = true,
+    })
+    tram:into_line({})
+
+    tram:nl()
+
+    tram:col("Tasks: ", "")
+    tram:col(project.task_count, _Neowarrior.config.colors.info.group)
+    tram:into_line({})
+
+    tram:nl()
+
+    tram:col("Avg. urgency: ", "")
+    tram:col(project.urgency.average, colors.get_urgency_color(project.urgency.average))
+    tram:into_line({})
+
+    tram:col("Total urgency: ", "")
+    tram:col(project.urgency.total, colors.get_urgency_color(project.urgency.total))
+    tram:into_line({})
+
+    tram:col("Max urgency: ", "")
+    tram:col(project.urgency.max, colors.get_urgency_color(project.urgency.max))
+    tram:into_line({})
+
+    tram:col("Min urgency: ", "")
+    tram:col(project.urgency.min, colors.get_urgency_color(project.urgency.min))
+    tram:into_line({})
+
+    tram:nl()
+
+    tram:col("Avg. estimate: ", "")
+    tram:col(project.estimate.average, colors.get_urgency_color(project.estimate.average))
+    tram:into_line({})
+
+    tram:col("Total estimate: ", "")
+    tram:col(project.estimate.total, colors.get_urgency_color(project.estimate.total))
+    tram:into_line({})
+
+    tram:col("Max estimate: ", "")
+    tram:col(project.estimate.max, colors.get_urgency_color(project.estimate.max))
+    tram:into_line({})
+
+    tram:col("Min estimate: ", "")
+    tram:col(project.estimate.min, colors.get_urgency_color(project.estimate.min))
+    tram:into_line({})
+
+    self.project_float = tram:open_float({
+      relative = 'cursor',
+      width = width,
+      col = col,
+      row = row,
+      enter = false,
+      anchor = anchor,
+    })
+    table.insert(self.project_floats, self.project_float)
+  end
 end
 
 --- Show task float
@@ -248,7 +388,7 @@ function NeoWarrior:open_task_float()
   if description then
 
     local uuid = self.buffer:get_meta_data('uuid')
-    local max_width = self.config.float.max_width
+    local max_width = self.config.task_float.max_width
     local win_width = self.window:get_width()
     local width = max_width
     local anchor = 'SW'
@@ -314,10 +454,10 @@ function NeoWarrior:open_task_float()
         tram:line('Priority: ' .. task.priority, { color = priority_color })
       end
 
-      if task.due then
-        local due_relative = task.due:relative()
-        local due_hours = task.due:relative_hours()
-        local due_formatted = task.due:default_format()
+      if task.due_dt then
+        local due_relative = task.due_dt:relative()
+        local due_hours = task.due_dt:relative_hours()
+        local due_formatted = task.due_dt:default_format()
         tram:line('Due: ' .. due_relative .. " (" .. due_formatted .. ")", { color = colors.get_due_color(due_hours) })
       end
 
@@ -332,6 +472,7 @@ function NeoWarrior:open_task_float()
         row = row,
         enter = false,
         anchor = anchor,
+        zindex = 101,
       })
       table.insert(self.task_floats, self.task_float)
 
@@ -339,10 +480,13 @@ function NeoWarrior:open_task_float()
   end
 
 end
+
 --- Init neowarrior
 ---@return NeoWarrior
 function NeoWarrior:init()
 
+  self.current_sort = self.config.sort
+  self.current_sort_direction = self.config.sort_direction
   self.current_mode = self.config.mode
   self.current_report = self.config.report
   self.current_filter = self.config.filter
@@ -365,15 +509,17 @@ end
 ---@return NeoWarrior
 function NeoWarrior:refresh()
 
+  self.task_cache = {}
+
   self.all_pending_tasks = self.tw:tasks('all', 'status:pending')
-  self.all_pending_tasks:sort('urgency')
+  self.all_pending_tasks:sort(self.current_sort, self.current_sort_direction)
 
   self.all_tasks = self.tw:tasks('all', 'description.not:')
-  self.all_tasks:sort('urgency')
+  self.all_tasks:sort(self.current_sort, self.current_sort_direction)
   self.all_project_names = util.extract('project', self.all_tasks:get())
 
   self.tasks = self.tw:tasks(self.current_report, self.current_filter)
-  self.tasks:sort('urgency')
+  self.tasks:sort(self.current_sort, self.current_sort_direction)
 
   self.project_names = util.extract('project', self.tasks:get())
 
@@ -402,17 +548,22 @@ function NeoWarrior:refresh()
 end
 
 --- Focus on neowarrior window
+---@return boolean Returns false if no neowarrior window was found
 function NeoWarrior:focus()
 
   local windows = vim.api.nvim_list_wins()
   for _, handle in ipairs(windows) do
     local buf_handle = vim.api.nvim_win_get_buf(handle)
     local buf_name = vim.api.nvim_buf_get_name(buf_handle)
-    if string.find(buf_name, "neowarrior") then
+    local buf_name_parts = util.split_string(buf_name, '/')
+    local buf_name = buf_name_parts[util.table_size(buf_name_parts)]
+    if buf_name == "neowarrior" then
       vim.api.nvim_set_current_win(handle)
-      return
+      return true
     end
   end
+
+  return false
 end
 
 --- Generate project collection from tasks
@@ -522,12 +673,139 @@ function NeoWarrior:show()
       self:report_select()
     elseif action == 'filter' then
       self:filter_select()
+    elseif action == 'about' then
+      self:open_about()
     end
 
   end
 end
 
---- Show add input
+function NeoWarrior:open_about()
+
+  local tram = Tram:new()
+  tram:col(" NeoWarrior " .. _Neowarrior.version .. " ", _Neowarrior.config.colors.neowarrior.group)
+  tram:col(" by ", "")
+  tram:col(" duckdm ", _Neowarrior.config.colors.neowarrior_inverted.group)
+  tram:into_line({})
+  tram:nl()
+  tram:line("Version: " .. self.version, { color = _Neowarrior.config.colors.info.group })
+  tram:line("License: " .. "GNU GPLv3", { color = _Neowarrior.config.colors.info.group })
+  tram:nl()
+  tram:line("https://github.com/duckdm/neowarrior.nvim", {})
+
+  self.about_float = self:open_float(tram:get_buffer(), {
+    width = 50,
+    height = 7,
+    title = "About NeoWarrior",
+    relative = "editor",
+    enter = false,
+    style = "minimal",
+  })
+
+  tram:print()
+
+end
+
+function NeoWarrior:get_editor_height()
+
+  local windows = vim.api.nvim_list_wins()
+  local max_height = 0
+
+  for _, handle in ipairs(windows) do
+
+    local window_height = vim.api.nvim_win_get_height(handle)
+
+    if window_height > max_height then
+      max_height = window_height
+    end
+
+  end
+
+  return max_height
+end
+
+function NeoWarrior:get_editor_width()
+
+  local windows = vim.api.nvim_list_wins()
+  local max_height = self:get_editor_height()
+  local total_width = 0
+  local first_smaller = true
+
+  for _, handle in ipairs(windows) do
+
+    local window_height = vim.api.nvim_win_get_height(handle)
+    local window_width = vim.api.nvim_win_get_width(handle)
+
+    if window_height == max_height then
+      total_width = total_width + window_width
+      first_smaller = true
+    elseif first_smaller then
+      total_width = total_width + window_width
+      first_smaller = false
+    end
+
+  end
+
+  return total_width
+end
+
+--- Open a float
+---@param buffer Buffer
+---@param opts table
+---@return Window
+function NeoWarrior:open_float(buffer, opts)
+
+  local win_width = self:get_editor_width()
+  local win_height = self:get_editor_height()
+  local width = opts.width or 30
+  local height = opts.height or 20
+
+  if width <= 1 then
+    width = math.floor(win_width * width)
+  end
+
+  if height <= 1 then
+    height = math.floor(win_height * height)
+  end
+
+  if win_width < width then
+    width = win_width
+  end
+  if win_height < height then
+    height = win_height
+  end
+
+  local row = math.floor(win_height / 2) - (height / 2)
+  local col = math.floor(win_width / 2) - (width / 2)
+  local enter = true
+
+  if opts.enter == false or opts.enter == true then
+    enter = opts.enter
+    opts.enter = nil
+  end
+
+  opts = {
+    title = opts.title or nil,
+    title_pos = opts.title_pos or "center",
+    relative = opts.relative or "editor",
+    width = width,
+    height = height,
+    row = opts.row or row,
+    col = opts.col or col,
+    anchor = opts.anchor or "NW",
+    border = opts.border or "rounded",
+    zindex = opts.zindex or 101,
+    style = opts.style or nil,
+  }
+
+  return Window:new({
+    buffer = buffer,
+    enter = enter,
+    win = -1,
+  }, opts)
+
+end
+
 function NeoWarrior:add()
 
   self:close_floats()
@@ -643,7 +921,7 @@ end
 function NeoWarrior:create_user_commands()
 
   vim.api.nvim_create_user_command("NeoWarriorOpen", function(opt)
-    local valid_args = { 'current', 'above', 'below', 'left', 'right' }
+    local valid_args = { 'current', 'above', 'below', 'left', 'right', 'float' }
     local split = opt and opt.fargs and opt.fargs[1] or 'below'
     if not vim.tbl_contains(valid_args, split) then
       split = 'below'
@@ -653,6 +931,14 @@ function NeoWarrior:create_user_commands()
 
   vim.api.nvim_create_user_command("NeoWarriorAdd", function()
     self:add()
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoWarriorDone", function()
+    self:mark_done()
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoWarriorStartStop", function()
+    self:start_stop()
   end, {})
 
   vim.api.nvim_create_user_command("NeoWarriorFilter", function()
@@ -686,11 +972,8 @@ end
 --- TODO: keymap callbacks should call seperate functions in appropriate classes
 function NeoWarrior:set_keymaps()
 
-  if not self.config.keys then
-    return
-  end
+  if not self.config.keys then return end
 
-  -- local opts = { noremap = true, silent = true }
   local default_keymap_opts = {
     buffer = self.buffer.id,
     noremap = true,
@@ -708,6 +991,20 @@ function NeoWarrior:set_keymaps()
   if self.config.keys.help then
     vim.keymap.set("n", self.config.keys.help, function()
       self:open_help()
+    end, default_keymap_opts)
+  end
+
+  -- Close help float
+  if self.config.keys.close then
+    vim.keymap.set("n", self.config.keys.close, function()
+      if self.help_float then
+        self:close_help()
+      elseif self.about_float then
+        self.about_float:close()
+        self.about_float = nil
+      else
+        self:close()
+      end
     end, default_keymap_opts)
   end
 
@@ -735,6 +1032,8 @@ function NeoWarrior:set_keymaps()
   -- Reset filtera and report
   if self.config.keys.reset then
     vim.keymap.set("n", self.config.keys.reset, function()
+      self.current_sort = self.config.default_sort
+      self.current_sort_direction = self.config.default_sort_direction
       self.current_filter = self.config.default_filter
       self.current_report = self.config.default_report
       self:refresh()
@@ -817,6 +1116,63 @@ function NeoWarrior:set_keymaps()
     end, default_keymap_opts)
     vim.keymap.set("n", self.config.keys.enter, function()
       self:show()
+    end, default_keymap_opts)
+  end
+
+  if self.config.keys.search then
+    vim.keymap.set("n", self.config.keys.search, function()
+      self:close_floats()
+      self.buffer:save_cursor()
+      local telescope_opts = require("telescope.themes").get_dropdown({})
+      local icons = _Neowarrior.config.icons
+      pickers.new(telescope_opts, {
+        prompt_title = "Search tasks",
+        finder = finders.new_table({
+          results = self.all_tasks:get(),
+          entry_maker = function(entry)
+
+            local task_line = ""
+            local status_ordinal = 0
+
+            if entry.status ~= 'pending' then
+              local status_icon = ""
+              if entry.status == "completed" then
+                status_icon = icons.task_completed .. " "
+              end
+              if entry.status == "deleted" then
+                status_icon = icons.deleted .. " "
+              end
+              task_line = task_line .. "[" .. status_icon .. entry.status .. "] "
+            end
+
+            task_line = task_line .. entry.description
+
+            if entry.status == 'completed' then status_ordinal = 100 end
+            if entry.status == 'deleted' then status_ordinal = 1000 end
+
+            task_line = task_line .. " (" .. icons.project .. " " .. entry.project .. ")"
+
+            return {
+              value = entry.uuid,
+              display = task_line,
+              ordinal = status_ordinal .. entry.description .. entry.project,
+            }
+
+          end,
+        }),
+        sorter = conf.generic_sorter(telescope_opts),
+        attach_mappings = function(prompt_bufnr)
+          actions.select_default:replace(function()
+            actions.close(prompt_bufnr)
+            local selection = action_state.get_selected_entry()
+            if selection and selection.value then
+              self:task(selection.value)
+            end
+          end)
+          return true
+        end,
+      })
+      :find()
     end, default_keymap_opts)
   end
 
@@ -995,8 +1351,8 @@ function NeoWarrior:set_keymaps()
     end, default_keymap_opts)
   end
 
-  local task_float_key = self.config.float.enabled or nil
-  local project_float_key = self.config.project_float and self.config.project_float.enabled or nil
+  local task_float_key = self.config.task_float.enabled or nil
+  local project_float_key = self.config.project_float.enabled or nil
 
   --- Show task float
   if type(task_float_key) == "string" then
@@ -1059,6 +1415,50 @@ function NeoWarrior:set_keymaps()
     vim.keymap.set("n", self.config.keys.refresh, '<Cmd>NeoWarriorRefresh<CR>', default_keymap_opts)
   end
 
+  -- Select task sorting
+  if self.config.keys.select_sort then
+    vim.keymap.set("n", self.config.keys.select_sort, function()
+      self:sort_select()
+    end, default_keymap_opts)
+  end
+
+end
+
+function NeoWarrior:sort_select()
+
+  self.buffer:save_cursor()
+  self:close_floats()
+
+  local sort_options = self.config.task_sort_options or {}
+  local telescope_opts = require("telescope.themes").get_dropdown({})
+
+  pickers.new(telescope_opts, {
+    prompt_title = "Select task sort order",
+    finder = finders.new_table({
+      results = sort_options,
+      entry_maker = function(entry)
+        return {
+          value = entry,
+          display = entry.name,
+          ordinal = entry.name,
+        }
+      end,
+    }),
+    sorter = conf.generic_sorter(telescope_opts),
+    attach_mappings = function(prompt_bufnr)
+      actions.select_default:replace(function()
+        actions.close(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        self.current_sort = selection.value.key
+        self.current_sort_direction = selection.value.direction or "desc"
+        self:refresh()
+        self:list()
+        self.buffer:restore_cursor()
+      end)
+      return true
+    end,
+  })
+  :find()
 end
 
 --- Start/stop task
@@ -1079,7 +1479,7 @@ function NeoWarrior:start_stop()
     task = self.tw:task(uuid)
   end
 
-  if task and task.start then
+  if task and task.start_dt then
 
     self.tw:stop(task)
     self:refresh()
@@ -1111,7 +1511,7 @@ function NeoWarrior:open_help()
 
   local tram = Tram:new()
   local width = 0
-  local win_width = self.window:get_width()
+  local win_width = self:get_editor_width()
   local pad = 0
   local key_length = 0
   local sep_length = 4
@@ -1127,7 +1527,7 @@ function NeoWarrior:open_help()
 
   pad = pad + 2
 
-  tram:line(' ', '')
+  tram:line(' ', {})
 
   for _, group in ipairs(self.keys) do
 
@@ -1149,7 +1549,7 @@ function NeoWarrior:open_help()
       end
     end
 
-    tram:line(' ', '')
+    tram:line(' ', {})
 
   end
 
@@ -1157,7 +1557,7 @@ function NeoWarrior:open_help()
   self.help_float = tram:open_float({
     title = 'NeoWarrior help',
     width = width,
-    col = math.floor((win_width - width) / 2),
+    col = math.floor(win_width / 2) - (width),
     row = 5,
   })
 
@@ -1228,7 +1628,7 @@ end
 function NeoWarrior:sort_tree(project)
 
     project.projects:sort('urgency.average')
-    project.tasks:sort('urgency')
+    project.tasks:sort(self.current_sort, self.current_sort_direction)
 
     for _, p in ipairs(project.projects:get()) do
         self:sort_tree(p)
@@ -1263,6 +1663,10 @@ function NeoWarrior:open(opts)
   self:set_keymaps()
   self:setup_autocmds()
 
+  if self:focus() then
+    return self
+  end
+
   if split == 'current' then
 
     vim.api.nvim_set_current_buf(self.buffer.id)
@@ -1279,13 +1683,51 @@ function NeoWarrior:open(opts)
       win = 0
     end
 
+    opts = {
+      split = split,
+    }
+
+    if split == "float" then
+
+      local win_width = vim.api.nvim_win_get_width(0)
+      local win_height = vim.api.nvim_win_get_height(0)
+      local width = self.config.float.width
+      local height = self.config.float.height
+
+      if width <= 1 then
+        width = math.floor(win_width * width)
+      end
+
+      if height <= 1 then
+        height = math.floor(win_height * height)
+      end
+
+      if win_width < width then
+        width = win_width
+      end
+      if win_height < height then
+        height = win_height
+      end
+      local row = math.floor(win_height / 2) - (height / 2)
+      local col = math.floor(win_width / 2) - (width / 2)
+
+      opts = {
+        relative = "win",
+        width = width,
+        height = height,
+        row = row,
+        col = col,
+        anchor = "NW",
+        border = "rounded",
+      }
+
+    end
+
     self.window = Window:new({
       buffer = self.buffer,
       win = win,
       enter = true,
-    }, {
-      split = split,
-    })
+    }, opts)
 
   end
 
@@ -1309,6 +1751,14 @@ function NeoWarrior:open(opts)
   self:list()
 
   return self
+end
+
+--- Close neowarrior
+function NeoWarrior:close()
+
+  self:close_floats()
+  self.window:close()
+
 end
 
 --- List tasks
@@ -1365,19 +1815,45 @@ end
 
 --- Open telescope filter selection
 function NeoWarrior:filter_select()
+
   self.buffer:save_cursor()
   self:close_floats()
+
   local opts = require("telescope.themes").get_dropdown({})
   local filters = self.config.filters
+  local icons = _Neowarrior.config.icons
+
   for _, project in ipairs(self.all_projects:get()) do
-    table.insert(filters, "project:" .. project.name)
-    table.insert(filters, "project.not:" .. project.name)
+    table.insert(filters, {
+      name = icons.project .. " In " .. project.name,
+      filter = "project:" .. project.name
+    })
+    table.insert(filters, {
+      name = icons.project .. " Not in " .. project.name,
+      filter = "project.not:" .. project.name
+    })
   end
-  pickers
-  .new(opts, {
+
+  pickers.new(opts, {
     prompt_title = "Filter",
     finder = finders.new_table({
       results = filters,
+      entry_maker = function(entry)
+
+        if type(entry) ~= "table" then
+          entry = {
+            name = entry,
+            filter = entry,
+          }
+        end
+
+        return {
+          value = entry.filter,
+          display = entry.name .. " (" .. entry.filter .. ")",
+          ordinal = entry.name .. " " .. entry.filter,
+        }
+
+      end,
     }),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
@@ -1386,8 +1862,8 @@ function NeoWarrior:filter_select()
         actions.close(prompt_bufnr)
         local selection = action_state.get_selected_entry()
         local new_filter = prompt
-        if selection and selection[1] then
-          new_filter = selection[1]
+        if selection and selection.value then
+          new_filter = selection.value
         end
         self.current_filter = new_filter
         self:refresh()

@@ -49,10 +49,18 @@ return {
     enable_total_estimate = "eol",
   },
 
+  ---@type boolean|table Add custom colors to specific projects or disable with false.
+  project_colors = {
+    neowarrior = { match = "neowarrior.*", color = "neowarrior" },
+  },
+
   ---@type table Header config
   header = {
-    ---@type string|nil Custom header text (disable with nil)
-    text = "NeoWarrior {version}",
+    ---@type string|table|nil Custom header text (disable with nil)
+    text = {
+      { text = " NeoWarrior ", color = "neowarrior" },
+      { text = " {version} ", color = "neowarrior_inverted" },
+    },
     ---@type boolean Whether to show help line
     enable_help_line = true,
     ---@type boolean Whether to show the current report at the top
@@ -61,6 +69,27 @@ return {
     enable_current_view = true,
     ---@type boolean Whether to show the current filter at the top
     enable_current_filter = true,
+    ---@type boolean|table Show task info. Disable with false.
+    task_info = {
+      { text = "Tasks: " },
+      { text = "{count}", color = "info" },
+      {
+        text = " Due soon: ",
+        tasks = { "next", "due.before:2d and due.after:today" },
+        active = function(tasks) return tasks:count() > 0 end
+      },
+      {
+        text = " {count} ",
+        tasks = { "next", "due.before:2d and due.after:today" },
+        active = function(tasks) return tasks:count() > 0 end,
+        color = function(tasks)
+          if tasks:count() > 3 then
+            return "danger_bg"
+          end
+          return "warning"
+        end,
+      },
+    }
   },
 
   ---@type string Default taskwarrior filter
@@ -72,20 +101,49 @@ return {
   ---@type "normal"|"grouped"|"tree" Default view mode
   mode = "normal",
 
+  ---@type string Default sort option
+  sort = "urgency",
+
+  ---@type string Sort direction, ascending (asc) or descending (desc)
+  sort_direction = "desc",
+
   ---@type boolean Whether to expand all trees at start
   expanded = false,
 
   ---@type string Default project name for tasks without project
   no_project_name = "no-project",
 
-  ---@type table Task float
+  ---@type table NeoWarrior float settings
   float = {
-    ---@type boolean Enable floating window for tasks
+    ---@type number Width of float in columns, or if set to a number below 1,
+    ---it will be calculated as a percentage of the window width.
+    width = 60,
+    ---@type number Height of float in rows, or if set to a number below 1,
+    ---it will be calculated as a percentage of the window height.
+    height = 0.8,
+  },
+
+  ---@type table Task float
+  task_float = {
+    ---@type boolean|string Set to true to enable task float on hover. Alternatively
+    ---you can set it to a key (string) to enable it on key press.
     enabled = true,
+    ---@type number Time in milliseconds before detail float is shown. Only used if
+    ---enabled is set to true.
+    delay = 200,
     ---@type number Max width of float in columns
     max_width = 60,
+  },
+
+  ---@type table Project float
+  project_float = {
+    ---@type boolean|string Set to true to enable project float on hover. Alternatively
+    ---you can set it to a key (string) to enable it on key press.
+    enabled = "e",
     ---@type number Time in milliseconds before detail float is shown
     delay = 200,
+    ---@type number Max width of float in columns
+    max_width = 40,
   },
 
   ---@type number Timezone offset in hours
@@ -97,6 +155,7 @@ return {
   ---disabled/transparent.
   colors = {
     neowarrior = { group = "NeoWarrior", fg = "#3eeafa", bg = "black" },
+    neowarrior_inverted = { group = "NeoWarriorInverted", fg = "black", bg = "#3cc8d7" },
     default = { group = "", fg = nil, bg = nil },
     dim = { group = "NeoWarriorTextDim", fg = "#333333", bg = nil },
     danger = { group = "NeoWarriorTextDanger", fg = "#cc0000", bg = nil },
@@ -126,7 +185,7 @@ return {
 
     ---@type table Urgency breakpoints. Uses equal or greater than for comparison.
     urgency = {
-      { 0, "dim" }, --- Equal or higher than 0
+      { -100, "dim" }, --- Equal or higher than -100
       { 5, "warning" }, --- Equal or higher than 5
       { 10, "danger" }, --- Equal or higher than 10
     },
@@ -161,6 +220,7 @@ return {
   ---to specify a match pattern and color.
   tag_colors = {
     next = "danger_bg", --- matches tags called "next"
+    blocked = "danger_bg", --- matches tags called "blocked"
     version = { match = "v.%..", color = "info_bg" }, -- match v*.*, v1.*, etc.
     version_full = { match = "v.%..%..", color = "info_bg" }, -- match v*.*.*, v1.*.*, etc.
     default = { match = ".*", color = "tag" }, -- match all other tags
@@ -171,8 +231,21 @@ return {
   ---@type nil|string Pad end of tags with this string. Use nil to disable.
   tag_padding_end = nil,
 
-  ---@type table|nil Set config values for specific directories. Most
-  --- config values from this file should work per dir basis too.
+  ---@type table|nil Set config values for specific directories.
+  --- Most config values from this file should work per dir
+  --- basis too. Example:
+  -- dir_setup = {
+  --   {
+  --     dir = HOME .. "/dev/neowarrior",
+  --     mode = "tree",
+  --     --- ... other config values
+  --   },
+  --   {
+  --     match = "neowarrior", --- matches paths with "neowarrior" in the name
+  --     mode = "tree",
+  --     --- ... other config values
+  --   }
+  -- },
   dir_setup = nil,
 
   ---@type table Default reports available (valid taskwarrior reports). Used
@@ -183,14 +256,32 @@ return {
     "ready", "recurring", "summary", "tags", "unblocked", "waiting",
   },
 
-  ---@type table Default filters available (valid taskwarrior filters). Used
+  ---@type string[]|table[] Default filters available (valid taskwarrior filters). Used
   ---in selects.
   filters = {
-    "due:", "due.not:", "\\(due.before:2d and due.not: \\)",
-    "scheduled:", "scheduled.not:", "priority:H",
-    "priority.not:H", "priority:M", "priority.not:M", "priority:L",
-    "priority.not:L", "priority:", "priority.not:", "project:",
-    "project.not:",
+    { name = "Has due date", filter = "due.not:" },
+    { name = "Has no due date", filter = "due:" },
+    { name = "Due today", filter = "\\(due.before:2d and due.not: \\)" },
+    { name = "Is not scheduled", filter = "scheduled:" },
+    { name = "Is scheduled", filter = "scheduled.not:" },
+    { name = "High priority", filter = "priority:H" },
+    { name = "Medium priority", filter = "priority:M" },
+    { name = "Low priority", filter = "priority:L" },
+    { name = "No priority", filter = "priority:" },
+    { name = "Has priority", filter = "priority.not:" },
+    { name = "Has no project", filter = "project:" },
+    { name = "Has project", filter = "project.not:" },
+  },
+
+  ---@type table Task sort options for selects.
+  task_sort_options = {
+    { name = "Urgency", key = "urgency", direction = "desc" },
+    { name = "Due (asc)", key = "due", direction = "asc" },
+    { name = "Due (desc)", key = "due", direction = "desc" },
+    { name = "Scheduled (asc)", key = "scheduled", direction = "asc" },
+    { name = "Sceduled (desc)", key = "schedlued", direction = "desc" },
+    { name = "Estimate (asc)", key = "estimate", direction = "asc" },
+    { name = "Estimate (desc)", key = "estimate", direction = "desc" },
   },
 
   ---@type table Default key mappings. Disable all by setting keys to nil or false.
@@ -198,10 +289,12 @@ return {
     help = '?', --- Show help
     add = 'a', --- Add task
     done = 'd', --- Mark task as done
-    start = 's', --- Start task
+    start = 'S', --- Start task
     select_dependency = 'D', --- Select dependency
+    search = 's', --- Search all tasks
     filter = 'F', --- Input filter
     select_filter = 'f', --- Select filter
+    select_sort = 'o', --- Select sort
     toggle_group_view = 'tg', --- Toggle grouped view
     toggle_tree_view = 'tt', --- Toggle tree view
     select_report = 'r', --- Select report
@@ -212,7 +305,7 @@ return {
     toggle_tree = '<Tab>', --- Toggle tree node
     enter = 'l', --- Enter task/Activate line action
     back = 'h', --- Go back
-    close_help = 'q', --- Close help
+    close = 'q', --- Close taskwarrior/close help
     modify = 'MM', --- Modify task
     modify_select_project = 'Mp', --- Modify project
     modify_select_priority = 'MP', --- Modify priority

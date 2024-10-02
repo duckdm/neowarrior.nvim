@@ -4,7 +4,7 @@ local util = require "neowarrior.util"
 ---@field task_collection Task[]
 ---@field new fun(self: TaskCollection): TaskCollection
 ---@field add fun(self: TaskCollection, task: Task): nil
----@field sort fun(self: TaskCollection, key: string): TaskCollection
+---@field sort fun(self: TaskCollection, key: string, direction: string): TaskCollection
 ---@field get fun(self: TaskCollection): Task[]
 ---@field find_max fun(self: TaskCollection, key: string): number
 ---@field find_min fun(self: TaskCollection, key: string): number
@@ -33,18 +33,28 @@ end
 
 --- Sort task collection
 ---@param key string
+---@param direction "asc"|"desc"
 ---@return TaskCollection
-function TaskCollection:sort(key)
+function TaskCollection:sort(key, direction)
   local tasks_array = {}
   for _, proj in pairs(self.task_collection) do
     table.insert(tasks_array, proj)
   end
   table.sort(tasks_array, function(a, b)
+    local a_val = 0
+    local b_val = 0
     if key:find('%.') then
         local keys = util.split_string(key, '.')
-        return a[keys[1]][keys[2]] > b[keys[1]][keys[2]]
+        a_val = a[keys[1]] and a[keys[1]][keys[2]] or 0
+        b_val = b[keys[1]] and b[keys[1]][keys[2]] or 0
+    else
+      a_val = a[key] or 0
+      b_val = b[key] or 0
     end
-    return a[key] > b[key]
+    if direction == "asc" then
+      return a_val < b_val
+    end
+    return a_val > b_val
   end)
   self.task_collection = tasks_array
 

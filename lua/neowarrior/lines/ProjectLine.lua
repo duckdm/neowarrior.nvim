@@ -21,6 +21,30 @@ function ProjectLine:new(tram, project)
     return self
 end
 
+function ProjectLine:get_color()
+
+  local conf = _Neowarrior.config.project_colors
+
+  if conf then
+
+    for match, value in pairs(conf) do
+
+      local color = value
+
+      if type(value) == "table" and value.match and value.color then
+        match = value.match
+        color = value.color
+      end
+
+      if string.match(self.project.name, match) then
+        return _Neowarrior.config.colors[color].group
+      end
+    end
+  end
+
+  return _Neowarrior.config.colors.project.group
+end
+
 --- Get project line data
 ---@param arg table
 ---@return Line[]
@@ -35,12 +59,14 @@ function ProjectLine:into_line(arg)
   local disable_meta = arg.disable_meta or false
   local meta = arg.meta or { project = self.project.id }
   if disable_meta then meta = nil end
+  local color = self:get_color()
 
   if arg.id_as_name then
     name = self.project.id
   end
   name = string.gsub(name, "%.", " " .. icon_alt .. " ")
-  self.tram:col(indent .. icon .. " " .. name, _Neowarrior.config.colors.project.group)
+  self.tram:col(indent, "")
+  self.tram:col(icon .. " " .. name, color)
 
   local task_count = self.project.task_count
   if arg.enable_task_count == "eol" and task_count > 0 then

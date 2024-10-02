@@ -8,18 +8,25 @@ local TaskCollection = require('neowarrior.TaskCollection')
 ---@field description string|nil
 ---@field project string|nil
 ---@field priority string|nil
----@field due DateTime|nil
+---@field due number
+---@field due_dt DateTime|nil
 ---@field tags table|nil
----@field entry DateTime|nil
----@field modified DateTime|nil
+---@field entry number
+---@field entry_dt DateTime|nil
+---@field modified number
+---@field modified_dt DateTime|nil
 ---@field uuid string|nil
 ---@field urgency number|nil
 ---@field estimate number|nil
 ---@field estimate_string number|nil
----@field start DateTime|nil
----@field end DateTime|nil
----@field wait DateTime|nil
----@field scheduled DateTime|nil
+---@field start number
+---@field start_dt DateTime|nil
+---@field end number
+---@field end_dt DateTime|nil
+---@field wait number
+---@field wait_dt DateTime|nil
+---@field scheduled number
+---@field scheduled_dt DateTime|nil
 ---@field depends TaskCollection|nil
 ---@field parents TaskCollection|nil
 ---@field annotations table|nil
@@ -61,13 +68,20 @@ function Task:new(task_data)
   data.annotations = task_data.annotations or nil
   data.recur = task_data.recur or nil
 
-  data.due = self:get_date_time_object(task_data.due)
-  data.entry = self:get_date_time_object(task_data.entry)
-  data.modified = self:get_date_time_object(task_data.modified)
-  data.start = self:get_date_time_object(task_data.start)
-  data['end'] = self:get_date_time_object(task_data['end'])
-  data.wait = self:get_date_time_object(task_data.wait)
-  data.scheduled = self:get_date_time_object(task_data.scheduled)
+  data.due_dt = self:get_date_time_object(task_data.due)
+  data.due = data.due_dt and data.due_dt.timestamp or 0
+  data.entry_dt = self:get_date_time_object(task_data.entry)
+  data.entry = data.entry_dt and data.entry_dt.timestamp or 0
+  data.modified_dt = self:get_date_time_object(task_data.modified)
+  data.modified = data.modified_dt and data.modified_dt.timestamp or 0
+  data.start_dt = self:get_date_time_object(task_data.start)
+  data.start = data.start_dt and data.start_dt.timestamp or 0
+  data['end_dt'] = self:get_date_time_object(task_data['end'])
+  data['end'] = data['end'] and data['end'].timestamp or 0
+  data.wait_dt = self:get_date_time_object(task_data.wait)
+  data.wait = data.wait_dt and data.wait_dt.timestamp or 0
+  data.scheduled_dt = self:get_date_time_object(task_data.scheduled)
+  data.scheduled = data.scheduled_dt and data.scheduled_dt.timestamp or 0
 
   return data
 end
@@ -141,19 +155,10 @@ function Task:get_attributes()
     description = self.description,
     project = self.project,
     priority = self.priority,
-    due = self.due,
     tags = self.tags,
-    entry = self.entry,
-    modified = self.modified,
     uuid = self.uuid,
-    urgency = self.urgency,
-    estimate = self.estimate,
-    start = self.start,
     ['end'] = self['end'],
     wait = self.wait,
-    scheduled = self.scheduled,
-    depends = self.depends,
-    annotations = self.annotations,
     recur = self.recur,
   }
 end

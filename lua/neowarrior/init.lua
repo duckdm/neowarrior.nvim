@@ -13,6 +13,7 @@ M.setup = function(opts)
 end
 
 M.open = function() _Neowarrior:open({ split = 'below' }) end
+M.open_float = function() _Neowarrior:open({ split = 'float' }) end
 M.open_current = function() _Neowarrior:open({ split = 'current' }) end
 M.open_below = function() _Neowarrior:open({ split = 'below' }) end
 M.open_above = function() _Neowarrior:open({ split = 'above' }) end

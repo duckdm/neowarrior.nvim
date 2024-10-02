@@ -1,3 +1,5 @@
+local Template = require('neowarrior.Template')
+
 ---@class HeaderComponent
 local HeaderComponent = {}
 
@@ -12,6 +14,7 @@ function HeaderComponent:new(tram)
     self.meta_enabled = true
     self.report_enabled = true
     self.filter_enabled = true
+    self.task_info_enabled = true
     self.help_items = {
       help = true,
       add = true,
@@ -43,6 +46,11 @@ function HeaderComponent:disable_filter()
   return self
 end
 
+function HeaderComponent:disable_task_info()
+  self.task_info_enabled = false
+  return self
+end
+
 --- Print header
 function HeaderComponent:set()
 
@@ -52,27 +60,19 @@ function HeaderComponent:set()
   if nw.config.header.text then
 
     local dev = _Neowarrior.config.dev or false
-    local header_text_color = _Neowarrior.config.colors.neowarrior.group
-    local header_text_has_version = string.match(nw.config.header.text, "{version}")
-
-    if header_text_has_version then
-
-      if string.match(nw.version, "dev") then
-        header_text_color = _Neowarrior.config.colors.danger.group
-      elseif string.match(nw.version, "pre") or string.match(nw.version, "alpha") or string.match(nw.version, "beta") then
-        header_text_color = _Neowarrior.config.colors.warning.group
-      end
-
-    end
-
-    local header_text = nw.config.header.text:gsub("{version}", nw.version)
 
     if dev then
       self.tram:col(" LOCAL DEV ", _Neowarrior.config.colors.danger_bg.group)
     end
 
-    self.tram:col(" " .. header_text .. " ", header_text_color)
-    self.tram:into_line({})
+    Template:new(self.tram):cols(nw.config.header.text)
+    if self.meta_enabled then
+      self.tram:into_line({
+        meta = { action = 'about' }
+      })
+    else
+      self.tram:into_line({})
+    end
 
   end
 
@@ -138,6 +138,12 @@ function HeaderComponent:set()
     else
       self.tram:into_line({})
     end
+
+  end
+
+  if nw.config.header.task_info and self.task_info_enabled then
+
+    Template:new(self.tram):line(nw.config.header.task_info)
 
   end
 

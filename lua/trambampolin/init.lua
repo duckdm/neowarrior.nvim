@@ -11,7 +11,7 @@ local Float = require("trambampolin.Float")
 ---@field print fun(self: Trambampolin): Trambampolin
 ---@field set_buffer fun(self: Trambampolin, buffer: Buffer): Trambampolin
 ---@field get_buffer fun(self: Trambampolin): Buffer
----@field line fun(self: Trambampolin, text: string, color: string): Trambampolin
+---@field line fun(self: Trambampolin, text: string, opts: table): Trambampolin
 ---@field virt_line fun(self: Trambampolin, text: string, opts: table): Trambampolin
 ---@field inc fun(self: Trambampolin): Trambampolin
 ---@field get_line_no fun(self: Trambampolin): number
