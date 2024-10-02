@@ -36,6 +36,17 @@ function Buffer:new(arg)
   return buffer
 end
 
+--- Set buffer keymap
+---@param mode string|table
+---@param key string
+---@param action string|function
+---@param opts? table|nil
+function Buffer:keymap(mode, key, action, opts)
+  opts = opts or {}
+  opts.buffer = self.id
+  vim.keymap.set(mode, key, action, opts)
+end
+
 --- Set buffer name
 ---@param name string
 ---return Buffer
