@@ -85,6 +85,7 @@ function TaskPage:print(buffer)
   self:scheduled()
   self:wait()
   self:due()
+  self:recur()
   self:ended()
 
   self.tram:nl()
@@ -348,6 +349,21 @@ function TaskPage:due()
     }, {
       text = _Neowarrior.config.icons.due .. " " .. self.task.due_dt:relative() .. " (" .. self.task.due_dt:default_format() .. ")",
       color = colors.get_due_color(self.task.due_dt:relative_hours()),
+    }})
+  end
+
+end
+
+--- Recur row
+function TaskPage:recur()
+
+  if self.task.recur then
+
+    self:row('recur', {{
+      text = "Recur",
+    }, {
+      text = _Neowarrior.config.icons.recur .. " " .. self.task.recur,
+      color = _Neowarrior.config.colors.info.group,
     }})
   end
 
