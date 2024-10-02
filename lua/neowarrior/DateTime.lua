@@ -12,8 +12,8 @@ local date = require('tieske.date')
 ---@field offset number
 ---@field new fun(self: DateTime, date: string|nil): DateTime
 ---@field parse fun(self: DateTime, str: string|nil): number
----@field format fun(self: DateTime, format: string): string|osdate
----@field default_format fun(self: DateTime): string|osdate
+---@field format fun(self: DateTime, format: string): string
+---@field default_format fun(self: DateTime): string
 ---@field relative fun(self: DateTime): string
 local DateTime = {}
 
@@ -76,13 +76,13 @@ end
 
 --- Format date
 ---@param format string
----@return string|osdate
+---@return string
 function DateTime:format(format)
   return self.date:fmt(format)
 end
 
 --- Get default formatted date
----@return string|osdate
+---@return string
 function DateTime:default_format()
   return self:format('%Y-%m-%d, %H:%M')
 end

@@ -56,6 +56,7 @@ local DateTimePicker = require('neowarrior.DateTimePicker')
 ---@field public task_cache table
 ---@field public current_page table|nil
 ---@field public back nil|table
+---@field public dtp DateTimePicker
 ---@field public new fun(self: NeoWarrior): NeoWarrior
 ---@field public setup fun(self: NeoWarrior, config: NeoWarrior.Config): NeoWarrior
 ---@field public init fun(self: NeoWarrior): NeoWarrior
@@ -87,7 +88,7 @@ function NeoWarrior:new()
     setmetatable(neowarrior, self)
     self.__index = self
 
-    neowarrior.version = "v0.3.0-rc1"
+    neowarrior.version = "v0.4.0-alpha"
     neowarrior.config = nil
     neowarrior.user_config = nil
     neowarrior.buffer = nil
@@ -118,6 +119,7 @@ function NeoWarrior:new()
     neowarrior.task_cache = {}
     neowarrior.current_page = nil
     neowarrior.back = nil
+    neowarrior.dtp = nil
     neowarrior.keys = {
       {
         name = nil,
@@ -1711,21 +1713,28 @@ function NeoWarrior:modify_due()
   self:close_floats()
   self.buffer:save_cursor()
 
-  local result = nil
   local uuid = nil
+  local task = nil
+
   if self.current_task then
     uuid = self.current_task.uuid
+    task = self.current_task
   else
     uuid = self.buffer:get_meta_data('uuid')
+    if uuid then
+      task = self.tw:task(uuid)
+    end
   end
 
-  local dtp = DateTimePicker:new({
+  self.dtp = DateTimePicker:new({
 
     select_time = true,
+    mark = {
+      { date = task and task.due_dt or nil, }
+    },
     on_select = function(date, dtp)
 
-      if date and uuid then
-        local task = self.tw:task(uuid)
+      if date and task then
         self.buffer:save_cursor()
         self.tw:modify(task, "due:" .. date:format("%Y%m%dT%H%M%SZ"))
         if self.current_task then
@@ -1737,13 +1746,13 @@ function NeoWarrior:modify_due()
         self.buffer:restore_cursor()
       end
 
-      dtp:close()
+      self.dtp:close()
 
     end,
 
   })
 
-  dtp:open();
+  self.dtp:open();
 
 end
 

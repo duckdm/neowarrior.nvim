@@ -3,14 +3,15 @@ local DateTime = require("neowarrior.DateTime")
 
 ---@class DateTimePicker
 ---@field tram Trambampolin
----@field float number
+---@field float Float
 ---@field select_date boolean
 ---@field select_time boolean
 ---@field on_select_callback nil|function
+---@field mark table
 ---@field on_select fun(self: DateTimePicker, callback: function): self
----@field open fun(self: DateTimePicker, ): self
+---@field open fun(self: DateTimePicker, date: string?): self
 ---@field close fun(self: DateTimePicker, ): self
----@field print_week fun(self: DateTimePicker, header: boolean, from: DateTime|nil): self
+---@field print_week fun(self: DateTimePicker, header: boolean, from: DateTime|nil, view: DateTime, current: DateTime): self
 ---@field new fun(self: DateTimePicker, opts: table|nil): DateTimePicker
 local DateTimePicker = {}
 
@@ -26,6 +27,7 @@ function DateTimePicker:new(opts)
   date_time_picker.on_select_callback = opts and opts.on_select or nil
   date_time_picker.select_date = opts and opts.select_date or true
   date_time_picker.select_time = opts and opts.select_time or false
+  date_time_picker.mark = opts and opts.mark or {}
 
   return date_time_picker
 end
@@ -37,14 +39,19 @@ function DateTimePicker:on_select(callback)
   return self
 end
 
-function DateTimePicker:open()
+--- Open the DateTimePicker
+---@param date? string
+---@return self
+function DateTimePicker:open(date)
 
+  date = date or nil
   local month_pad = "         "
   local colors = _Neowarrior.config.colors
   local current_date = DateTime:new()
-  local last_month = current_date:copy():add("months", -1)
-  local next_month = current_date:copy():add("months", 1)
-  local month_start = DateTime:new():set({
+  local view = DateTime:new(date)
+  local last_month = view:copy():add("months", -1)
+  local next_month = view:copy():add("months", 1)
+  local month_start = view:copy():set({
     day = 1,
     hour = 0,
     minute = 0,
@@ -53,66 +60,91 @@ function DateTimePicker:open()
   local first_weekday = month_start:weekday()
   local first_view_day = month_start:add("days", -(first_weekday - 2))
 
-  self.tram:col(" " .. last_month:format("%b"), colors.dim.group)
-  self.tram:col(month_pad .. current_date:format("%b") .. month_pad, colors.info.group)
-  self.tram:col(next_month:format("%b"), colors.dim.group)
+  local last_month_name = last_month:format("%b")
+  local view_month_name = view:format("%b")
+  local next_month_name = next_month:format("%b")
+
+  self.tram:clear()
+  self.tram:col(" " .. last_month_name, colors.dim.group)
+  self.tram:col(month_pad .. view_month_name .. month_pad, colors.info.group)
+  self.tram:col(next_month_name, colors.dim.group)
   self.tram:into_line({})
 
   for i = 1, 6 do
     if i == 1 then
-      self:print_week(true, nil)
+      self:print_week(true, nil, nil, nil)
     else
-      self:print_week(false, first_view_day)
+      self:print_week(false, first_view_day, view, current_date)
     end
   end
 
-  self.float = self.tram:open_float({
-    width = 30,
-    height = 7,
-    relative = "editor",
-    row = 2,
-    col = 2,
-    enter = true,
-  })
+  if not self.float then
+    self.float = self.tram:open_float({
+      width = 30,
+      height = 7,
+      relative = "editor",
+      row = 2,
+      col = 2,
+      enter = true,
+    })
+  else
+    self.tram:print()
+  end
+
+  self.tram:get_buffer():keymap("n", "q", ":q<CR>", { silent = true })
 
   self.tram:get_buffer():keymap("n", "<CR>", function()
+
     local meta_data = self.tram:get_line_meta_data("dates")
     local word = vim.fn.expand("<cword>")
-    local result = nil
 
-    if meta_data and meta_data[word] then
-      result = DateTime:new(meta_data[word])
-    end
+    if word == last_month_name or word == next_month_name then
 
-    if self.select_time then
-      vim.ui.input({
-        prompt = "Time: ",
-        cancelreturn = nil,
-      }, function(input)
+      self.tram.buffer:save_cursor()
 
-        if input:find(":") == nil then
-          input = input:sub(0,2) .. ":00"
-        end
+      if word == last_month_name then
+        self:open(last_month:default_format())
+      else
+        self:open(next_month:default_format())
+      end
 
-        local time_parts = vim.split(input, ":")
-        local hour = tonumber(time_parts[1] or 0)
-        local minute = tonumber(time_parts[2] or 0)
-        local second = tonumber(time_parts[3] or 0)
+      self.tram.buffer:restore_cursor()
 
-        if result then
-          result:set({
+    else
+
+      local date_result = nil
+
+      if meta_data and meta_data[word] then
+        date_result = DateTime:new(meta_data[word])
+      end
+
+      if date_result and self.select_time then
+        vim.ui.input({
+          prompt = "Time: ",
+          cancelreturn = nil,
+        }, function(input)
+
+          if input:find(":") == nil then
+            input = input:sub(0,2) .. ":00"
+          end
+
+          local time_parts = vim.split(input, ":")
+          local hour = tonumber(time_parts[1] or 0)
+          local minute = tonumber(time_parts[2] or 0)
+          local second = tonumber(time_parts[3] or 0)
+
+          date_result:set({
             hour = hour,
             minute = minute,
             second = second,
           })
-        end
 
-      end)
+        end)
+      end
 
-    end
-
-    if self.on_select_callback then
-      self.on_select_callback(result, self)
+      if type(self.on_select_callback) == "function" then
+        self.on_select_callback(date_result, self)
+      end
     end
 
   end, { silent = true })
@@ -125,7 +157,7 @@ function DateTimePicker:close()
   self.float = nil
 end
 
-function DateTimePicker:print_week(header, from)
+function DateTimePicker:print_week(header, from, view, current)
 
   local colors = _Neowarrior.config.colors
 
@@ -134,12 +166,21 @@ function DateTimePicker:print_week(header, from)
   else
     local dates = {}
     for _ = 1, 7 do
+
       local color = ""
-      if from.date:getmonth() ~= DateTime:new().date:getmonth() then
+
+      if from.date:getmonth() ~= view.date:getmonth() then
         color = colors.dim.group
-      elseif from.date:getday() == DateTime:new().date:getday() then
-        color = colors.info.group
+      elseif from:format("%Y%m%d") == current:format("%Y%m%d") then
+        color = colors.current_date.group
       end
+
+      for _, mark in ipairs(self.mark) do
+        if (mark and mark.date) and from:format("%Y%m%d") == mark.date:format("%Y%m%d") then
+          color = mark.color or colors.marked_date.group
+        end
+      end
+
       local date_string = from:format("%d")
       dates[date_string] = from:default_format()
       self.tram:col(" " .. date_string .. " ", color)

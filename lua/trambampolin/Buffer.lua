@@ -17,6 +17,7 @@
 ---@field public virt_text fun(self: Buffer, text: string, hl_group: string, ns_name: string, o: table): number
 ---@field public create_line fun(ln: number, blocks: table): table
 ---@field public apply_colors fun(colors: table, cta: table): nil
+---@field public keymap fun(self: Buffer, mode: string|table, key: string, action: string|function, opts: table): Buffer
 local Buffer = {}
 
 --- Constructor
@@ -45,6 +46,8 @@ function Buffer:keymap(mode, key, action, opts)
   opts = opts or {}
   opts.buffer = self.id
   vim.keymap.set(mode, key, action, opts)
+
+  return self
 end
 
 --- Set buffer name

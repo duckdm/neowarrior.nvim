@@ -167,6 +167,8 @@ return {
     project = { group = "NeoWarriorGroup", fg = "#00aaff", bg = nil },
     annotation = { group = "NeoWarriorAnnotation", fg = "#00aaff", bg = nil },
     tag = { group = "NeoWarriorTag", fg = "#ffffff", bg = "#333333" },
+    current_date = { group = "NeoWarriorCurrentDate", fg = "#000000", bg = "#00aaff" },
+    marked_date = { group = "NeoWarriorMarkedDate", fg = "#ffffff", bg = "#00aa66" },
   },
   --- Example using builtin highlight groups:
   -- colors = {

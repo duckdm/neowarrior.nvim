@@ -46,6 +46,13 @@ function M:print()
     return self
 end
 
+function M:clear()
+    self.lines = {}
+    self.line_no = 0
+    self.columns = {}
+    return self
+end
+
 --- Get meta data.
 --- Note! This must not be called before print.
 ---
