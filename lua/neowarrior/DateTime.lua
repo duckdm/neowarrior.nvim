@@ -101,19 +101,30 @@ function DateTime:diff_object()
   return date.diff(self.date, now.date)
 end
 
+function DateTime:round(value)
+  if value < 0 then
+    return math.ceil(value)
+  end
+  return math.floor(value)
+end
+
 -- Function to calculate the relative time difference
 ---@return string
 function DateTime:relative()
 
   local diff = self:diff_object()
-  local years = math.floor(diff:spandays()) and math.floor(diff:spandays() / 365) or 0
-  local months = math.floor(diff:spandays()) and math.floor(diff:spandays() / 30) or 0
-  local days = math.floor(diff:spandays()) and math.floor(diff:spandays()) or 0
-  local hours = math.floor(diff:spanhours()) and math.floor(diff:spanhours()) or 0
-  local minutes = math.floor(diff:spanminutes()) and math.floor(diff:spanminutes()) or 0
+  local days = self:round(diff:spandays())
+  local years = days ~= 0 and self:round(days / 365) or 0
+  local months = days ~= 0 and self:round(days / 30) or 0
+  local hours = self:round(diff:spanhours()) and self:round(diff:spanhours()) or 0
+  local minutes = self:round(diff:spanminutes()) and self:round(diff:spanminutes()) or 0
   local seconds = diff:spanseconds()
 
-  if years >= 1 or years < 0 then
+  if false then
+    return days .. ""
+  end
+
+  if years >= 1 or years <= -1 then
     return years .. "y"
   end
 
