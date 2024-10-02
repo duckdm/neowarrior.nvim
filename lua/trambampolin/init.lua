@@ -135,7 +135,7 @@ end
 ---@return Trambampolin
 function M:line(text, opts)
 
-    local wrapped = opts.wrapped or nil
+    local wrapped = opts and opts.wrapped or nil
     if wrapped then opts.wrapped = nil end
 
     self:get_buffer()
@@ -154,7 +154,7 @@ function M:line(text, opts)
             end
         end
     else
-        self:col(text, opts.color or "")
+        self:col(text, opts and opts.color or "")
     end
     self:into_line(opts)
 

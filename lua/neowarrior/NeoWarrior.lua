@@ -9,6 +9,7 @@ local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
 local Taskwarrior = require('neowarrior.Taskwarrior')
 local TaskPage = require('neowarrior.pages.TaskPage')
+local ProjectPage = require('neowarrior.pages.ProjectPage')
 local colors   = require('neowarrior.colors')
 local default_config = require('neowarrior.config')
 local TaskCollection = require('neowarrior.TaskCollection')
@@ -52,6 +53,7 @@ local DateTimePicker = require('neowarrior.DateTimePicker')
 ---@field public current_mode string
 ---@field public key_descriptions table
 ---@field public current_task Task
+---@field public current_project string|nil
 ---@field public keys table
 ---@field public task_cache table
 ---@field public current_page table|nil
@@ -116,6 +118,7 @@ function NeoWarrior:new()
     neowarrior.current_report = nil
     neowarrior.current_mode = nil
     neowarrior.current_task = nil
+    neowarrior.current_project = nil
     neowarrior.task_cache = {}
     neowarrior.current_page = nil
     neowarrior.back = nil
@@ -165,6 +168,8 @@ function NeoWarrior:new()
           { key = 'collapse_all', sort = 35, desc = 'Collapse all trees' },
           { key = 'expand_all', sort = 36, desc = 'Expand all trees' },
           { key = 'toggle_tree', sort = 37, desc = 'Toggle tree' },
+          { key = 'next_tab' , sort = 38, desc = 'Next tab' },
+          { key = 'prev_tab' , sort = 39, desc = 'Previous tab' },
         }
       },
 
@@ -661,6 +666,7 @@ end
 function NeoWarrior:show()
 
   self:close_floats()
+  self.buffer:save_cursor()
 
   local uuid = self.buffer:get_meta_data('uuid')
   local project = self.buffer:get_meta_data('project')
@@ -673,9 +679,10 @@ function NeoWarrior:show()
 
   elseif project then
 
-    self.current_filter = "project:" .. project
-    self:refresh()
-    self:list()
+    -- self.current_filter = "project:" .. project
+    -- self:refresh()
+    -- self:list()
+    self:project(project)
 
   elseif action then
 
@@ -1344,6 +1351,9 @@ function NeoWarrior:set_keymaps()
       if self.back and self.back.type == "task" and self.back.uuid then
         self:task(self.back.uuid)
         self.back = nil
+      elseif self.back and self.back.type == "project" and self.back.project then
+        self:project(self.back.project)
+        self.back = nil
       else
         self:list()
       end
@@ -1803,6 +1813,21 @@ function NeoWarrior:task(uuid)
   task_page:print(self.buffer)
   self.current_task = task
   self.current_page = { tram = task_page.tram, name = 'task' }
+
+end
+
+--- Project page
+---@param project string Project "id"
+function NeoWarrior:project(project)
+
+  local project_page = ProjectPage:new(self.buffer, project)
+  project_page:print("pending")
+  self.current_project = project
+  self.current_page = {
+    tram = project_page.tram,
+    name = 'project',
+  }
+  self.buffer:restore_cursor()
 
 end
 

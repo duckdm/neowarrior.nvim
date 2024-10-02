@@ -313,6 +313,8 @@ return {
     modify_select_project = 'Mp', --- Modify project
     modify_select_priority = 'MP', --- Modify priority
     modify_due = 'MD', --- Modify due date
+    next_tab = "L", --- Tab navigation, next tab
+    prev_tab = "H", --- Tab navigation, previous tab
   },
 
   ---@type table Default icons

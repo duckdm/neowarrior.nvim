@@ -53,6 +53,9 @@ end
 ---@param est number
 ---@return string
 Colors.get_estimate_color = function(est)
+  if (not est) or (est == 0) then
+    return ""
+  end
   return Colors.get_geq(est, _Neowarrior.config.breakpoints.estimate, "")
 end
 
