@@ -70,7 +70,7 @@ function Buffer:process_lines(up_lines, from)
       local text = line.text
       if text == "__NL__" then text = "" end
 
-      table.insert(lines, text .. line.meta_text)
+      table.insert(lines, text)
       last_line_len = string.len(text)
 
       if line.colors then
@@ -188,18 +188,7 @@ end
 ---@param key string
 ---@return string|nil
 function Buffer:get_meta_data(key)
-
-  -- local line_no = vim.api.nvim_win_get_cursor(0)[1]
   return _Neowarrior.current_page.tram:get_line_meta_data(key)
-  -- local line = vim.api.nvim_get_current_line()
-  -- local pattern = "{{{" .. key .. ".-}}}"
-  -- local value = nil
-  --
-  -- for id in string.gmatch(line, pattern) do
-  --   value = string.gsub(string.gsub(id, "{{{" .. key, ""), "}}}", "")
-  -- end
-  --
-  -- return value
 end
 
 --- Get cursor

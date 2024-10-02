@@ -1,7 +1,6 @@
 local Buffer = require("trambampolin.Buffer")
 local Line = require("trambampolin.Line")
 local Float = require("trambampolin.Float")
-local util = require("neowarrior.util")
 
 ---@class Trambampolin
 ---@field version string
