@@ -159,6 +159,7 @@ function ProjectPage:lines(group_key)
         back = {
           type = "project",
           project = project.id,
+          group = group.name:lower(),
         }
       },
     })

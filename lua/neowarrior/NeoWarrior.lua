@@ -682,7 +682,7 @@ function NeoWarrior:show()
     -- self.current_filter = "project:" .. project
     -- self:refresh()
     -- self:list()
-    self:project(project)
+    self:project(project, "pending")
 
   elseif action then
 
@@ -1352,7 +1352,7 @@ function NeoWarrior:set_keymaps()
         self:task(self.back.uuid)
         self.back = nil
       elseif self.back and self.back.type == "project" and self.back.project then
-        self:project(self.back.project)
+        self:project(self.back.project, self.back.group or "pending")
         self.back = nil
       else
         self:list()
@@ -1818,10 +1818,10 @@ end
 
 --- Project page
 ---@param project string Project "id"
-function NeoWarrior:project(project)
+function NeoWarrior:project(project, group)
 
   local project_page = ProjectPage:new(self.buffer, project)
-  project_page:print("pending")
+  project_page:print(group)
   self.current_project = project
   self.current_page = {
     tram = project_page.tram,
