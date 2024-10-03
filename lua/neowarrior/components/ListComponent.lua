@@ -1,6 +1,7 @@
 local TaskLine = require('neowarrior.lines.TaskLine')
 local TreeComponent = require('neowarrior.components.TreeComponent')
 local GroupedComponent = require('neowarrior.components.GroupedComponent')
+local AgendaComponent = require('neowarrior.components.AgendaComponent')
 
 ---@class ListComponent
 ---@field task_collection TaskCollection
@@ -34,6 +35,11 @@ function ListComponent:set()
   elseif _Neowarrior.current_mode == 'grouped' then
 
     GroupedComponent:new(self.tram, _Neowarrior.grouped_projects):set()
+    return self
+
+  elseif _Neowarrior.current_mode == "agenda" then
+
+    AgendaComponent:new(self.tram):set(self.task_collection)
     return self
 
   end

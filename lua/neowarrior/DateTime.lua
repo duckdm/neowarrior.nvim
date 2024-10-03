@@ -74,6 +74,41 @@ function DateTime:weekday()
   return self.date:getweekday()
 end
 
+--- Show a nice date with "today", "tomorrow", "yesterday"
+---@param opts? table
+---@return string
+function DateTime:nice(opts)
+
+  local default_format = opts and opts.format or "%A, %B %d"
+  local show_close_dates = opts and opts.show_close_dates or false
+  local now = DateTime:new(nil)
+  local days = math.ceil(date.diff(self.date, now.date):spandays())
+
+  local str = "In " .. days .. " days (" .. self:format(default_format) .. ")"
+
+  if days == 0 then
+    str = "Today"
+  end
+
+  if days == 1 then
+    str = "Tomorrow"
+  end
+
+  if days == -1 then
+    str = "Yesterday"
+  end
+
+  if days < 0 then
+    str = days .. " days ago"
+  end
+
+  if show_close_dates then
+    str = str .. " (" .. self:format(default_format) .. ")"
+  end
+
+  return str
+end
+
 --- Format date
 ---@param format string
 ---@return string

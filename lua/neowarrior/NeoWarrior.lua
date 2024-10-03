@@ -165,11 +165,14 @@ function NeoWarrior:new()
         keys = {
           { key = 'toggle_group_view', sort = 33, desc = 'Toggle grouped view' },
           { key = 'toggle_tree_view', sort = 34, desc = 'Toggle tree view' },
-          { key = 'collapse_all', sort = 35, desc = 'Collapse all trees' },
-          { key = 'expand_all', sort = 36, desc = 'Expand all trees' },
-          { key = 'toggle_tree', sort = 37, desc = 'Toggle tree' },
-          { key = 'next_tab' , sort = 38, desc = 'Next tab' },
-          { key = 'prev_tab' , sort = 39, desc = 'Previous tab' },
+          { key = 'toggle_agenda_view', sort = 35, desc = 'Toggle agenda view' },
+
+          { key = 'collapse_all', sort = 36, desc = 'Collapse all trees' },
+          { key = 'expand_all', sort = 37, desc = 'Expand all trees' },
+          { key = 'toggle_tree', sort = 38, desc = 'Toggle tree' },
+
+          { key = 'next_tab' , sort = 39, desc = 'Next tab' },
+          { key = 'prev_tab' , sort = 40, desc = 'Previous tab' },
         }
       },
 
@@ -679,9 +682,6 @@ function NeoWarrior:show()
 
   elseif project then
 
-    -- self.current_filter = "project:" .. project
-    -- self:refresh()
-    -- self:list()
     self:project(project, "pending")
 
   elseif action then
@@ -1028,6 +1028,16 @@ function NeoWarrior:set_keymaps()
       self.current_mode = 'normal'
     else
       self.current_mode = 'tree'
+    end
+    self:list()
+  end, default_keymap_opts)
+
+  -- Toggle agenda view
+  vim.keymap.set("n", self.config.keys.toggle_agenda_view, function()
+    if self.current_mode == 'agenda' then
+      self.current_mode = 'normal'
+    else
+      self.current_mode = 'agenda'
     end
     self:list()
   end, default_keymap_opts)

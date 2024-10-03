@@ -466,6 +466,7 @@ require('neowarrior').focus()
     select_sort = 'o', --- Select sort
     toggle_group_view = 'tg', --- Toggle grouped view
     toggle_tree_view = 'tt', --- Toggle tree view
+    toggle_agenda_view = 'ta', --- Toggle tree view
     select_report = 'r', --- Select report
     refresh = 'R', --- Refresh tasks
     reset = 'X', --- Reset filter
