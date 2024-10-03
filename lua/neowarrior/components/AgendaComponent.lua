@@ -58,11 +58,15 @@ function AgendaComponent:_set(tasks)
   for _, date in ipairs(dates_array) do
 
     local nice_date = date.date:nice()
-    local color = ""
+    local color = _Neowarrior.config.colors.info.group
     if nice_date:find("days ago") or nice_date:find("Yesterday") then
       color = _Neowarrior.config.colors.danger.group
     end
-    self.tram:line(nice_date, { color = color })
+    self.tram:col(nice_date, { color = color })
+    self.tram:col(" (" .. date.date:format('%A, %B %d') .. ")", {
+      color = _Neowarrior.config.colors.dim.group
+    })
+    self.tram:into_line({})
 
     for _, task in ipairs(date.tasks) do
 

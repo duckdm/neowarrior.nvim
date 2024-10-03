@@ -84,7 +84,7 @@ function DateTime:nice(opts)
   local now = DateTime:new(nil)
   local days = math.ceil(date.diff(self.date, now.date):spandays())
 
-  local str = "In " .. days .. " days (" .. self:format(default_format) .. ")"
+  local str = "In " .. days .. " days"
 
   if days == 0 then
     str = "Today"
