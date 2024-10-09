@@ -83,7 +83,11 @@ function DateTime:nice(opts)
   local default_format = opts and opts.format or "%A, %B %d"
   local show_close_dates = opts and opts.show_close_dates or false
   local now = DateTime:new(nil)
-  local days = math.floor(date.diff(self.date, now.date):spandays())
+  local span_days = date.diff(self.date, now.date):spandays()
+  local days = math.floor(span_days)
+  if span_days > -1 and span_days < 1 then
+    days = 0
+  end
 
   local str = "In " .. days .. " days"
 
