@@ -1,5 +1,6 @@
 local TaskLine = require('neowarrior.lines.TaskLine')
 local util = require('neowarrior.util')
+local colors = require('neowarrior.colors')
 
 ---@class AgendaComponent
 local AgendaComponent = {}
@@ -68,9 +69,13 @@ function AgendaComponent:_set(tasks)
     })
     self.tram:into_line({})
 
+    table.sort(date.tasks, function(a, b) return a.due < b.due end)
+
     for _, task in ipairs(date.tasks) do
 
-      self.tram:col(task.due_dt:format('%H:%M') .. ": ", { color = _Neowarrior.config.colors.dim.group })
+      local time_color = colors.get_due_color(task.due_dt:diff_hours())
+      self.tram:col(task.due_dt:format('%H:%M'), { color = time_color })
+      self.tram:col(": ", {})
       TaskLine:new(self.tram, task):into_line({
         disable_due = true,
       })
