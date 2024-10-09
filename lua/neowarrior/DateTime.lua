@@ -83,25 +83,29 @@ function DateTime:nice(opts)
   local default_format = opts and opts.format or "%A, %B %d"
   local show_close_dates = opts and opts.show_close_dates or false
   local now = DateTime:new(nil)
-  local span_days = date.diff(self.date, now.date):spandays()
-  local days = math.floor(span_days)
-  if span_days > -1 and span_days < 1 then
-    days = 0
+  local yesterday = DateTime:new(nil):add("days", -1)
+  local tomorrow = DateTime:new(nil):add("days", 1)
+  local cmp_formatted = self:format("%Y-%m-%d")
+  local today_formatted = now:format("%Y-%m-%d")
+  local yesterday_formatted = yesterday:format("%Y-%m-%d")
+  local tomorrow_formatted = tomorrow:format("%Y-%m-%d")
+
+  if cmp_formatted == today_formatted then
+    return "Today"
   end
+
+  if cmp_formatted == yesterday_formatted then
+    return "Yesterday"
+  end
+
+  if cmp_formatted == tomorrow_formatted then
+    return "Tomorrow"
+  end
+
+  local span_days = date.diff(self.date, now.date):spandays()
+  local days = math.ceil(span_days)
 
   local str = "In " .. days .. " days"
-
-  if days == 0 then
-    str = "Today"
-  end
-
-  if days == 1 then
-    str = "Tomorrow"
-  end
-
-  if days == -1 then
-    str = "Yesterday"
-  end
 
   if days < 0 then
     str = days .. " days ago"
