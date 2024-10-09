@@ -1,13 +1,18 @@
 ---@class Line
----@field line_no number
 ---@field text string
+---@field virt_text string
 ---@field meta_text string
+---@field meta_data table
 ---@field colors table
+---@field ns_name string
+---@field pos string
+---@field col_num number
+---@field strict_col_num number
 ---@field current_col number
 ---@field last_col number
----@field ns_name string
----@field new fun(self: Line): Line
----@field col fun(self: Line, block: table): Line
+---@field line_no number
+---@field col fun(self: Line, block: table):Line
+---@field new fun(self: Line):Line
 local Line = {}
 
 --- Create a new Line
@@ -19,6 +24,7 @@ function Line:new()
   line.text = ''
   line.virt_text = ''
   line.meta_text = ''
+  line.meta_data = nil
   line.colors = {}
   line.ns_name = "trambampolin"
   line.pos = "overlay"
@@ -26,6 +32,7 @@ function Line:new()
   line.strict_col_num = 0
   line.current_col = 0
   line.last_col = 0
+  line.line_no = 0
 
   return line
 end
@@ -34,6 +41,8 @@ end
 ---@param block table
 ---@return Line
 function Line:col(block)
+
+  self.line_no = block.line_no or nil
 
   if block.text then
     if block.seperator then
@@ -53,10 +62,11 @@ function Line:col(block)
   if block.ns_name then self.ns_name = block.ns_name end
 
   if block.meta then
-    self.meta_text = self.meta_text .. " "
-    for key, value in pairs(block.meta) do
-      self.meta_text = self.meta_text .. "{{{" .. key .. value .. "}}}"
-    end
+    self.meta_data = block.meta
+    -- self.meta_text = self.meta_text .. " "
+    -- for key, value in pairs(block.meta) do
+    --   self.meta_text = self.meta_text .. "{{{" .. key .. value .. "}}}"
+    -- end
   end
 
   if (not block.virt_text) and self.current_col > 0 then

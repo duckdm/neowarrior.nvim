@@ -56,9 +56,7 @@ function ProjectLine:into_line(arg)
   local icon = open and conf.icons.project_open or conf.icons.project
   local icon_alt = conf.icons.project_alt
   local name = self.project.name
-  local disable_meta = arg.disable_meta or false
   local meta = arg.meta or { project = self.project.id }
-  if disable_meta then meta = nil end
   local color = self:get_color()
 
   if arg.id_as_name then

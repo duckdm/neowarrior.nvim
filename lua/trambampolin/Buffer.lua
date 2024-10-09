@@ -17,6 +17,7 @@
 ---@field public virt_text fun(self: Buffer, text: string, hl_group: string, ns_name: string, o: table): number
 ---@field public create_line fun(ln: number, blocks: table): table
 ---@field public apply_colors fun(colors: table, cta: table): nil
+---@field public keymap fun(self: Buffer, mode: string|table, key: string, action: string|function, opts: table): Buffer
 local Buffer = {}
 
 --- Constructor
@@ -36,6 +37,19 @@ function Buffer:new(arg)
   return buffer
 end
 
+--- Set buffer keymap
+---@param mode string|table
+---@param key string
+---@param action string|function
+---@param opts? table|nil
+function Buffer:keymap(mode, key, action, opts)
+  opts = opts or {}
+  opts.buffer = self.id
+  vim.keymap.set(mode, key, action, opts)
+
+  return self
+end
+
 --- Set buffer name
 ---@param name string
 ---return Buffer
@@ -43,6 +57,10 @@ function Buffer:set_name(name)
   self.name = name
   vim.api.nvim_buf_set_name(self.id, name)
   return self
+end
+
+function Buffer:get_line()
+  return vim.api.nvim_get_current_line()
 end
 
 --- Get buffer lines
@@ -70,7 +88,7 @@ function Buffer:process_lines(up_lines, from)
       local text = line.text
       if text == "__NL__" then text = "" end
 
-      table.insert(lines, text .. line.meta_text)
+      table.insert(lines, text)
       last_line_len = string.len(text)
 
       if line.colors then
@@ -188,16 +206,7 @@ end
 ---@param key string
 ---@return string|nil
 function Buffer:get_meta_data(key)
-
-  local line = vim.api.nvim_get_current_line()
-  local pattern = "{{{" .. key .. ".-}}}"
-  local value = nil
-
-  for id in string.gmatch(line, pattern) do
-    value = string.gsub(string.gsub(id, "{{{" .. key, ""), "}}}", "")
-  end
-
-  return value
+  return _Neowarrior.current_page.tram:get_line_meta_data(key)
 end
 
 --- Get cursor

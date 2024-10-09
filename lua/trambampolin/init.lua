@@ -46,6 +46,38 @@ function M:print()
     return self
 end
 
+function M:clear()
+    self.lines = {}
+    self.line_no = 0
+    self.columns = {}
+    return self
+end
+
+--- Get meta data.
+--- Note! This must not be called before print.
+---
+---@param line_no number
+---@param key string|nil Pass nil to get all meta data for the line.
+---@return any
+function M:get_meta_data(line_no, key)
+    line_no = line_no - 1
+    for _, line in ipairs(self.lines) do
+        if line.line_no == line_no then
+            if key == nil then
+                return line.meta_data
+            elseif line.meta_data and line.meta_data[key] then
+                return line.meta_data[key]
+            end
+        end
+    end
+    return nil
+end
+
+function M:get_line_meta_data(key)
+    local line_no = vim.api.nvim_win_get_cursor(0)[1]
+    return self:get_meta_data(line_no, key)
+end
+
 --- Open float
 ---@param opts table 
 ---@return Float
@@ -53,6 +85,7 @@ function M:open_float(opts)
 
     local float = Float:new(self, vim.tbl_extend('force', {
         title = nil,
+        title_pos = "center",
         width = 10,
         col = 0,
         row = 1,
@@ -102,8 +135,27 @@ end
 ---@return Trambampolin
 function M:line(text, opts)
 
+    local wrapped = opts and opts.wrapped or nil
+    if wrapped then opts.wrapped = nil end
+
     self:get_buffer()
-    self:col(text, opts.color or "")
+    if wrapped then
+        wrapped = wrapped - 2
+        local words = vim.split(tostring(text), " ")
+        local total_line_len = 0
+        for _, word in ipairs(words) do
+            total_line_len = total_line_len + string.len(word) + 1
+            if total_line_len >= wrapped then
+                self:into_line(opts)
+                self:col(word .. " ", opts.color or "")
+                total_line_len = string.len(word) + 1
+            else
+                self:col(word .. " ", opts.color or "")
+            end
+        end
+    else
+        self:col(text, opts and opts.color or "")
+    end
     self:into_line(opts)
 
     return self
@@ -148,7 +200,7 @@ function M:into_line(opts)
             text = column.text,
             color = column.color,
             ns_name = column.ns_name or nil,
-            line_no = opts.line_no or nil,
+            line_no = opts.line_no or self.line_no,
             pos = opts.pos or "overlay",
             col = opts.col or nil,
             meta = opts.meta or nil,

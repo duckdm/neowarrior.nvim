@@ -69,6 +69,8 @@ return {
     enable_current_view = true,
     ---@type boolean Whether to show the current filter at the top
     enable_current_filter = true,
+    ---@type boolean Whether to show the current sort option on the filter line
+    enable_current_sort = false,
     ---@type boolean|table Show task info. Disable with false.
     task_info = {
       { text = "Tasks: " },
@@ -167,6 +169,8 @@ return {
     project = { group = "NeoWarriorGroup", fg = "#00aaff", bg = nil },
     annotation = { group = "NeoWarriorAnnotation", fg = "#00aaff", bg = nil },
     tag = { group = "NeoWarriorTag", fg = "#ffffff", bg = "#333333" },
+    current_date = { group = "NeoWarriorCurrentDate", fg = "#000000", bg = "#00aaff" },
+    marked_date = { group = "NeoWarriorMarkedDate", fg = "#ffffff", bg = "#00aa66" },
   },
   --- Example using builtin highlight groups:
   -- colors = {
@@ -271,15 +275,32 @@ return {
     { name = "Has priority", filter = "priority.not:" },
     { name = "Has no project", filter = "project:" },
     { name = "Has project", filter = "project.not:" },
+    {
+      name = "Overdue",
+      filter = "due.before:today and status:pending",
+      sort = "due",
+      sort_order = "asc",
+    },
+    {
+      name = "Est. under 1 hour, this week",
+      filter = "\\(est.before:1 and est.not: \\) and \\(due.before:7d or due: \\)",
+      sort = "estimate",
+      sort_order = "asc",
+    },
   },
 
   ---@type table Task sort options for selects.
   task_sort_options = {
-    { name = "Urgency", key = "urgency", direction = "desc" },
+    { name = "Urgency (desc)", key = "urgency", direction = "desc" },
+    { name = "Urgency (asc)", key = "urgency", direction = "asc" },
     { name = "Due (asc)", key = "due", direction = "asc" },
     { name = "Due (desc)", key = "due", direction = "desc" },
     { name = "Scheduled (asc)", key = "scheduled", direction = "asc" },
     { name = "Sceduled (desc)", key = "schedlued", direction = "desc" },
+    { name = "Entry (from newest)", key = "entry", direction = "desc" },
+    { name = "Entry (from oldest)", key = "entry", direction = "asc" },
+    { name = "Modified (latest)", key = "modified", direction = "desc" },
+    { name = "Modified (oldest)", key = "modified", direction = "asc" },
     { name = "Estimate (asc)", key = "estimate", direction = "asc" },
     { name = "Estimate (desc)", key = "estimate", direction = "desc" },
   },
@@ -290,13 +311,14 @@ return {
     add = 'a', --- Add task
     done = 'd', --- Mark task as done
     start = 'S', --- Start task
-    select_dependency = 'D', --- Select dependency
+    select_dependency = 'Md', --- Select dependency
     search = 's', --- Search all tasks
     filter = 'F', --- Input filter
     select_filter = 'f', --- Select filter
     select_sort = 'o', --- Select sort
     toggle_group_view = 'tg', --- Toggle grouped view
     toggle_tree_view = 'tt', --- Toggle tree view
+    toggle_agenda_view = 'ta', --- Toggle tree view
     select_report = 'r', --- Select report
     refresh = 'R', --- Refresh tasks
     reset = 'X', --- Reset filter
@@ -309,7 +331,9 @@ return {
     modify = 'MM', --- Modify task
     modify_select_project = 'Mp', --- Modify project
     modify_select_priority = 'MP', --- Modify priority
-    modify_due = 'Md', --- Modify due date
+    modify_due = 'MD', --- Modify due date
+    next_tab = "L", --- Tab navigation, next tab
+    prev_tab = "H", --- Tab navigation, previous tab
   },
 
   ---@type table Default icons

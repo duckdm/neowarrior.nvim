@@ -1,155 +1,198 @@
+local date = require('tieske.date')
+
 ---@class DateTime
 ---@field date string
----@field year number
----@field month number
----@field day number
----@field hour number
----@field minute number
----@field second number
----@field timestamp number
+---@field year number?
+---@field month number?
+---@field day number?
+---@field hour number?
+---@field minute number?
+---@field second number?
+---@field timestamp number?
 ---@field offset number
----@field new fun(self: DateTime, date: string): DateTime
----@field parse fun(self: DateTime, str: string): number
----@field format fun(self: DateTime, format: string): string|osdate
----@field default_format fun(self: DateTime): string|osdate
+---@field new fun(self: DateTime, date: string|nil): DateTime
+---@field parse fun(self: DateTime, str: string|nil): number
+---@field format fun(self: DateTime, format: string): string
+---@field default_format fun(self: DateTime): string
 ---@field relative fun(self: DateTime): string
 local DateTime = {}
 
 --- Create new datetime
----@param date string
+---@param input string|nil
 ---@return DateTime
-function DateTime:new(date)
+function DateTime:new(input)
 
   local datetime = {}
   setmetatable(datetime, self)
 
   self.__index = self
 
-  datetime.date = date
-  datetime.year = 0
-  datetime.month = 0
-  datetime.day = 0
-  datetime.hour = 0
-  datetime.minute = 0
-  datetime.second = 0
-  datetime.timestamp = self:parse(date)
-  datetime.offset = 0
+  datetime.date = date(input)
+  datetime.timestamp = datetime.date:spanseconds()
 
   return datetime
 end
 
---- Parse date
----@param str string
----@return number Timestamp
-function DateTime:parse(str)
+function DateTime:copy()
+  return DateTime:new(self.date)
+end
 
-  local year, month, day, hour, min, sec = str:match '(%d%d%d%d)(%d%d)(%d%d)T(%d%d)(%d%d)(%d%d)Z'
-  self.year = year
-  self.month = month
-  self.day = day
-  self.hour = hour
-  self.minute = min
-  self.second = sec
-  self.offset = ((60 * 60) * _Neowarrior.config.time_offset)
+--- Add time to date
+---@param unit "years"|"months"|"days"|"hours"|"minutes"|"seconds"
+---@param value number
+function DateTime:add(unit, value)
 
-  local utc_time = os.time {
-    year = self.year,
-    month = self.month,
-    day = self.day,
-    hour = self.hour,
-    min = self.minute,
-    sec = self.second,
-    isdst = false, -- Explicitly state that this is not daylight saving time
-  }
+  if unit == "years" then
+    self.date:addyears(value)
+  elseif unit == "months" then
+    self.date:addmonths(value)
+  elseif unit == "days" then
+    self.date:adddays(value)
+  elseif unit == "hours" then
+    self.date:addhours(value)
+  elseif unit == "minutes" then
+    self.date:addminutes(value)
+  elseif unit == "seconds" then
+    self.date:addseconds(value)
+  end
 
-  local local_time = os.date('*t', utc_time)
-  local_time.isdst = os.date('*t').isdst
+  return self
+end
 
-  self.timestamp = os.time(local_time)
-  -- FIX: need a better solution for this
-  self.timestamp = self.timestamp + self.offset
+function DateTime:set(values)
 
-  return self.timestamp
+    if values.year then self.date:setyear(values.year) end
+    if values.month then self.date:setmonth(values.month) end
+    if values.day then self.date:setday(values.day) end
+    if values.hour then self.date:sethours(values.hour) end
+    if values.minute then self.date:setminutes(values.minute) end
+    if values.second then self.date:setseconds(values.second) end
+
+    return self
+end
+
+function DateTime:weekday()
+  return self.date:getweekday()
+end
+
+--- Show a nice date with "today", "tomorrow", "yesterday"
+---@param opts? table
+---@return string
+function DateTime:nice(opts)
+
+  local default_format = opts and opts.format or "%A, %B %d"
+  local show_close_dates = opts and opts.show_close_dates or false
+  local now = DateTime:new(nil)
+  local days = math.floor(date.diff(self.date, now.date):spandays())
+
+  local str = "In " .. days .. " days"
+
+  if days == 0 then
+    str = "Today"
+  end
+
+  if days == 1 then
+    str = "Tomorrow"
+  end
+
+  if days == -1 then
+    str = "Yesterday"
+  end
+
+  if days < 0 then
+    str = days .. " days ago"
+  end
+
+  if show_close_dates then
+    str = str .. " (" .. self:format(default_format) .. ")"
+  end
+
+  return str
 end
 
 --- Format date
 ---@param format string
----@return string|osdate
+---@return string
 function DateTime:format(format)
-  return os.date(format, self.timestamp)
+  return self.date:fmt(format)
 end
 
 --- Get default formatted date
----@return string|osdate
+---@return string
 function DateTime:default_format()
-  if self.timestamp == 0 then
-    return ''
-  end
-  return os.date('%Y-%m-%d, %H:%M', self.timestamp)
+  return self:format('%Y-%m-%d, %H:%M')
 end
 
 --- Function to calculate the time difference
----@return number
+---@return number Diff in seconds
 function DateTime:diff()
-  local target_time = self:parse(self.date)
-  local now = os.time()
-  local diff = os.difftime(target_time, now)
-  return diff
+  local now = DateTime:new(nil)
+  return date.diff(self.date, now.date):spanseconds()
+end
+
+--- Function to calculate the time difference
+---@return dateObject
+function DateTime:diff_object()
+  local now = DateTime:new(nil)
+  return date.diff(self.date, now.date)
+end
+
+function DateTime:round(value)
+  if value < 0 then
+    return math.ceil(value)
+  end
+  return math.floor(value)
 end
 
 -- Function to calculate the relative time difference
 ---@return string
 function DateTime:relative()
 
-  local diff = self:diff()
-  local negative = false
+  local diff = self:diff_object()
+  local days = self:round(diff:spandays())
+  local years = days ~= 0 and self:round(days / 365) or 0
+  local months = days ~= 0 and self:round(days / 30) or 0
+  local hours = self:round(diff:spanhours()) and self:round(diff:spanhours()) or 0
+  local minutes = self:round(diff:spanminutes()) and self:round(diff:spanminutes()) or 0
+  local seconds = diff:spanseconds()
 
-  if diff < 0 then
-    negative = true
-    diff = diff * -1
+  if false then
+    return days .. ""
   end
 
-  local days = math.floor(diff / (24 * 60 * 60))
-  local hours = math.floor((diff % (24 * 60 * 60)) / (60 * 60))
-  local minutes = math.floor((diff % (60 * 60)) / 60)
-
-  local value = ''
-
-  if days > 0 or days < -1 then
-    if days >= 30 or days <= -30 then
-      local months = math.floor(days / 30)
-      value = string.format('~%dmon', months)
-    else
-      value = string.format('%dd', days)
-    end
-  elseif hours > 0 or hours < -1 then
-    value = string.format('%dh', hours)
-  elseif minutes > 0 or minutes < 0 then
-    value = string.format('%dm', minutes)
-  else
-    value = 'now'
-  end
-  if negative then
-    value = '-' .. value
+  if years >= 1 or years <= -1 then
+    return years .. "y"
   end
 
-  return value
+  if months >= 1 or months < 0 then
+    return months .. "mon"
+  end
+
+  if days >= 1 or days < 0 then
+    return days .. "d"
+  end
+
+  if hours >= 1 or hours < 0 then
+    return hours .. "h"
+  end
+
+  if minutes >= 1 or minutes < 0 then
+    return minutes .. "m"
+  end
+
+  return seconds .. "s"
+
 end
 
 --- Get relative hours
 --- @return number
 function DateTime:relative_hours()
+  return self:diff_hours()
+end
 
-  local diff = self:diff()
-  local negative = false
-
-  if diff < 0 then
-    negative = true
-    diff = diff * -1
-  end
-
-  local value = diff / (60 * 60)
-  return (not negative) and value or value * -1
+function DateTime:diff_hours()
+  local diff = self:diff_object()
+  return diff:spanhours()
 end
 
 return DateTime

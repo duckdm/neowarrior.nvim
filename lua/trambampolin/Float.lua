@@ -33,6 +33,7 @@ function Float:open()
     relative = self.opt.relative or 'editor',
     border = self.opt.border or 'rounded',
     title = self.opt.title or nil,
+    title_pos = self.opt.title and self.opt.title_pos or nil,
     width = self.opt.width or 30,
     height = self.opt.height or self.tram:get_line_no(),
     col = self.opt.col or 0,

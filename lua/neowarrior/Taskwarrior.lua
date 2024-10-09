@@ -2,6 +2,7 @@ local Task = require("neowarrior.Task")
 local TaskCollection = require("neowarrior.TaskCollection")
 
 ---@class Taskwarrior
+---@field last_cmd string
 ---@field syscall fun(self: Taskwarrior, cmd: string[]): string
 local Taskwarrior = {}
 
@@ -12,6 +13,8 @@ function Taskwarrior:new()
   setmetatable(taskwarrior, self)
   self.__index = self
 
+  taskwarrior.last_cmd = nil
+
   return taskwarrior
 end
 
@@ -20,6 +23,7 @@ end
 ---@return string
 function Taskwarrior:syscall(cmd)
   local result = vim.fn.system(table.concat(cmd, " "))
+  self.last_cmd = table.concat(cmd, " ")
   return result
 end
 
@@ -40,16 +44,14 @@ end
 ---@return TaskCollection
 function Taskwarrior:tasks(report, filter)
 
-  local default_limit = " limit:1000000 "
+  local default_limit = "limit:1000000"
 
   if filter and string.find(filter, "limit:") then
     default_limit = ""
   end
-  -- local cmd = "task " .. default_limit .. "export " .. report
   local cmd = { "task", default_limit, "export", report }
 
   if filter then
-    -- cmd = "task " .. default_limit .. filter .. " export " .. report
     cmd = { "task", default_limit, filter, "export", report }
   end
 

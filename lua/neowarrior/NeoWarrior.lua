@@ -9,6 +9,7 @@ local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
 local Taskwarrior = require('neowarrior.Taskwarrior')
 local TaskPage = require('neowarrior.pages.TaskPage')
+local ProjectPage = require('neowarrior.pages.ProjectPage')
 local colors   = require('neowarrior.colors')
 local default_config = require('neowarrior.config')
 local TaskCollection = require('neowarrior.TaskCollection')
@@ -20,6 +21,7 @@ local Project = require('neowarrior.Project')
 local ProjectCollection = require('neowarrior.ProjectCollection')
 local ProjectLine = require('neowarrior.lines.ProjectLine')
 local util = require('neowarrior.util')
+local DateTimePicker = require('neowarrior.DateTimePicker')
 
 ---@class NeoWarrior
 ---@field public version string
@@ -51,8 +53,12 @@ local util = require('neowarrior.util')
 ---@field public current_mode string
 ---@field public key_descriptions table
 ---@field public current_task Task
+---@field public current_project string|nil
 ---@field public keys table
 ---@field public task_cache table
+---@field public current_page table|nil
+---@field public back nil|table
+---@field public dtp DateTimePicker
 ---@field public new fun(self: NeoWarrior): NeoWarrior
 ---@field public setup fun(self: NeoWarrior, config: NeoWarrior.Config): NeoWarrior
 ---@field public init fun(self: NeoWarrior): NeoWarrior
@@ -84,7 +90,7 @@ function NeoWarrior:new()
     setmetatable(neowarrior, self)
     self.__index = self
 
-    neowarrior.version = "v0.3.0"
+    neowarrior.version = "v0.4.1"
     neowarrior.config = nil
     neowarrior.user_config = nil
     neowarrior.buffer = nil
@@ -112,7 +118,11 @@ function NeoWarrior:new()
     neowarrior.current_report = nil
     neowarrior.current_mode = nil
     neowarrior.current_task = nil
+    neowarrior.current_project = nil
     neowarrior.task_cache = {}
+    neowarrior.current_page = nil
+    neowarrior.back = nil
+    neowarrior.dtp = nil
     neowarrior.keys = {
       {
         name = nil,
@@ -155,9 +165,14 @@ function NeoWarrior:new()
         keys = {
           { key = 'toggle_group_view', sort = 33, desc = 'Toggle grouped view' },
           { key = 'toggle_tree_view', sort = 34, desc = 'Toggle tree view' },
-          { key = 'collapse_all', sort = 35, desc = 'Collapse all trees' },
-          { key = 'expand_all', sort = 36, desc = 'Expand all trees' },
-          { key = 'toggle_tree', sort = 37, desc = 'Toggle tree' },
+          { key = 'toggle_agenda_view', sort = 35, desc = 'Toggle agenda view' },
+
+          { key = 'collapse_all', sort = 36, desc = 'Collapse all trees' },
+          { key = 'expand_all', sort = 37, desc = 'Expand all trees' },
+          { key = 'toggle_tree', sort = 38, desc = 'Toggle tree' },
+
+          { key = 'next_tab' , sort = 39, desc = 'Next tab' },
+          { key = 'prev_tab' , sort = 40, desc = 'Previous tab' },
         }
       },
 
@@ -420,6 +435,10 @@ function NeoWarrior:open_task_float()
         disable_estimate = true,
         disable_has_blocking = true,
         disable_tags = true,
+        line_conf = {
+          enable_warning_icon = "left",
+          enable_urgency = "eol",
+        },
       })
 
       if task.tags then
@@ -556,7 +575,7 @@ function NeoWarrior:focus()
     local buf_handle = vim.api.nvim_win_get_buf(handle)
     local buf_name = vim.api.nvim_buf_get_name(buf_handle)
     local buf_name_parts = util.split_string(buf_name, '/')
-    local buf_name = buf_name_parts[util.table_size(buf_name_parts)]
+    buf_name = buf_name_parts[util.table_size(buf_name_parts)]
     if buf_name == "neowarrior" then
       vim.api.nvim_set_current_win(handle)
       return true
@@ -650,10 +669,12 @@ end
 function NeoWarrior:show()
 
   self:close_floats()
+  self.buffer:save_cursor()
 
   local uuid = self.buffer:get_meta_data('uuid')
   local project = self.buffer:get_meta_data('project')
   local action = self.buffer:get_meta_data('action')
+  self.back = self.buffer:get_meta_data('back')
 
   if uuid then
 
@@ -661,9 +682,7 @@ function NeoWarrior:show()
 
   elseif project then
 
-    self.current_filter = "project:" .. project
-    self:refresh()
-    self:list()
+    self:project(project, "pending")
 
   elseif action then
 
@@ -828,6 +847,8 @@ function NeoWarrior:add()
     default_add_input = "project:" .. task.project .. " "
   elseif project_id then
     default_add_input = "project:" .. project_id .. " "
+  elseif self.current_project then
+    default_add_input = "project:" .. self.current_project .. " "
   elseif self.current_filter and string.find(self.current_filter, "project:") then
     for k, _ in string.gmatch(self.current_filter, "project:%w+[%.%w]*") do
       default_add_input = k
@@ -853,7 +874,15 @@ function NeoWarrior:add()
       else
         self.tw:add(input)
         self:refresh()
-        self:list()
+        if self.current_project then
+          local current_project_group = "pending"
+          if self.current_page and self.current_page.group then
+            current_project_group = self.current_page.group
+          end
+          self:project(self.current_project, current_project_group)
+        else
+          self:list()
+        end
         self.buffer:restore_cursor()
       end
     end
@@ -920,51 +949,13 @@ end
 --- Create user commands
 function NeoWarrior:create_user_commands()
 
-  vim.api.nvim_create_user_command("NeoWarriorOpen", function(opt)
-    local valid_args = { 'current', 'above', 'below', 'left', 'right', 'float' }
-    local split = opt and opt.fargs and opt.fargs[1] or 'below'
-    if not vim.tbl_contains(valid_args, split) then
-      split = 'below'
-    end
-    self:open({ split = split })
-  end, { nargs = '*' })
+  local cmds = require('neowarrior.user_commands')
 
-  vim.api.nvim_create_user_command("NeoWarriorAdd", function()
-    self:add()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorDone", function()
-    self:mark_done()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorStartStop", function()
-    self:start_stop()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorFilter", function()
-    self.buffer:save_cursor()
-    self:filter()
-    self.buffer:restore_cursor()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorFilterSelect", function()
-    self:filter_select()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorReportSelect", function()
-    self:report_select()
-  end, {})
-
-  vim.api.nvim_create_user_command("NeoWarriorRefresh", function()
-    self.buffer:save_cursor()
-    self:refresh()
-    if self.current_task then
-      self:task(self.current_task.uuid)
-    else
-      self:list()
-    end
-    self.buffer:restore_cursor()
-  end, {})
+  for _, cmd in ipairs(cmds) do
+    vim.api.nvim_create_user_command("NeoWarrior" .. cmd.cmd, function(opt)
+      cmd.callback(self, opt)
+    end, cmd.opts or {})
+  end
 
 end
 
@@ -1047,6 +1038,16 @@ function NeoWarrior:set_keymaps()
       self.current_mode = 'normal'
     else
       self.current_mode = 'tree'
+    end
+    self:list()
+  end, default_keymap_opts)
+
+  -- Toggle agenda view
+  vim.keymap.set("n", self.config.keys.toggle_agenda_view, function()
+    if self.current_mode == 'agenda' then
+      self.current_mode = 'normal'
+    else
+      self.current_mode = 'agenda'
     end
     self:list()
   end, default_keymap_opts)
@@ -1283,35 +1284,7 @@ function NeoWarrior:set_keymaps()
   --- Modify task due date
   if self.config.keys.modify_due then
     vim.keymap.set("n", self.config.keys.modify_due, function()
-      self:close_floats()
-      self.buffer:save_cursor()
-      local uuid = nil
-      if self.current_task then
-        uuid = self.current_task.uuid
-      else
-        uuid = self.buffer:get_meta_data('uuid')
-      end
-      if uuid then
-        local task = self.tw:task(uuid)
-        self.buffer:save_cursor()
-        local prompt = "Task due date: "
-        vim.ui.input({
-          prompt = prompt,
-          cancelreturn = nil,
-        }, function(input)
-          if input then
-            self.tw:modify(task, "due:" .. input)
-            if self.current_task then
-              self:task(self.current_task.uuid)
-            else
-              self:refresh()
-              self:list()
-            end
-            self.buffer:restore_cursor()
-          end
-        end)
-        self.buffer:restore_cursor()
-      end
+      self:modify_due()
     end, default_keymap_opts)
   end
 
@@ -1391,8 +1364,20 @@ function NeoWarrior:set_keymaps()
 
   -- Back to list/refresh
   if self.config.keys.back then
-    vim.keymap.set("n", '<Esc>', function() self:list() end, default_keymap_opts)
-    vim.keymap.set("n", self.config.keys.back, function() self:list() end, default_keymap_opts)
+    vim.keymap.set("n", '<Esc>', function()
+      self:list()
+    end, default_keymap_opts)
+    vim.keymap.set("n", self.config.keys.back, function()
+      if self.back and self.back.type == "task" and self.back.uuid then
+        self:task(self.back.uuid)
+        self.back = nil
+      elseif self.back and self.back.type == "project" and self.back.project then
+        self:project(self.back.project, self.back.group or "pending")
+        self.back = nil
+      else
+        self:list()
+      end
+    end, default_keymap_opts)
   end
 
   -- Filter tasks
@@ -1741,16 +1726,68 @@ function NeoWarrior:open(opts)
   self.buffer:option('wrap', false, { win = self.window.id })
   self.buffer:option('filetype', 'neowarrior', { buf = self.buffer.id })
 
-  vim.cmd([[
-  syntax match Metadata /{{{.*}}}/ conceal
-  syntax match MetadataConceal /{{{[^}]*}}}/ contained conceal
-]])
+--   vim.cmd([[
+--   syntax match Metadata /{{{.*}}}/ conceal
+--   syntax match MetadataConceal /{{{[^}]*}}}/ contained conceal
+-- ]])
 
   self:refresh()
   self:after_initial_refresh()
   self:list()
 
   return self
+end
+
+function NeoWarrior:modify_due()
+
+  self:close_floats()
+  self.buffer:save_cursor()
+
+  local uuid = nil
+  local task = nil
+
+  if self.current_task then
+    uuid = self.current_task.uuid
+    task = self.current_task
+  else
+    uuid = self.buffer:get_meta_data('uuid')
+    if uuid then
+      task = self.tw:task(uuid)
+    end
+  end
+
+  self.dtp = DateTimePicker:new({
+
+    row = 0,
+    col = 2,
+    title = "Select due date",
+    select_time = true,
+    mark = {
+      { date = task and task.due_dt or nil, }
+    },
+    on_select = function(date, dtp)
+
+      dtp:close()
+
+      if date and task then
+        self.buffer:save_cursor()
+        self.tw:modify(task, "due:" .. date:format("%Y%m%dT%H%M%SZ"))
+        if self.current_task then
+          self:task(self.current_task.uuid)
+        else
+          self:refresh()
+          self:list()
+        end
+      end
+
+      self.buffer:restore_cursor()
+
+    end,
+
+  })
+
+  self.dtp:open();
+
 end
 
 --- Close neowarrior
@@ -1780,6 +1817,7 @@ function NeoWarrior:list()
   tram:print()
 
   self.buffer:restore_cursor()
+  self.current_page = { tram = tram, name = 'list' }
 
   return self
 end
@@ -1794,6 +1832,23 @@ function NeoWarrior:task(uuid)
   local task_page = TaskPage:new(self.buffer, task)
   task_page:print(self.buffer)
   self.current_task = task
+  self.current_page = { tram = task_page.tram, name = 'task' }
+
+end
+
+--- Project page
+---@param project string Project "id"
+function NeoWarrior:project(project, group)
+
+  local project_page = ProjectPage:new(self.buffer, project)
+  project_page:print(group)
+  self.current_project = project
+  self.current_page = {
+    tram = project_page.tram,
+    name = 'project',
+    group = group,
+  }
+  self.buffer:restore_cursor()
 
 end
 
@@ -1848,7 +1903,7 @@ function NeoWarrior:filter_select()
         end
 
         return {
-          value = entry.filter,
+          value = entry,
           display = entry.name .. " (" .. entry.filter .. ")",
           ordinal = entry.name .. " " .. entry.filter,
         }
@@ -1862,8 +1917,24 @@ function NeoWarrior:filter_select()
         actions.close(prompt_bufnr)
         local selection = action_state.get_selected_entry()
         local new_filter = prompt
+        local current_sort = self.current_sort
+        local current_sort_direction = self.current_sort_direction
         if selection and selection.value then
-          new_filter = selection.value
+
+          new_filter = selection.value.filter
+
+          if selection.value.sort then
+            self.current_sort = selection.value.sort
+          else
+            self.current_sort = current_sort
+          end
+
+          if selection.value.sort_order then
+            self.current_sort_direction = selection.value.sort_order
+          else
+            self.current_sort_direction = current_sort_direction
+          end
+
         end
         self.current_filter = new_filter
         self:refresh()
