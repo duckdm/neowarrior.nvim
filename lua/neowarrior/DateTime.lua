@@ -28,6 +28,7 @@ function DateTime:new(input)
   self.__index = self
 
   datetime.date = date(input)
+  datetime.timestamp = datetime.date:spanseconds()
 
   return datetime
 end
@@ -38,7 +39,7 @@ end
 
 --- Add time to date
 ---@param unit "years"|"months"|"days"|"hours"|"minutes"|"seconds"
----@param value 
+---@param value number
 function DateTime:add(unit, value)
 
   if unit == "years" then
@@ -82,7 +83,7 @@ function DateTime:nice(opts)
   local default_format = opts and opts.format or "%A, %B %d"
   local show_close_dates = opts and opts.show_close_dates or false
   local now = DateTime:new(nil)
-  local days = math.ceil(date.diff(self.date, now.date):spandays())
+  local days = math.floor(date.diff(self.date, now.date):spandays())
 
   local str = "In " .. days .. " days"
 
@@ -186,6 +187,10 @@ end
 --- Get relative hours
 --- @return number
 function DateTime:relative_hours()
+  return self:diff_hours()
+end
+
+function DateTime:diff_hours()
   local diff = self:diff_object()
   return diff:spanhours()
 end
