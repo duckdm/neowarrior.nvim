@@ -872,7 +872,15 @@ function NeoWarrior:add()
       else
         self.tw:add(input)
         self:refresh()
-        self:list()
+        if self.current_project then
+          local current_project_group = "pending"
+          if self.current_page and self.current_page.group then
+            current_project_group = self.current_page.group
+          end
+          self:project(self.current_project, current_project_group)
+        else
+          self:list()
+        end
         self.buffer:restore_cursor()
       end
     end
@@ -1836,6 +1844,7 @@ function NeoWarrior:project(project, group)
   self.current_page = {
     tram = project_page.tram,
     name = 'project',
+    group = group,
   }
   self.buffer:restore_cursor()
 
