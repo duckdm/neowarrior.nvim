@@ -847,6 +847,8 @@ function NeoWarrior:add()
     default_add_input = "project:" .. task.project .. " "
   elseif project_id then
     default_add_input = "project:" .. project_id .. " "
+  elseif self.current_project then
+    default_add_input = "project:" .. self.current_project .. " "
   elseif self.current_filter and string.find(self.current_filter, "project:") then
     for k, _ in string.gmatch(self.current_filter, "project:%w+[%.%w]*") do
       default_add_input = k
