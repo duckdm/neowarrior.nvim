@@ -725,48 +725,8 @@ function NeoWarrior:open_about()
 
 end
 
-function NeoWarrior:get_editor_height()
-
-  local windows = vim.api.nvim_list_wins()
-  local max_height = 0
-
-  for _, handle in ipairs(windows) do
-
-    local window_height = vim.api.nvim_win_get_height(handle)
-
-    if window_height > max_height then
-      max_height = window_height
-    end
-
-  end
-
-  return max_height
-end
-
-function NeoWarrior:get_editor_width()
-
-  local windows = vim.api.nvim_list_wins()
-  local max_height = self:get_editor_height()
-  local total_width = 0
-  local first_smaller = true
-
-  for _, handle in ipairs(windows) do
-
-    local window_height = vim.api.nvim_win_get_height(handle)
-    local window_width = vim.api.nvim_win_get_width(handle)
-
-    if window_height == max_height then
-      total_width = total_width + window_width
-      first_smaller = true
-    elseif first_smaller then
-      total_width = total_width + window_width
-      first_smaller = false
-    end
-
-  end
-
-  return total_width
-end
+function NeoWarrior:get_editor_height() return vim.api.nvim_list_uis()[1].height end
+function NeoWarrior:get_editor_width() return vim.api.nvim_list_uis()[1].width end
 
 --- Open a float
 ---@param buffer Buffer
@@ -1496,7 +1456,6 @@ function NeoWarrior:open_help()
 
   local tram = Tram:new()
   local width = 0
-  local win_width = self:get_editor_width()
   local pad = 0
   local key_length = 0
   local sep_length = 4
@@ -1539,11 +1498,13 @@ function NeoWarrior:open_help()
   end
 
   width = key_length + sep_length + desc_length + 4
+  local gwidth = vim.api.nvim_list_uis()[1].width
+  local gheight = vim.api.nvim_list_uis()[1].height
   self.help_float = tram:open_float({
     title = 'NeoWarrior help',
     width = width,
-    col = math.floor(win_width / 2) - (width),
-    row = 5,
+    col = math.floor(gwidth / 2) - (width / 2),
+    row = math.floor(gheight / 2) - (tram:get_line_no() / 2),
   })
 
   return self.help_float
@@ -1674,27 +1635,27 @@ function NeoWarrior:open(opts)
 
     if split == "float" then
 
-      local win_width = vim.api.nvim_win_get_width(0)
-      local win_height = vim.api.nvim_win_get_height(0)
+      local gwidth = vim.api.nvim_list_uis()[1].width
+      local gheight = vim.api.nvim_list_uis()[1].height
       local width = self.config.float.width
       local height = self.config.float.height
 
       if width <= 1 then
-        width = math.floor(win_width * width)
+        width = math.floor(gwidth * width)
       end
 
       if height <= 1 then
-        height = math.floor(win_height * height)
+        height = math.floor(gheight * height)
       end
 
-      if win_width < width then
-        width = win_width
+      if gwidth < width then
+        width = gwidth
       end
-      if win_height < height then
-        height = win_height
+      if gheight < height then
+        height = gheight
       end
-      local row = math.floor(win_height / 2) - (height / 2)
-      local col = math.floor(win_width / 2) - (width / 2)
+      local row = math.floor(gheight / 2) - (height / 2)
+      local col = math.floor(gwidth / 2) - (width / 2)
 
       opts = {
         relative = "win",
