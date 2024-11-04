@@ -59,8 +59,10 @@ function Project:refresh()
 
         if task.status and task.status == 'pending' then
             self.urgency.total = self.urgency.total + task.urgency
-            if task.estimate == nil then task.estimate = 0 end
-            self.estimate.total = self.estimate.total + task.estimate
+            if task.estimate and type(task.estimate) == 'number' then
+                if task.estimate == nil then task.estimate = 0 end
+                self.estimate.total = self.estimate.total + task.estimate
+            end
             self.task_count = self.task_count + 1
         end
 

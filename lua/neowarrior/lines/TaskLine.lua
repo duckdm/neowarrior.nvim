@@ -147,7 +147,7 @@ function TaskLine:into_line(arg)
     self.tram:col(" ", "")
   end
 
-  if (not disable_estimate) and line_conf.enable_estimate == "left" and self.task.estimate and self.task.estimate > 0 then
+  if self.task.estimate and type(self.task.estimate) == "number" and (not disable_estimate) and line_conf.enable_estimate == "left" and self.task.estimate and self.task.estimate > 0 then
     self.tram:col(
       conf.icons.est .. "" .. estimate_string .. " ",
       colors.get_estimate_color(self.task.estimate)
