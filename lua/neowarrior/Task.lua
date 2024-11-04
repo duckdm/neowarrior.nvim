@@ -51,8 +51,13 @@ function Task:new(task_data)
   data.tags = task_data.tags or nil
   data.urgency = task_data.urgency or nil
   data.recur = task_data.recur or nil
-  data.estimate = task_data.estimate or nil
-  data.estimate_string = self:get_hour_duration_string(task_data.estimate)
+  if task_data.estimate and type(task_data.estimate) == "string" then
+    data.estimate = tonumber(task_data.estimate) or nil
+    data.estimate_string = task_data.estimate
+  else
+    data.estimate = task_data.estimate or nil
+    data.estimate_string = self:get_hour_duration_string(task_data.estimate)
+  end
   data.depends = self:create_dependency_collection(task_data.depends)
   data.parents = nil
   -- TODO: Probably need a specific class for annotations (similar
