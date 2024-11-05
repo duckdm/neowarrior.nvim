@@ -276,6 +276,15 @@ end
 --- Estimate row
 function TaskPage:estimate()
 
+  if not self.task.estimate and self.task.estimate_string then
+    self:row('estimate', {{
+      text = "Estimate",
+    }, {
+      text = self.task.estimate_string,
+      color = "",
+    }})
+  end
+
   if not self.task.estimate then
     return self
   end

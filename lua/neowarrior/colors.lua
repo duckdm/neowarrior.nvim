@@ -18,7 +18,7 @@ Colors.get_geq = function(cmp_value, values, default_value)
 
   for _, val in ipairs(values) do
 
-    if cmp_value >= tonumber(val[1]) then
+    if cmp_value and type(cmp_value) == "number" and val[1] and tonumber(cmp_value) >= tonumber(val[1]) then
       hl_group = _Neowarrior.config.colors[val[2]].group
     end
 
