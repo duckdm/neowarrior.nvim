@@ -135,7 +135,8 @@ end
 ---@return Buffer
 function Buffer:print(up_lines, from)
 
-  local lines, virt_lines, colors = table.unpack(self:process_lines(up_lines, from))
+  local unpack = unpack or table.unpack
+  local lines, virt_lines, colors = unpack(self:process_lines(up_lines, from))
 
   self:unlock()
 
