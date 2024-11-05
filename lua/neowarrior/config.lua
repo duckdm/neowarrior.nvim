@@ -256,8 +256,8 @@ return {
   ---in selects.
   reports = {
     "active", "all", "blocked", "blocking", "completed", "list", "long",
-    "ls", "minimal", "newest", "next", "oldest", "overdue", "projects",
-    "ready", "recurring", "summary", "tags", "unblocked", "waiting",
+    "ls", "minimal", "newest", "next", "oldest", "overdue",
+    "ready", "recurring", "unblocked", "waiting",
   },
 
   ---@type string[]|table[] Default filters available (valid taskwarrior filters). Used
