@@ -4,6 +4,12 @@ return {
   ---@type boolean
   dev = false,
 
+  ui = {
+
+    select = "native";
+
+  },
+
   ---@type table Task line config
   --- Note: Using more than one of these on the right currently causes some
   --- visual issues, the leftmost value's color will be used for the entire right
