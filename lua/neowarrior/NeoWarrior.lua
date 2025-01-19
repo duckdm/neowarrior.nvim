@@ -191,43 +191,63 @@ end
 ---@param config NeoWarrior.Config
 ---@return NeoWarrior
 function NeoWarrior:setup(config)
-
-  self.user_config = config or {}
-  self.config = vim.tbl_deep_extend(
-    "force",
-    default_config,
-    self.user_config
-  )
-  if self.config.dir_setup and util.table_size(self.config.dir_setup) > 0 then
-
-    local cwd = vim.uv.cwd()
-
-    for _, dir_setup in ipairs(self.config.dir_setup) do
-
-      local path = dir_setup.dir or nil
-      local match = dir_setup.match or nil
-
-      if cwd and match and cwd:find(match) then
-        self.config = vim.tbl_deep_extend('force', self.config, dir_setup)
-      elseif cwd and path and path == cwd then
-        self.config = vim.tbl_deep_extend('force', self.config, dir_setup)
-      end
-
+    self.user_config = config
+    -- Create a new table for merged config
+    self.config = vim.deepcopy(default_config)
+    -- First level merge of user_config
+    for key, value in pairs(self.user_config) do
+        if type(value) == "table" then
+            -- For tables, do a shallow merge to replace whole subtables
+            self.config[key] = self.config[key] or {}
+            for subkey, subvalue in pairs(value) do
+                self.config[key][subkey] = vim.deepcopy(subvalue)
+            end
+        else
+            -- For non-table values, just copy
+            self.config[key] = value
+        end
+    end
+    if self.config.dir_setup and util.table_size(self.config.dir_setup) > 0 then
+        local cwd = vim.uv.cwd()
+        for _, dir_setup in ipairs(self.config.dir_setup) do
+            local path = dir_setup.dir or nil
+            local match = dir_setup.match or nil
+            if cwd and match and cwd:find(match) then
+                -- Apply the same shallow merge logic for dir_setup
+                for key, value in pairs(dir_setup) do
+                    if type(value) == "table" then
+                        self.config[key] = self.config[key] or {}
+                        for subkey, subvalue in pairs(value) do
+                            self.config[key][subkey] = vim.deepcopy(subvalue)
+                        end
+                    else
+                        self.config[key] = value
+                    end
+                end
+            elseif cwd and path and path == cwd then
+                -- Same shallow merge for path match
+                for key, value in pairs(dir_setup) do
+                    if type(value) == "table" then
+                        self.config[key] = self.config[key] or {}
+                        for subkey, subvalue in pairs(value) do
+                            self.config[key][subkey] = vim.deepcopy(subvalue)
+                        end
+                    else
+                        self.config[key] = value
+                    end
+                end
+            end
+        end
     end
 
-  end
-
-  --- For reset purposes
-  self.config.default_sort = self.config.sort or "urgency"
-  self.config.default_sort_direction = self.config.sort_direction or "desc"
-  self.config.default_filter = self.config.filter or ""
-  self.config.default_report = self.config.report or "next"
-
-  colors.set(self.config.colors)
-
-  self:create_user_commands()
-
-  return self
+    -- Store defaults based on final config values
+    self.config.default_sort = self.config.sort or "urgency"
+    self.config.default_sort_direction = self.config.sort_direction or "desc"
+    self.config.default_filter = self.config.filter or ""
+    self.config.default_report = self.config.report or "next"
+    colors.set(self.config.colors)
+    self:create_user_commands()
+    return self
 end
 
 --- Close all floats
