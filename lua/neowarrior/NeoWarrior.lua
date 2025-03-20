@@ -418,6 +418,10 @@ end
 --- Show task float
 function NeoWarrior:open_task_float()
 
+  if (not self.buffer) or (not self.window) then
+    return
+  end
+
   local description = self.buffer:get_meta_data('description')
 
   if description then
@@ -1763,6 +1767,8 @@ function NeoWarrior:close()
 
   self:close_floats()
   self.window:close()
+  self.window = nil
+  self.buffer = nil
 
 end
 
