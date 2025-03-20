@@ -938,6 +938,9 @@ function NeoWarrior:mark_done()
     if self.current_task then
       self:refresh()
       self:task(self.current_task.uuid)
+    elseif self.current_page and self.current_page.name == "project" then
+      self:refresh()
+      self:project(self.current_page.project, self.current_page.group);
     else
       self:refresh()
       self:list()
@@ -972,6 +975,8 @@ function NeoWarrior:delete()
 
   if self.current_task then
     self:task(self.current_task.uuid)
+  elseif self.current_page and self.current_page.name == "project" then
+    self:project(self.current_page.project, self.current_page.group);
   else
     self:list()
   end
@@ -1809,6 +1814,7 @@ function NeoWarrior:project(project, group)
     tram = project_page.tram,
     name = 'project',
     group = group,
+    project = project,
   }
   self.buffer:restore_cursor()
 

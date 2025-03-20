@@ -69,6 +69,8 @@ return {
       nw:refresh()
       if nw.current_task then
         nw:task(nw.current_task.uuid)
+      elseif nw.current_page and nw.current_page.name == "project" then
+        nw:project(nw.current_page.project, nw.current_page.group);
       else
         nw:list()
       end
