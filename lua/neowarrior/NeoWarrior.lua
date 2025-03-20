@@ -876,12 +876,8 @@ function NeoWarrior:add()
       else
         self.tw:add(input)
         self:refresh()
-        if self.current_project then
-          local current_project_group = "pending"
-          if self.current_page and self.current_page.group then
-            current_project_group = self.current_page.group
-          end
-          self:project(self.current_project, current_project_group)
+        if self.current_page and self.current_page.name == "project" then
+          self:project(self.current_page.project, self.current_page.group)
         else
           self:list()
         end
