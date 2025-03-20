@@ -1284,6 +1284,7 @@ function NeoWarrior:set_keymaps()
           if input then
             self.tw:modify(task, input)
             if self.current_task then
+              self:refresh()
               self:task(self.current_task.uuid)
             else
               self:refresh()
