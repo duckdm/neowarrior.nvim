@@ -832,6 +832,10 @@ end
 
 function NeoWarrior:add()
 
+  if not self.buffer then
+    return
+  end
+
   self:close_floats()
   self.buffer:save_cursor()
 
