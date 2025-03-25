@@ -4,6 +4,7 @@ local TaskLine = require('neowarrior.lines.TaskLine')
 ---@class TreeComponent
 ---@field project Project
 ---@field lines Line[]
+---@field selected_tasks string[]
 ---@field new fun(self: TreeComponent, tram: Trambampolin, project: Project): TreeComponent
 ---@field get_lines fun(self: TreeComponent): Line[]
 ---@field generate_lines fun(self: TreeComponent, project: Project, indent: string, line_no: number): number
@@ -11,13 +12,14 @@ local TreeComponent = {}
 
 --- Create a new TreeComponent
 ---@param project Project
-function TreeComponent:new(tram, project)
+function TreeComponent:new(tram, project, selected_tasks)
     local tree_component = {}
     setmetatable(tree_component, self)
     self.__index = self
 
     self.project = project
     self.tram = tram
+    self.selected_tasks = selected_tasks
 
     return self
 end
@@ -49,7 +51,13 @@ function TreeComponent:_set(project, indent)
   end
 
   for _, task in ipairs(project.tasks:get()) do
-    TaskLine:new(self.tram, task):into_line({
+
+    local is_selected = false
+    if self.selected_tasks and self.selected_tasks[task.uuid] ~= nil then
+      is_selected = true
+    end
+
+    TaskLine:new(self.tram, task, is_selected):into_line({
       indent = indent,
     })
   end

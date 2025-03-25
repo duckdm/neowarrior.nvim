@@ -31,12 +31,12 @@ function ListComponent:set()
 
   if _Neowarrior.current_mode == 'tree' then
 
-    TreeComponent:new(self.tram, _Neowarrior.project_tree):set()
+    TreeComponent:new(self.tram, _Neowarrior.project_tree, self.selected_tasks):set()
     return self
 
   elseif _Neowarrior.current_mode == 'grouped' then
 
-    GroupedComponent:new(self.tram, _Neowarrior.grouped_projects):set()
+    GroupedComponent:new(self.tram, _Neowarrior.grouped_projects, self.selected_tasks):set()
     return self
 
   elseif _Neowarrior.current_mode == "agenda" then

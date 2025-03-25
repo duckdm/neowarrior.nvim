@@ -14,13 +14,14 @@ local GroupedComponent = {}
 
 --- Create a new GroupedComponent
 ---@param projects ProjectCollection
-function GroupedComponent:new(tram, projects)
+function GroupedComponent:new(tram, projects, selected_tasks)
     local grouped_component = {}
     setmetatable(grouped_component, self)
     self.__index = self
 
     self.projects = projects
     self.tram = tram
+    self.selected_tasks = selected_tasks
 
     return self
 end
@@ -50,7 +51,13 @@ function GroupedComponent:_set(projects)
     })
 
     for _, task in ipairs(project.tasks:get()) do
-      TaskLine:new(self.tram, task):into_line({})
+
+      local is_selected = false
+      if self.selected_tasks and self.selected_tasks[task.uuid] ~= nil then
+        is_selected = true
+      end
+
+      TaskLine:new(self.tram, task, is_selected):into_line({})
     end
 
     self.tram:nl()

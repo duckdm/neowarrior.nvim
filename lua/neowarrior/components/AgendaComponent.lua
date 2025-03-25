@@ -97,7 +97,12 @@ function AgendaComponent:_set(tasks, selected)
     self.tram:line("Tasks without due date", { color = _Neowarrior.config.colors.warning.group })
     for _, task in ipairs(tasks_without_due) do
 
-      TaskLine:new(self.tram, task):into_line({})
+      local is_selected = false
+      if self.selected and self.selected[task.uuid] ~= nil then
+        is_selected = true
+      end
+
+      TaskLine:new(self.tram, task, is_selected):into_line({})
 
     end
 
