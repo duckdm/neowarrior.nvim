@@ -352,7 +352,7 @@ return {
   icons = {
     task = "\u{f1db}",
     task_completed = "\u{f14a}",
-    task_selected = "\u{f058}",
+    task_selected = "\u{f14a}",
     recur = "\u{f021}",
     project = "\u{f07b}",
     project_alt = "\u{f0256}",
