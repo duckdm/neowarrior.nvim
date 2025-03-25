@@ -5,6 +5,7 @@ local AgendaComponent = require('neowarrior.components.AgendaComponent')
 
 ---@class ListComponent
 ---@field task_collection TaskCollection
+---@field selected_tasks table
 ---@field line_no number
 local ListComponent = {}
 
@@ -12,12 +13,13 @@ local ListComponent = {}
 ---@param tram Trambampolin
 ---@param task_collection TaskCollection
 ---@return ListComponent
-function ListComponent:new(tram, task_collection)
+function ListComponent:new(tram, task_collection, selected_tasks)
     local header_component = {}
     setmetatable(header_component, self)
     self.__index = self
 
     self.task_collection = task_collection
+    self.selected_tasks = selected_tasks
     self.tram = tram
 
     return self
@@ -39,7 +41,7 @@ function ListComponent:set()
 
   elseif _Neowarrior.current_mode == "agenda" then
 
-    AgendaComponent:new(self.tram):set(self.task_collection)
+    AgendaComponent:new(self.tram):set(self.task_collection, self.selected_tasks)
     return self
 
   end

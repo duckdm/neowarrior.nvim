@@ -56,6 +56,7 @@ local DateTimePicker = require('neowarrior.DateTimePicker')
 ---@field public back nil|table
 ---@field public dtp DateTimePicker
 ---@field public telescope table|nil
+---@field public selected_tasks table|nil
 ---@field public new fun(self: NeoWarrior): NeoWarrior
 ---@field public setup fun(self: NeoWarrior, config: NeoWarrior.Config): NeoWarrior
 ---@field public init fun(self: NeoWarrior): NeoWarrior
@@ -79,6 +80,7 @@ local DateTimePicker = require('neowarrior.DateTimePicker')
 ---@field public sort_tree fun(self: NeoWarrior, project: Project): NeoWarrior
 ---@field public set_filter fun(self: NeoWarrior, filter: string): NeoWarrior
 ---@field public set_report fun(self: NeoWarrior, report: string): NeoWarrior
+---@field public select_task fun(self: NeoWarrior, uuid: string): NeoWarrior
 local NeoWarrior = {}
 
 --- Constructor
@@ -122,6 +124,7 @@ function NeoWarrior:new()
     neowarrior.back = nil
     neowarrior.dtp = nil
     neowarrior.telescope = nil
+    neowarrior.selected_tasks = nil
     neowarrior.keys = {
       {
         name = nil,
@@ -145,6 +148,7 @@ function NeoWarrior:new()
           { key = 'modify_select_priority', sort = 18, desc = 'Modify priority' },
           { key = 'modify_due', sort = 19, desc = 'Modify due date' },
           { key = 'select_dependency', sort = 20, desc = 'Select dependency' },
+          { key = 'select_task', sort = 30, desc = 'Select task' },
         },
       },
 
@@ -1123,6 +1127,17 @@ function NeoWarrior:set_keymaps()
     end, default_keymap_opts)
   end
 
+  -- Select task
+  if self.config.keys.select_task then
+    vim.keymap.set("n", self.config.keys.select_task, function()
+      local uuid = self.buffer:get_meta_data('uuid')
+      if uuid then
+        self:select_task(uuid)
+      end
+
+    end, default_keymap_opts)
+  end
+
   -- Toggle tree node
   if self.config.keys.toggle_tree then
     vim.keymap.set("n", self.config.keys.toggle_tree, function()
@@ -1786,7 +1801,7 @@ function NeoWarrior:list()
 
   local tram = Tram:new():set_buffer(self.buffer)
   HeaderComponent:new(tram):set()
-  ListComponent:new(tram, self.tasks):set()
+  ListComponent:new(tram, self.tasks, self.selected_tasks):set()
 
   tram:print()
 
@@ -1957,6 +1972,29 @@ function NeoWarrior:dependency_select()
       }
     end,
   })
+
+  return self
+end
+
+function NeoWarrior:select_task(uuid)
+
+  self.buffer:save_cursor()
+  if not self.selected_tasks then
+    self.selected_tasks = {}
+  end
+
+  if self.selected_tasks[uuid] then
+    self.selected_tasks[uuid] = nil
+  else
+    self.selected_tasks[uuid] = true
+  end
+  self:list()
+  self.buffer:restore_cursor()
+
+  if self.config.select_task_jump then
+    local cursor = self.buffer:get_cursor()
+    self.buffer:set_cursor(cursor[1] + 1, cursor[2])
+  end
 
   return self
 end

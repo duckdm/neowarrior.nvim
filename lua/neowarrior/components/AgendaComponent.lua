@@ -13,6 +13,7 @@ function AgendaComponent:new(tram)
     self.__index = self
 
     self.tram = tram
+    self.selected = {}
 
     return self
 end
@@ -20,16 +21,17 @@ end
 --- Get grouped lines
 ---@param tasks TaskCollection
 ---@return AgendaComponent
-function AgendaComponent:set(tasks)
-  self:_set(tasks)
+function AgendaComponent:set(tasks, selected)
+  self:_set(tasks, selected)
   return self
 end
 
 --- Generate grouped lines
 ---@param tasks TaskCollection
 ---@return AgendaComponent
-function AgendaComponent:_set(tasks)
+function AgendaComponent:_set(tasks, selected)
 
+  self.selected = selected
   local dates = {}
   local dates_array = {}
   local tasks_without_due = {}
@@ -76,7 +78,11 @@ function AgendaComponent:_set(tasks)
       local time_color = colors.get_due_color(task.due_dt:diff_hours())
       self.tram:col(task.due_dt:format('%H:%M'), { color = time_color })
       self.tram:col(": ", {})
-      TaskLine:new(self.tram, task):into_line({
+      local is_selected = false
+      if self.selected and self.selected[task.uuid] ~= nil then
+        is_selected = true
+      end
+      TaskLine:new(self.tram, task, is_selected):into_line({
         disable_due = true,
       })
 

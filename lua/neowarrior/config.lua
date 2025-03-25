@@ -157,6 +157,9 @@ return {
   ---@type number Timezone offset in hours
   time_offset = 0,
 
+  ---@type boolean Jump to next row on task select
+  select_task_jump = true,
+
   ---@type table Colors and hl groups.
   ---You can use custom hl groups or just define colors for the existing
   ---highlight groups. A nil/false value for a color means it's
@@ -177,6 +180,7 @@ return {
     tag = { group = "NeoWarriorTag", fg = "#ffffff", bg = "#333333" },
     current_date = { group = "NeoWarriorCurrentDate", fg = "#000000", bg = "#00aaff" },
     marked_date = { group = "NeoWarriorMarkedDate", fg = "#ffffff", bg = "#00aa66" },
+    selected_task = { group = "NeoWarriorSelectedTask", fg = "#00aaff", bg = nil },
   },
   --- Example using builtin highlight groups:
   -- colors = {
@@ -319,6 +323,7 @@ return {
     done = 'd', --- Mark task as done
     start = 'S', --- Start task
     select_dependency = 'Md', --- Select dependency
+    select_task = 'J', --- Select dependency
     search = 's', --- Search all tasks
     filter = 'F', --- Input filter
     select_filter = 'f', --- Select filter
@@ -347,6 +352,7 @@ return {
   icons = {
     task = "\u{f1db}",
     task_completed = "\u{f14a}",
+    task_selected = "\u{f058}",
     recur = "\u{f021}",
     project = "\u{f07b}",
     project_alt = "\u{f0256}",

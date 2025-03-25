@@ -10,13 +10,14 @@ local TaskLine = {}
 ---@param tram Trambampolin
 ---@param task Task
 ---@return TaskLine
-function TaskLine:new(tram, task)
+function TaskLine:new(tram, task, selected)
     local task_component = {}
     setmetatable(task_component, self)
     self.__index = self
 
     self.tram = tram
     self.task = task
+    self.selected = selected
 
     return self
 end
@@ -122,6 +123,13 @@ function TaskLine:into_line(arg)
   end
 
   self.tram:col(indent, "")
+
+  if self.selected then
+    self.tram:col(
+      _Neowarrior.config.icons.task_selected .. " ",
+      _Neowarrior.config.colors.selected_task.group
+    )
+  end
 
   if not disable_task_icon then
     self.tram:col(task_icon .. " ", task_icon_color)
