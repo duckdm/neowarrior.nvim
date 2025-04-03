@@ -1746,6 +1746,9 @@ function NeoWarrior:modify_due()
         self.tw:modify(task, "due:" .. date:format("%Y%m%dT%H%M%SZ"))
         if self.current_task then
           self:task(self.current_task.uuid)
+        elseif self.current_page and self.current_page.name == "project" then
+          self:refresh()
+          self:project(self.current_page.project, self.current_page.group);
         else
           self:refresh()
           self:list()
