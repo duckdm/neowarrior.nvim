@@ -78,7 +78,7 @@ Colors.get_priority_color = function(priority)
 
   local breakpoints = _Neowarrior.config.breakpoints.priority
 
-  for k, v in ipairs(breakpoints) do
+  for k, v in pairs(breakpoints) do
     if k == priority then
       return _Neowarrior.config.colors[v].group
     end
