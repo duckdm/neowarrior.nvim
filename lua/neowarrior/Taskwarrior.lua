@@ -33,7 +33,7 @@ end
 function Taskwarrior:task(uuid)
 
   local json_data = self:syscall({ "task", uuid, "export" })
-  local task = vim.json.decode(json_data)
+  local task = vim.json.decode(json_data:match("%b[]") or "[]")
 
   return Task:new(task[1])
 end
